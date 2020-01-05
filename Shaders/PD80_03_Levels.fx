@@ -47,7 +47,7 @@ namespace pd80_levels
     uniform bool enableLumaOutBlack <
     ui_label = "Allow average scene luminosity to influence Black OUT.\nWhen NOT selected Black OUT minimum is ignored.";
     ui_category = "Levels";
-    > = true;
+    > = false;
 
     uniform float3 outBlackRGBmin <
     ui_type = "color";
@@ -114,7 +114,12 @@ namespace pd80_levels
         clr.g            = color.g <= 0.04045f ? x.g : y.g;
         clr.b            = color.b <= 0.04045f ? x.b : y.b;
         return clr;
-    }    
+    }
+    
+    float fade( float t )
+    {
+        return t * t * t * ( t * ( t * 6.0 - 15.0 ) + 10.0 );
+    }
 
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float PS_WriteCLuma(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
@@ -122,7 +127,7 @@ namespace pd80_levels
         float4 color     = tex2D( samplerColor, texcoord );
         color.xyz        = SRGBToLinear( color.xyz );
         float luma       = getLuminance( color.xyz );
-        return log2( max( luma, 0.001f ));
+        return log2( luma );
     }
 
     float PS_AvgCLuma(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
@@ -145,7 +150,7 @@ namespace pd80_levels
         color.xyz        = pow( color.xyz, inGammaGray );
         float3 outBlack  = outBlackRGBmax.xyz;
         if( enableLumaOutBlack == TRUE )
-            outBlack.xyz = lerp( outBlackRGBmin.xyz, outBlackRGBmax.xyz, avgluma );
+            outBlack.xyz = lerp( outBlackRGBmin.xyz, outBlackRGBmax.xyz, fade( min( avgluma * 3.0f, 1.0f )));
         color.xyz        = color.xyz * max( outWhiteRGB.xyz - outBlack.xyz, 0.000001f ) + outBlack.xyz;
         color.xyz        = max( color.xyz, 0.0f );
         return float4( color.xyz, 1.0f );
