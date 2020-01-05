@@ -455,7 +455,9 @@ namespace pd80_blackandwhite
     {
         float4 color      = tex2D( samplerColorNew, texcoord );
         float SigmaSum    = 0.0f;
-        float pxlOffset   = 1.0f;
+        float pxlOffset   = 1.5f;
+        float calcOffset  = 0.0f;
+        float2 buffSigma  = 0.0f;
         float3 Sigma;
         Sigma.x           = 1.0f / ( sqrt( 2.0f * Pi ) * BlurSigma );
         Sigma.y           = exp( -0.5f / ( BlurSigma * BlurSigma ));
@@ -465,10 +467,14 @@ namespace pd80_blackandwhite
         Sigma.xy          *= Sigma.yz;
         for( int i = 0; i < Loops && SigmaSum <= Quality; ++i )
         {
-            color         += tex2D( samplerColorNew, texcoord.xy + float2( pxlOffset*px, 0.0f )) * Sigma.x;
-            color         += tex2D( samplerColorNew, texcoord.xy - float2( pxlOffset*px, 0.0f )) * Sigma.x;
-            SigmaSum      += ( 2.0f * Sigma.x );
-            pxlOffset     += 1.0f;
+            buffSigma.x   = Sigma.x * Sigma.y;
+            calcOffset    = pxlOffset - 1.0f + buffSigma.x / Sigma.x;
+            buffSigma.y   = Sigma.x + buffSigma.x;
+            color         += tex2D( samplerColorNew, texcoord.xy + float2( calcOffset*px, 0.0f )) * buffSigma.y;
+            color         += tex2D( samplerColorNew, texcoord.xy - float2( calcOffset*px, 0.0f )) * buffSigma.y;
+            SigmaSum      += ( 2.0f * Sigma.x + 2.0f * buffSigma.x );
+            pxlOffset     += 2.0f;
+            Sigma.xy      *= Sigma.yz;
             Sigma.xy      *= Sigma.yz;
         }
         color.xyz         /= SigmaSum;
@@ -479,7 +485,9 @@ namespace pd80_blackandwhite
     {
         float4 color      = tex2D( samplerBlurH, texcoord );
         float SigmaSum    = 0.0f;
-        float pxlOffset   = 1.0f;
+        float pxlOffset   = 1.5f;
+        float calcOffset  = 0.0f;
+        float2 buffSigma  = 0.0f;
         float3 Sigma;
         Sigma.x           = 1.0f / ( sqrt( 2.0f * Pi ) * BlurSigma );
         Sigma.y           = exp( -0.5f / ( BlurSigma * BlurSigma ));
@@ -489,10 +497,14 @@ namespace pd80_blackandwhite
         Sigma.xy          *= Sigma.yz;
         for( int i = 0; i < Loops && SigmaSum < Quality; ++i )
         {
-            color         += tex2D( samplerBlurH, texcoord.xy + float2( 0.0f, pxlOffset*py )) * Sigma.x;
-            color         += tex2D( samplerBlurH, texcoord.xy - float2( 0.0f, pxlOffset*py )) * Sigma.x;
-            SigmaSum      += ( 2.0f * Sigma.x );
-            pxlOffset     += 1.0f;
+            buffSigma.x   = Sigma.x * Sigma.y;
+            calcOffset    = pxlOffset - 1.0f + buffSigma.x / Sigma.x;
+            buffSigma.y   = Sigma.x + buffSigma.x;
+            color         += tex2D( samplerBlurH, texcoord.xy + float2( 0.0f, calcOffset*py )) * buffSigma.y;
+            color         += tex2D( samplerBlurH, texcoord.xy - float2( 0.0f, calcOffset*py )) * buffSigma.y;
+            SigmaSum      += ( 2.0f * Sigma.x + 2.0f * buffSigma.x );
+            pxlOffset     += 2.0f;
+            Sigma.xy      *= Sigma.yz;
             Sigma.xy      *= Sigma.yz;
         }
         color.xyz         /= SigmaSum;
