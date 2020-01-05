@@ -44,6 +44,13 @@ namespace pd80_filmgrain
         ui_category = "Film Grain (simplex)";
         ui_items = "Disabled\0Enabled\0";
         > = 1;
+    uniform float grainAdjust <
+        ui_type = "slider";
+        ui_label = "Grain Pattern Adjust (for still noise)";
+        ui_category = "Film Grain (simplex)";
+        ui_min = 1.0f;
+        ui_max = 2.0f;
+        > = 1.0;
     uniform int grainSize <
         ui_type = "slider";
         ui_label = "Grain Size";
@@ -103,10 +110,10 @@ namespace pd80_filmgrain
     float4 rnm( float2 tc, float t ) 
     {
         float noise       = sin( dot( tc, float2( 12.9898, 78.233 ))) * ( 43758.5453 + t );
-        float noiseR      = frac( noise ) * 2.0 - 1.0;
-        float noiseG      = frac( noise * 1.2154 ) * 2.0 - 1.0; 
-        float noiseB      = frac( noise * 1.3453 ) * 2.0 - 1.0;
-        float noiseA      = frac( noise * 1.3647 ) * 2.0 - 1.0;
+        float noiseR      = frac( noise * grainAdjust ) * 2.0 - 1.0;
+        float noiseG      = frac( noise * 1.2154 * grainAdjust ) * 2.0 - 1.0; 
+        float noiseB      = frac( noise * 1.3453 * grainAdjust ) * 2.0 - 1.0;
+        float noiseA      = frac( noise * 1.3647 * grainAdjust ) * 2.0 - 1.0;
         return float4( noiseR, noiseG, noiseB, noiseA );
     }
 
@@ -123,19 +130,19 @@ namespace pd80_filmgrain
         pi.xy             /= permTexSize;
         float3 pf         = frac( p );
         // Noise contributions from (x=0, y=0), z=0 and z=1
-        float perm00      = rnm( pi.xy, t ).w;
+        float perm00      = rnm( pi.xy, t ).x;
         float3 grad000    = tex2D( samplerPermTex, float2( perm00, pi.z )).xyz * 4.0 - 1.0;
         float n000        = dot( grad000, pf );
         float3 grad001    = tex2D( samplerPermTex, float2( perm00, pi.z + permONE )).xyz * 4.0 - 1.0;
         float n001        = dot( grad001, pf - float3( 0.0, 0.0, 1.0 ));
         // Noise contributions from (x=0, y=1), z=0 and z=1
-        float perm01      = rnm( pi.xy + float2( 0.0, permONE ), t ).w ;
+        float perm01      = rnm( pi.xy + float2( 0.0, permONE ), t ).y ;
         float3  grad010   = tex2D( samplerPermTex, float2( perm01, pi.z )).xyz * 4.0 - 1.0;
         float n010        = dot( grad010, pf - float3( 0.0, 1.0, 0.0 ));
         float3  grad011   = tex2D( samplerPermTex, float2(perm01, pi.z + permONE)).xyz * 4.0 - 1.0;
         float n011        = dot( grad011, pf - float3( 0.0, 1.0, 1.0 ));
         // Noise contributions from (x=1, y=0), z=0 and z=1
-        float perm10      = rnm( pi.xy + float2( permONE, 0.0 ), t ).w ;
+        float perm10      = rnm( pi.xy + float2( permONE, 0.0 ), t ).z ;
         float3  grad100   = tex2D( samplerPermTex, float2( perm10, pi.z )).xyz * 4.0 - 1.0;
         float n100        = dot( grad100, pf - float3( 1.0, 0.0, 0.0 ));
         float3  grad101   = tex2D( samplerPermTex, float2( perm10, pi.z + permONE )).xyz * 4.0 - 1.0;
