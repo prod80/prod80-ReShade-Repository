@@ -5,7 +5,7 @@ Categorized by suggested load order, but use as you see fit.
 
 01: Prepass effects: DoF, Flares, Bloom, etc
 
-02: Tonemapping techniques
+02: Tonemapping techniques, Adaptation, Exposure compensation
 
 03: Level adjustments: Black/White points, Gamma
 
