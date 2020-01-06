@@ -1,5 +1,5 @@
 /*
-    Description : PD80 01 HQ Bloom for Reshade https://reshade.me/
+    Description : PD80 06 Film Grain for Reshade https://reshade.me/
     Author      : prod80 (Bas Veth)
     License     : MIT, Copyright (c) 2020 prod80
 
