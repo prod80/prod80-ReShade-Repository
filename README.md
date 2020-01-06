@@ -15,6 +15,6 @@ Categorized by suggested load order, but use as you see fit.
 
 06: Post effects: Grain, Dither, CA, etc
 
-Not all work is mine, much is used (possibly adjusted) from other people. Credits and licensing are individually noted within the files
+Not all work is mine, much is used (possibly adjusted) from other people. Credits and licensing are individually noted within the files.
 
 Enjoy and make your games look nice(r)!
