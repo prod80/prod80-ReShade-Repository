@@ -71,7 +71,7 @@ namespace pd80_filmgrain
         ui_category = "Film Grain (simplex)";
         ui_min = 0.0f;
         ui_max = 1.0f;
-        > = 0.2;
+        > = 0.14;
     uniform float grainIntensity <
         ui_type = "slider";
         ui_label = "Grain Density";
@@ -200,9 +200,9 @@ namespace pd80_filmgrain
         if( grainMotion )
             timer         = Timer % 1000.0f;
         float2 uv         = texcoord.xy * float2( BUFFER_WIDTH, BUFFER_HEIGHT );
-        float3 noise      = pnoise3D( float3( uv.xy, 0.0f ), timer );
-        noise.y           = pnoise3D( float3( uv.xy, 1.0f ), timer );
-        noise.z           = pnoise3D( float3( uv.xy, 2.0f ), timer );
+        float3 noise      = pnoise3D( float3( uv.xy, 1 ), timer );
+        noise.y           = pnoise3D( float3( uv.xy, 2 ), timer );
+        noise.z           = pnoise3D( float3( uv.xy, 3 ), timer );
         
         // Old, practically does the same as grainAmount below
         //      noise.xyz         *= grainIntensity;
