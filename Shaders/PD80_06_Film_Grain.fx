@@ -71,14 +71,14 @@ namespace pd80_filmgrain
         ui_category = "Film Grain (simplex)";
         ui_min = 0.0f;
         ui_max = 1.0f;
-        > = 0.25;
+        > = 0.2;
     uniform float grainIntensity <
         ui_type = "slider";
-        ui_label = "Grain Intensity Global";
+        ui_label = "Grain Density";
         ui_category = "Film Grain (simplex)";
         ui_min = 0.0f;
-        ui_max = 1.0f;
-        > = 0.425;
+        ui_max = 0.5f;
+        > = 0.5;
     uniform float grainIntHigh <
         ui_type = "slider";
         ui_label = "Grain Intensity Highlights";
@@ -101,11 +101,17 @@ namespace pd80_filmgrain
     sampler samplerColor { Texture = texColorBuffer; };
     sampler samplerPermTex { Texture = texPerm; };
     //// DEFINES ////////////////////////////////////////////////////////////////////
+    #define LumCoeff float3(0.212656, 0.715158, 0.072186)
     #define permTexSize 256
     #define permONE     1.0f / 256.0f
     #define permHALF    0.5f * permONE
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
     uniform float Timer < source = "timer"; >;
+
+    float getLuminance( in float3 x )
+    {
+        return dot( x, LumCoeff );
+    }
 
     float4 rnm( float2 tc, float t ) 
     {
@@ -197,11 +203,29 @@ namespace pd80_filmgrain
         float3 noise      = pnoise3D( float3( uv.xy, 0.0f ), timer );
         noise.y           = pnoise3D( float3( uv.xy, 1.0f ), timer );
         noise.z           = pnoise3D( float3( uv.xy, 2.0f ), timer );
-        noise.xyz         *= grainIntensity;
+        
+        // Old, practically does the same as grainAmount below
+        //      noise.xyz         *= grainIntensity;
+
+        // New method
+        // noise is in range -1..0..1
+        // to reduce noise density we have to evaluate and exclude values above or below threshold ( grainIntensity )
+        // hence we need to keep only noise values above threshold and set remainder to 0 on all vectors
+        // using max() instead will give visually similar results as grainAmount, which is not intended
+        float3 absNoise   = abs( noise.xyz );
+        float grainDens   = 0.5f - grainIntensity; // 0.5 is enough to make minimal density, reversing here to make sense of UI slider (min=min, max=max, instead of reversed)
+        if( min( min( absNoise.x, absNoise.y ), absNoise.z ) < grainDens )
+             noise.xyz    = 0.0f;
+
         // Have to work out how to make a nice greyscale noise here, since noise.xyz has negative and positive values.
         // doing dot() will neutralize some values which shouldn't happen.
-        // as workaround using middle value here for now which seems to give acceptable results.
-        noise.xyz         = lerp( mid( noise.xyz ), noise.xyz, grainColor );
+        //      Old, as workaround using middle value here for now which seems to give acceptable results.
+        //      noise.xyz         = lerp( mid( noise.xyz ), noise.xyz, grainColor );    
+        
+        // New method by using exclusion method to handle negative values which works perfectly
+        noise.xyz         = max( saturate( color.xyz + noise.xyz ) - color.xyz, 0.0f );
+        noise.xyz         = lerp( getLuminance( noise.xyz ), noise.xyz, grainColor );
+
         // Mixing options
         float lum         = dot( color.xyz, 0.333333f ); // Just using average here
         noise.xyz         = lerp( noise.xyz * grainIntLow, noise.xyz * grainIntHigh, fade( lum )); // Noise adjustments based on luma
