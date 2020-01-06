@@ -77,8 +77,8 @@ namespace pd80_filmgrain
         ui_label = "Grain Density";
         ui_category = "Film Grain (simplex)";
         ui_min = 0.0f;
-        ui_max = 0.5f;
-        > = 0.5;
+        ui_max = 10.0f;
+        > = 10.0;
     uniform float grainIntHigh <
         ui_type = "slider";
         ui_label = "Grain Intensity Highlights";
@@ -203,19 +203,14 @@ namespace pd80_filmgrain
         float3 noise      = pnoise3D( float3( uv.xy, 1 ), timer );
         noise.y           = pnoise3D( float3( uv.xy, 2 ), timer );
         noise.z           = pnoise3D( float3( uv.xy, 3 ), timer );
-        
+
         // Old, practically does the same as grainAmount below
         //      noise.xyz         *= grainIntensity;
 
         // New method
         // noise is in range -1..0..1
-        // to reduce noise density we have to evaluate and exclude values above or below threshold ( grainIntensity )
-        // hence we need to keep only noise values above threshold and set remainder to 0 on all vectors
-        // using max() instead will give visually similar results as grainAmount, which is not intended
-        float3 absNoise   = abs( noise.xyz );
-        float grainDens   = 0.5f - grainIntensity; // 0.5 is enough to make minimal density, reversing here to make sense of UI slider (min=min, max=max, instead of reversed)
-        if( min( min( absNoise.x, absNoise.y ), absNoise.z ) < grainDens )
-             noise.xyz    = 0.0f;
+        // Use pow() function to visually reduce noise density
+        noise.xyz         = pow( noise.xyz, max( 11.0f - grainIntensity, 0.1f ));
 
         // Have to work out how to make a nice greyscale noise here, since noise.xyz has negative and positive values.
         // doing dot() will neutralize some values which shouldn't happen.
