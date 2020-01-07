@@ -74,6 +74,13 @@ namespace pd80_filmgrain
         > = 0.14;
     uniform float grainIntensity <
         ui_type = "slider";
+        ui_label = "Grain Intensity";
+        ui_category = "Film Grain (simplex)";
+        ui_min = 0.0f;
+        ui_max = 1.0f;
+        > = 1.0;
+    uniform float grainDensity <
+        ui_type = "slider";
         ui_label = "Grain Density";
         ui_category = "Film Grain (simplex)";
         ui_min = 0.0f;
@@ -205,12 +212,8 @@ namespace pd80_filmgrain
         noise.z           = pnoise3D( float3( uv.xy, 3 ), timer );
 
         // Old, practically does the same as grainAmount below
-        //      noise.xyz         *= grainIntensity;
-
-        // New method
-        // noise is in range -1..0..1
-        // Use pow() function to visually reduce noise density
-        noise.xyz         = pow( noise.xyz, max( 11.0f - grainIntensity, 0.1f ));
+        // Added back on request
+        noise.xyz         *= grainIntensity;
 
         // Have to work out how to make a nice greyscale noise here, since noise.xyz has negative and positive values.
         // doing dot() will neutralize some values which shouldn't happen.
@@ -219,11 +222,14 @@ namespace pd80_filmgrain
         
         // New method by using exclusion method to handle negative values which works perfectly
         noise.xyz         = max( saturate( color.xyz + noise.xyz ) - color.xyz, 0.0f );
+        // Control noise density using simple curve
+        noise.xyz         = pow( noise.xyz, max( 11.0f - grainDensity, 0.1f ));
+        // Noise saturation
         noise.xyz         = lerp( getLuminance( noise.xyz ), noise.xyz, grainColor );
 
         // Mixing options
         float lum         = dot( color.xyz, 0.333333f ); // Just using average here
-        noise.xyz         = lerp( noise.xyz * grainIntLow, noise.xyz * grainIntHigh, fade( lum )); // Noise adjustments based on luma
+        noise.xyz         = lerp( noise.xyz * grainIntLow, noise.xyz * grainIntHigh, fade( lum )); // Noise adjustments based on average intensity
         color.xyz         = lerp( color.xyz, color.xyz + noise.xyz, grainAmount );
         return float4( color.xyz, 1.0f );
     }
