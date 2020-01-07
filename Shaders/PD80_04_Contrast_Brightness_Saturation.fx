@@ -33,28 +33,34 @@ namespace pd80_conbrisat
 {
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
     uniform float contrast <
-    ui_label = "Contrast";
-    ui_category = "Final Adjustments";
-    ui_type = "slider";
-    ui_min = -1.0;
-    ui_max = 2.0;
-    > = 0.0;
-
+        ui_label = "Contrast";
+        ui_category = "Final Adjustments";
+        ui_type = "slider";
+        ui_min = -1.0;
+        ui_max = 1.0;
+        > = 0.0;
     uniform float brightness <
-    ui_label = "Brightness";
-    ui_category = "Final Adjustments";
-    ui_type = "slider";
-    ui_min = -1.0;
-    ui_max = 2.0;
-    > = 0.0;
-
+        ui_label = "Brightness";
+        ui_category = "Final Adjustments";
+        ui_type = "slider";
+        ui_min = -1.0;
+        ui_max = 1.0;
+        > = 0.0;
     uniform float saturation <
-    ui_label = "Saturation";
-    ui_category = "Final Adjustments";
-    ui_type = "slider";
-    ui_min = 0.0;
-    ui_max = 2.0;
-    > = 1.0;
+        ui_label = "Saturation";
+        ui_category = "Final Adjustments";
+        ui_type = "slider";
+        ui_min = -1.0;
+        ui_max = 1.0;
+        > = 0.0;
+    uniform float vibrance <
+        ui_label = "Vibrance";
+        ui_category = "Final Adjustments";
+        ui_type = "slider";
+        ui_min = -1.0;
+        ui_max = 1.0;
+        > = 0.0;
+
 
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
@@ -68,34 +74,53 @@ namespace pd80_conbrisat
         return dot( x, LumCoeff );
     }
 
-    float3 screen( in float3 c, in float3 b )
-    { 
-        return 1.0f - ( 1.0f - c ) * ( 1.0f - b );
+    float3 lineardodge(float3 c, float3 b) 	{ return min(c+b, 1.0f);}
+    float3 softlight(float3 c, float3 b) 	{ return b<0.5f ? (2.0f*c*b+c*c*(1.0f-2.0f*b)):(sqrt(c)*(2.0f*b-1.0f)+2.0f*c*(1.0f-b));}
+
+    float3 con( float3 color, float x )
+    {
+        //softlight
+        float3 c = softlight( color.xyz, color.xyz );
+        float c1 = 0.0f;
+        if( x < 0.0f ) c1 = x * 0.5f;
+        else           c1 = x;
+        return lerp( color.xyz, c.xyz, c1 );
     }
 
-    float3 softlight( in float3 c, in float3 b )
+    float3 bri( float3 color, float x )
     {
-        return b < 0.5f ? ( 2.0f * c * b + c * c * ( 1.0f - 2.0f * b )) : ( sqrt( c ) * ( 2.0f * b - 1.0f ) + 2.0f * c * ( 1.0f - b ));
+        //lineardodge
+        float3 c = lineardodge( color.xyz, color.xyz );
+        float b = 0.0f;
+        if( x < 0.0f ) b = x * 0.5f;
+        else           b = x;
+        return lerp( color.xyz, c.xyz, b );   
+    }
+
+    float3 sat( float3 color, float x )
+    {
+        return min( lerp( getLuminance( color.xyz ), color.xyz, x + 1.0f ), 1.0f );
+    }
+
+    float3 vib( float3 color, float x )
+    {
+        float4 sat = 0.0f;
+        sat.xy = float2( min( min( color.x, color.y ), color.z ), max( max( color.x, color.y ), color.z ));
+        sat.z = sat.y - sat.x;
+        sat.w = getLuminance( color.xyz );
+        return lerp( sat.w, color.xyz, 1.0f + ( x * ( 1.0f - sat.z )));
     }
 
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float4 PS_CBS(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color     = tex2D( samplerColor, texcoord );
-        color.xyz        = saturate( lerp( color.xyz, softlight( color.xyz, color.xyz ), contrast ));
-        color.xyz        = saturate( lerp( color.xyz, screen( color.xyz, color.xyz ), brightness ));
-        float4 sat       = 0.0f;
-        sat.xy           = float2( min( min( color.x, color.y ), color.z ), max( max( color.x, color.y ), color.z ));
-        sat.z            = sat.y - sat.x;
-        sat.w            = getLuminance( color.xyz );
-        float3 min_sat   = lerp( sat.w, color.xyz, saturation );
-        float3 max_sat   = lerp( sat.w, color.xyz, 1.0f + ( saturation - 1.0f ) * ( 1.0f - sat.z ));
-        float3 neg       = min( max_sat.xyz + 1.0f, 1.0f );
-        neg.xyz          = saturate( 1.0f - neg.xyz );
-        float negsum     = dot( neg.xyz, 1.0f );
-        max_sat.xyz      = max( max_sat.xyz, 0.0f );
-        max_sat.xyz      = max_sat.xyz + saturate(sign( max_sat.xyz )) * negsum.xxx;
-        color.xyz        = saturate( lerp( min_sat.xyz, max_sat.xyz, step( 1.0f, saturation )));
+        color.xyz        = saturate( color.xyz );
+        color.xyz        = con( color.xyz, contrast );
+        color.xyz        = bri( color.xyz, brightness );
+        color.xyz        = sat( color.xyz, saturation );
+        color.xyz        = vib( color.xyz, vibrance );
+        color.xyz        = saturate( color.xyz ); // shouldn't be needed, but just to ensure no oddities are there
         return float4( color.xyz, 1.0f );
     }
 
