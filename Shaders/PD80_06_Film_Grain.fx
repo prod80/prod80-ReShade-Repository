@@ -210,22 +210,16 @@ namespace pd80_filmgrain
         float3 noise      = pnoise3D( float3( uv.xy, 1 ), timer );
         noise.y           = pnoise3D( float3( uv.xy, 2 ), timer );
         noise.z           = pnoise3D( float3( uv.xy, 3 ), timer );
-
+        		
         // Old, practically does the same as grainAmount below
         // Added back on request
         noise.xyz         *= grainIntensity;
 
-        // Have to work out how to make a nice greyscale noise here, since noise.xyz has negative and positive values.
-        // doing dot() will neutralize some values which shouldn't happen.
-        //      Old, as workaround using middle value here for now which seems to give acceptable results.
-        //      noise.xyz         = lerp( mid( noise.xyz ), noise.xyz, grainColor );    
-        
-        // New method by using exclusion method to handle negative values which works perfectly
-        noise.xyz         = max( saturate( color.xyz + noise.xyz ) - color.xyz, 0.0f );
-        // Control noise density using simple curve
-        noise.xyz         = pow( noise.xyz, max( 11.0f - grainDensity, 0.1f ));
-        // Noise saturation
-        noise.xyz         = lerp( getLuminance( noise.xyz ), noise.xyz, grainColor );
+		// Noise saturation
+        noise.xyz         = lerp( dot( noise.xyz, 1.0f ), noise.xyz, grainColor );
+		
+		// Control noise density
+        noise.xyz         = pow( abs( noise.xyz ), max( 11.0f - grainDensity, 0.1f )) * sign( noise.xyz );
 
         // Mixing options
         float lum         = dot( color.xyz, 0.333333f ); // Just using average here
