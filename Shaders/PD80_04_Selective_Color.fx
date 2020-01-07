@@ -610,8 +610,8 @@ namespace pd80_selectivecolor
             color.x       = color.x + adjustcolor( sWhites, color.x, w_adj_cya, w_adj_bla, corr_method );
             color.y       = color.y + adjustcolor( sWhites, color.y, w_adj_mag, w_adj_bla, corr_method );
             color.z       = color.z + adjustcolor( sWhites, color.z, w_adj_yel, w_adj_bla, corr_method );
-            color.xyz     = sat( color.xyz, w_adj_sat );
-            color.xyz     = vib( color.xyz, w_adj_vib );
+            color.xyz     = sat( color.xyz, w_adj_sat * smoothstep( 0.5f, 1.0f, min_value ));
+            color.xyz     = vib( color.xyz, w_adj_vib * smoothstep( 0.5f, 1.0f, min_value ));
         }
 
         if( max_value != 0.0f && min_value != 1.0f )
@@ -628,8 +628,8 @@ namespace pd80_selectivecolor
             color.x       = color.x + adjustcolor( sBlacks, color.x, bk_adj_cya, bk_adj_bla, corr_method );
             color.y       = color.y + adjustcolor( sBlacks, color.y, bk_adj_mag, bk_adj_bla, corr_method );
             color.z       = color.z + adjustcolor( sBlacks, color.z, bk_adj_yel, bk_adj_bla, corr_method );
-            color.xyz     = sat( color.xyz, bk_adj_sat );
-            color.xyz     = vib( color.xyz, bk_adj_vib );
+            color.xyz     = sat( color.xyz, bk_adj_sat * smoothstep( 0.5f, 0.0f, max_value ));
+            color.xyz     = vib( color.xyz, bk_adj_vib * smoothstep( 0.5f, 0.0f, max_value ));
         }
 
         return float4( color.xyz, 1.0f );
