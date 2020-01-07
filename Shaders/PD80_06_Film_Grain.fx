@@ -64,7 +64,7 @@ namespace pd80_filmgrain
         ui_category = "Film Grain (simplex)";
         ui_min = 0.0f;
         ui_max = 1.0f;
-        > = 0.0;
+        > = 1.0;
     uniform float grainAmount <
         ui_type = "slider";
         ui_label = "Grain Amount";
@@ -78,7 +78,7 @@ namespace pd80_filmgrain
         ui_category = "Film Grain (simplex)";
         ui_min = 0.0f;
         ui_max = 1.0f;
-        > = 1.0;
+        > = 0.65;
     uniform float grainDensity <
         ui_type = "slider";
         ui_label = "Grain Density";
