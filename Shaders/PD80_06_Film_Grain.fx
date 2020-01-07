@@ -4,11 +4,9 @@
     License     : MIT, Copyright (c) 2020 prod80
 
     Additional credits
-    - Noise/Grain code adopted, modified, and adjusted from Martins H.,
-      based on work by Stefan Gustavson.
-      http://devlog-martinsh.blogspot.com/2013/05/image-imperfections-and-film-grain-post.html
+    - Noise/Grain code adopted, modified, and adjusted on work by Stefan Gustavson.
       https://github.com/stegu/perlin-noise/tree/master/src
-      Code is public domain, adjusted by prod80
+      License: MIT, Copyright (c) 2011 stegu
 
 
     MIT License
