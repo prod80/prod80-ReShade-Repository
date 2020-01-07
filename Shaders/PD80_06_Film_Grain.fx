@@ -150,7 +150,7 @@ namespace pd80_filmgrain
         float perm01      = rnm( pi.xy + float2( 0.0, permONE ), t ).y ;
         float3  grad010   = tex2D( samplerPermTex, float2( perm01, pi.z )).xyz * 4.0 - 1.0;
         float n010        = dot( grad010, pf - float3( 0.0, 1.0, 0.0 ));
-        float3  grad011   = tex2D( samplerPermTex, float2(perm01, pi.z + permONE)).xyz * 4.0 - 1.0;
+        float3  grad011   = tex2D( samplerPermTex, float2( perm01, pi.z + permONE )).xyz * 4.0 - 1.0;
         float n011        = dot( grad011, pf - float3( 0.0, 1.0, 1.0 ));
         // Noise contributions from (x=1, y=0), z=0 and z=1
         float perm10      = rnm( pi.xy + float2( permONE, 0.0 ), t ).z ;
