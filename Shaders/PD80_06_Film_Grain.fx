@@ -174,29 +174,6 @@ namespace pd80_filmgrain
         return n_xyz;
     }
 
-    float mid( float3 c )
-    {
-        /*
-        Return the middle value, standard comparison math
-        x > y, z > y, z > x, mid=x, else mid=z
-        else 
-        y > z, z > x, mid=z, else mid=x
-        both false, mid=y
-        */
-        if( c.x > c.y ) {
-            if( c.z > c.y ) {
-                if( c.z > c.x ) c.y = c.x;
-                else            c.y = c.z;
-            }
-        } else {
-            if( c.y > c.z ) {
-                if( c.z > c.x ) c.y = c.z;
-                else            c.y = c.x;
-            }
-        }
-        return c.y;
-    }
-
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float4 PS_FilmGrain(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
