@@ -533,11 +533,15 @@ namespace pd80_selectivecolor
         float sWhites     = ( min_value - 0.5f ) * 2.0f;
         float sBlacks     = ( 0.5f - max_value ) * 2.0f;
 
-        // Red is highest
-        // If green is higher than blue, then also in yellow channel
-        // If blue is higher than green, then also in magenta channel
-        // Need to use difference between those values to offset Saturation/Vibrance effect
-        // Attempt to avoid some bugs and difference between channel is very low
+        /*
+        Create relative saturation levels.
+        For example when saturating red channel you will manipulate yellow and magenta channels.
+        So, to ensure there are no bugs and transitions are smooth, need to scale saturation with
+        relative saturation of nearest colors. If difference between red and green is low ( color nearly yellow )
+        you use this info to scale back red saturation on those pixels.
+
+        This solution is not fool proof, but gives acceptable results almost always.
+        */
         float r_d_m       = orig.x - orig.z;
         float r_d_y       = orig.x - orig.y;
         float y_d_r       = mid_value - orig.z;
