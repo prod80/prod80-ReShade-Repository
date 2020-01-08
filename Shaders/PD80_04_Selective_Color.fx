@@ -42,6 +42,11 @@ namespace pd80_selectivecolor
         ui_category = "Selective Color";
         ui_items = "Absolute\0Relative\0"; //Do not change order; 0=Absolute, 1=Relative
         > = 1;
+    uniform int corr_method2 < __UNIFORM_COMBO_INT1
+        ui_label = "Correction Method Saturation";
+        ui_category = "Selective Color";
+        ui_items = "Absolute\0Relative\0"; //Do not change order; 0=Absolute, 1=Relative
+        > = 1;
     // Reds
     uniform float r_adj_cya <
         ui_type = "slider";
@@ -485,35 +490,12 @@ namespace pd80_selectivecolor
 
     float getLuminance( float3 x )
     {
-        return dot( x.xyz, float3( 0.212656, 0.715158, 0.072186 ));
-    }
-
-    float3 lineardodge(float3 c, float3 b) 	{ return min(c+b, 1.0f);}
-    float3 softlight(float3 c, float3 b) 	{ return b<0.5f ? (2.0f*c*b+c*c*(1.0f-2.0f*b)):(sqrt(c)*(2.0f*b-1.0f)+2.0f*c*(1.0f-b));}
-    
-    float3 con( float3 color, float x )
-    {
-        //softlight
-        float3 c = softlight( color.xyz, color.xyz );
-        float c1 = 0.0f;
-        if( x < 0.0f ) c1 = x * 0.5f;
-        else           c1 = x;
-        return lerp( color.xyz, c.xyz, c1 );
-    }
-
-    float3 bri( float3 color, float x )
-    {
-        //lineardodge
-        float3 c = lineardodge( color.xyz, color.xyz );
-        float b = 0.0f;
-        if( x < 0.0f ) b = x * 0.5f;
-        else           b = x;
-        return lerp( color.xyz, c.xyz, b );   
+        return dot( x.xyz, float3( 0.212656f, 0.715158f, 0.072186f ));
     }
 
     float3 sat( float3 color, float x )
     {
-        return min( lerp( getLuminance( color.xyz ), color.xyz, x + 1.0f ), 1.0f );
+        return saturate( lerp( getLuminance( color.xyz ), color.xyz, x + 1.0f ));
     }
 
     float3 vib( float3 color, float x )
@@ -522,7 +504,7 @@ namespace pd80_selectivecolor
         sat.xy = float2( min( min( color.x, color.y ), color.z ), max( max( color.x, color.y ), color.z ));
         sat.z = sat.y - sat.x;
         sat.w = getLuminance( color.xyz );
-        return lerp( sat.w, color.xyz, 1.0f + ( x * ( 1.0f - sat.z )));
+        return saturate( lerp( sat.w, color.xyz, 1.0f + ( x * ( 1.0f - sat.z ))));
     }
 
     //// COMPUTE SHADERS ////////////////////////////////////////////////////////////
@@ -539,16 +521,52 @@ namespace pd80_selectivecolor
         // Need these a lot
         float min_value   = min( min( color.x, color.y ), color.z );
         float max_value   = max( max( color.x, color.y ), color.z );
+        float mid_value   = mid( color.xyz );
         
         // Used for determining which pixels to adjust regardless of prior changes to color
         float3 orig       = color.xyz;
 
         // Scales
-        float sRGB        = max_value - mid( color.xyz );
-        float sCMY        = mid( color.xyz ) - min_value;
+        float sRGB        = max_value - mid_value;
+        float sCMY        = mid_value - min_value;
         float sNeutrals   = 1.0f - ( abs( max_value - 0.5f ) + abs( min_value - 0.5f ));
         float sWhites     = ( min_value - 0.5f ) * 2.0f;
         float sBlacks     = ( 0.5f - max_value ) * 2.0f;
+
+        // Red is highest
+        // If green is higher than blue, then also in yellow channel
+        // If blue is higher than green, then also in magenta channel
+        // Need to use difference between those values to offset Saturation/Vibrance effect
+        // Attempt to avoid some bugs and difference between channel is very low
+        float r_d_m       = orig.x - orig.z;
+        float r_d_y       = orig.x - orig.y;
+        float y_d_r       = mid_value - orig.z;
+        float y_d_g       = r_d_y;
+        float g_d_y       = orig.y - orig.x;
+        float g_d_c       = orig.y - orig.z;
+        float c_d_g       = mid_value - orig.x;
+        float c_d_b       = g_d_c;
+        float b_d_c       = orig.z - orig.y;
+        float b_d_m       = orig.z - orig.x;
+        float m_d_b       = mid_value - orig.y;
+        float m_d_r       = b_d_m;
+        
+        float r_delta     = 1.0f;
+        float y_delta     = 1.0f;
+        float g_delta     = 1.0f;
+        float c_delta     = 1.0f;
+        float b_delta     = 1.0f;
+        float m_delta     = 1.0f;
+
+        if( corr_method2 ) // Relative saturation
+        {
+            r_delta       = min( r_d_m, r_d_y );
+            y_delta       = max( y_d_r, y_d_g );
+            g_delta       = min( g_d_y, g_d_c );
+            c_delta       = max( c_d_g, c_d_b );
+            b_delta       = min( b_d_c, b_d_m );
+            m_delta       = max( m_d_b, m_d_r );
+        } 
 
         // Selective Color
         if( max_value == orig.x )
@@ -556,8 +574,8 @@ namespace pd80_selectivecolor
             color.x       = color.x + adjustcolor( sRGB, color.x, r_adj_cya, r_adj_bla, corr_method );
             color.y       = color.y + adjustcolor( sRGB, color.y, r_adj_mag, r_adj_bla, corr_method );
             color.z       = color.z + adjustcolor( sRGB, color.z, r_adj_yel, r_adj_bla, corr_method );
-            color.xyz     = sat( color.xyz, r_adj_sat );
-            color.xyz     = vib( color.xyz, r_adj_vib );
+            color.xyz     = sat( color.xyz, r_adj_sat * r_delta );
+            color.xyz     = vib( color.xyz, r_adj_vib * r_delta );
         }
 
         if( min_value == orig.z )
@@ -565,8 +583,8 @@ namespace pd80_selectivecolor
             color.x       = color.x + adjustcolor( sCMY, color.x, y_adj_cya, y_adj_bla, corr_method );
             color.y       = color.y + adjustcolor( sCMY, color.y, y_adj_mag, y_adj_bla, corr_method );
             color.z       = color.z + adjustcolor( sCMY, color.z, y_adj_yel, y_adj_bla, corr_method );
-            color.xyz     = sat( color.xyz, y_adj_sat );
-            color.xyz     = vib( color.xyz, y_adj_vib );
+            color.xyz     = sat( color.xyz, y_adj_sat * y_delta );
+            color.xyz     = vib( color.xyz, y_adj_vib * y_delta );
         }
 
         if( max_value == orig.y )
@@ -574,8 +592,8 @@ namespace pd80_selectivecolor
             color.x       = color.x + adjustcolor( sRGB, color.x, g_adj_cya, g_adj_bla, corr_method );
             color.y       = color.y + adjustcolor( sRGB, color.y, g_adj_mag, g_adj_bla, corr_method );
             color.z       = color.z + adjustcolor( sRGB, color.z, g_adj_yel, g_adj_bla, corr_method );
-            color.xyz     = sat( color.xyz, g_adj_sat );
-            color.xyz     = vib( color.xyz, g_adj_vib );
+            color.xyz     = sat( color.xyz, g_adj_sat * g_delta );
+            color.xyz     = vib( color.xyz, g_adj_vib * g_delta );
         }
 
         if( min_value == orig.x )
@@ -583,8 +601,8 @@ namespace pd80_selectivecolor
             color.x       = color.x + adjustcolor( sCMY, color.x, c_adj_cya, c_adj_bla, corr_method );
             color.y       = color.y + adjustcolor( sCMY, color.y, c_adj_mag, c_adj_bla, corr_method );
             color.z       = color.z + adjustcolor( sCMY, color.z, c_adj_yel, c_adj_bla, corr_method );
-            color.xyz     = sat( color.xyz, c_adj_sat );
-            color.xyz     = vib( color.xyz, c_adj_vib );
+            color.xyz     = sat( color.xyz, c_adj_sat * c_delta );
+            color.xyz     = vib( color.xyz, c_adj_vib * c_delta );
         }
 
         if( max_value == orig.z )
@@ -592,8 +610,8 @@ namespace pd80_selectivecolor
             color.x       = color.x + adjustcolor( sRGB, color.x, b_adj_cya, b_adj_bla, corr_method );
             color.y       = color.y + adjustcolor( sRGB, color.y, b_adj_mag, b_adj_bla, corr_method );
             color.z       = color.z + adjustcolor( sRGB, color.z, b_adj_yel, b_adj_bla, corr_method );
-            color.xyz     = sat( color.xyz, b_adj_sat );
-            color.xyz     = vib( color.xyz, b_adj_vib );
+            color.xyz     = sat( color.xyz, b_adj_sat * b_delta );
+            color.xyz     = vib( color.xyz, b_adj_vib * b_delta );
         }
 
         if( min_value == orig.y )
@@ -601,8 +619,8 @@ namespace pd80_selectivecolor
             color.x       = color.x + adjustcolor( sCMY, color.x, m_adj_cya, m_adj_bla, corr_method );
             color.y       = color.y + adjustcolor( sCMY, color.y, m_adj_mag, m_adj_bla, corr_method );
             color.z       = color.z + adjustcolor( sCMY, color.z, m_adj_yel, m_adj_bla, corr_method );
-            color.xyz     = sat( color.xyz, m_adj_sat );
-            color.xyz     = vib( color.xyz, m_adj_vib );
+            color.xyz     = sat( color.xyz, m_adj_sat * m_delta );
+            color.xyz     = vib( color.xyz, m_adj_vib * m_delta );
         }
 
         if( min_value >= 0.5f )
