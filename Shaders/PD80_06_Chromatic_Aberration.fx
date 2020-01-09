@@ -33,30 +33,38 @@ namespace pd80_ca
 {
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
     uniform bool use_ca_edges <
-        ui_label = "Chromatic Aberration Only Edges.\nUse Rotation = 225 for best effect.";
+        ui_label = "Chromatic Aberration Only Edges.\nUse Rotation = 135 for best effect.";
         ui_category = "Chromatic Aberration";
         > = true;
     uniform int degrees <
         ui_type = "slider";
-        ui_label = "Chromatic Aberration Rotation";
+        ui_label = "CA Rotation";
         ui_category = "Chromatic Aberration";
-        ui_min = 0;
-        ui_max = 360;
+        ui_min = 90;
+        ui_max = 270;
         ui_step = 1;
-        > = 225;
+        > = 135;
     uniform float CA <
         ui_type = "slider";
-        ui_label = "Chromatic Aberration Width";
+        ui_label = "CA Global Strength";
         ui_category = "Chromatic Aberration";
-        ui_min = 0.0f;
-        ui_max = 100.0f;
-        > = 5.0;
-    uniform float CA_strength <
+        ui_min = -20.0f;
+        ui_max = 20.0f;
+        > = -8.0;
+    uniform int sampleSTEPS <
         ui_type = "slider";
-        ui_label = "Chromatic Aberration Strength";
+        ui_label = "Number of Hues";
         ui_category = "Chromatic Aberration";
-        ui_min = 0.0f;
-        ui_max = 1.0f;
+        ui_min = 8;
+        ui_max = 48;
+        ui_step = 1;
+        > = 24;
+    uniform float CA_curve <
+        ui_type = "slider";
+        ui_label = "CA Curve";
+        ui_category = "Chromatic Aberration";
+        ui_min = 0.05f;
+        ui_max = 10.0f;
         > = 0.5;
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
@@ -66,27 +74,59 @@ namespace pd80_ca
     #define px          1.0f / BUFFER_WIDTH
     #define py          1.0f / BUFFER_HEIGHT
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
+    float3 HUEToRGB( in float H )
+    {
+        float R          = abs(H * 6.0f - 3.0f) - 1.0f;
+        float G          = 2.0f - abs(H * 6.0f - 2.0f);
+        float B          = 2.0f - abs(H * 6.0f - 4.0f);
+        return saturate( float3( R,G,B ));
+    }
 
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float4 PS_CA(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
-        float4 color      = tex2D( samplerColor, texcoord );
-        float3 orig       = color.xyz;
-        float CAwidth     = CA;
-        float adj         = 1.0f;
-        float2 adjRad     = 1.0f;
-        if( use_ca_edges ) {
-            float2 coords = texcoord.xy;
-            coords.xy     -= 0.5f;
-            adjRad.xy     = coords.xy * 2.0f;
-            coords.xy     = abs( coords.xy );
-            adj           = adj * pow( max( coords.x, coords.y ) * 2.0f, 0.5f );
+        float4 orig       = tex2D( samplerColor, texcoord );
+        float3 color      = 0.0f;
+        float AR          = max( BUFFER_WIDTH, BUFFER_HEIGHT ) / min( BUFFER_WIDTH, BUFFER_HEIGHT );
+
+        float2 coords     = texcoord.xy * 2.0f - 1.0f;                 // Middle screen is 0.0, to all edges -1.0...1.0
+        float c           = cos( radians( degrees )) * coords.x;       // Influence rotation based on screen position
+        float s           = sin( radians( degrees )) * coords.y;       // ...
+        if( BUFFER_WIDTH > BUFFER_HEIGHT )
+            coords.x      *= AR;
+        else
+            coords.y      *= AR;
+        float2 adj        = abs( coords.xy );                           // Now middle is 0.0, and all edges 1.0
+        adj.x             = pow( max( adj.x, adj.y ), CA_curve );       // Apply curve to apply less CA in center screen
+
+        float3 huecolor   = 0.0f;
+        float3 tempcolor  = 0.0f;
+        float o1          = sampleSTEPS - 1.0f;
+        float o2          = 0.0f;
+        float3 d          = 0.0f;
+
+        if ( !use_ca_edges )
+        {
+            adj.x         = 1.0f;
+            c             = cos( radians( degrees ));
+            s             = sin( radians( degrees ));
         }
-        float cos     = cos( radians( degrees )) * adjRad.x;
-        float sin     = sin( radians( degrees )) * adjRad.y;
-        color.x       = tex2D( samplerColor, texcoord + float2( px * cos * CAwidth * adj, py * sin * CAwidth * adj )).x;
-        color.z       = tex2D( samplerColor, texcoord - float2( px * cos * CAwidth * adj, py * sin * CAwidth * adj )).z;
-        color.xyz     = lerp( orig.xyz, color.xyz, CA_strength );
+        // Scale CA (hackjob!)
+        float caWidth     = CA * ( max( BUFFER_WIDTH, BUFFER_HEIGHT ) / 1920.0f ); // Scaled for 1920, raising resolution in X or Y should raise scale
+
+        float offsetX     = px * c * adj.x;
+        float offsetY     = py * s * adj.x;
+
+        for( float i = 0; i < sampleSTEPS; i++ )
+        {
+            huecolor.xyz  = HUEToRGB( i / sampleSTEPS );
+            o2            = lerp( -caWidth, caWidth, i / o1 );
+            tempcolor.xyz = tex2D( samplerColor, texcoord.xy + float2( o2 * offsetX, o2 * offsetY )).xyz;
+            color.xyz     += tempcolor.xyz * huecolor.xyz;
+            d.xyz         += huecolor.xyz;
+        }
+        //color.xyz         /= ( sampleSTEPS / 3.0f * 2.0f ); // Too crude and doesn't work with low sampleSTEPS ( too dim )
+        color.xyz           /= dot( d.xyz, 0.333333f ); // seems so-so OK    
         return float4( color.xyz, 1.0f );
     }
 
