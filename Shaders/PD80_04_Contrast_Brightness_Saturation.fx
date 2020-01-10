@@ -62,57 +62,57 @@ namespace pd80_conbrisat
         > = 0.0;
     uniform bool enable_depth <
         ui_label = "Enable depth based adjustments.\nMake sure you have setup your depth buffer correctly.";
-        ui_category = "Final Adjustments";
+        ui_category = "Final Adjustments: Depth";
         > = false;
     uniform bool display_depth <
         ui_label = "Show depth texture";
-        ui_category = "Final Adjustments";
+        ui_category = "Final Adjustments: Depth";
         > = false;
     uniform float depthStart <
         ui_type = "slider";
         ui_label = "Change Depth Start Plane";
-        ui_category = "Final Adjustments";
+        ui_category = "Final Adjustments: Depth";
         ui_min = 0.0f;
         ui_max = 1.0f;
         > = 0.0;
     uniform float depthEnd <
         ui_type = "slider";
         ui_label = "Change Depth End Plane";
-        ui_category = "Final Adjustments";
+        ui_category = "Final Adjustments: Depth";
         ui_min = 0.0f;
         ui_max = 1.0f;
-        > = 1.0;
+        > = 0.1;
     uniform float depthCurve <
         ui_label = "Depth Curve Adjustment";
-        ui_category = "Final Adjustments";
+        ui_category = "Final Adjustments: Depth";
         ui_type = "slider";
         ui_min = 0.05;
         ui_max = 8.0;
         > = 1.0;
     uniform float contrastD <
-        ui_label = "Contrast";
-        ui_category = "Final Adjustments";
+        ui_label = "Contrast Far";
+        ui_category = "Final Adjustments: Far";
         ui_type = "slider";
         ui_min = -1.0;
         ui_max = 1.0;
         > = 0.0;
     uniform float brightnessD <
-        ui_label = "Brightness";
-        ui_category = "Final Adjustments";
+        ui_label = "Brightness Far";
+        ui_category = "Final Adjustments: Far";
         ui_type = "slider";
         ui_min = -1.0;
         ui_max = 1.0;
         > = 0.0;
     uniform float saturationD <
-        ui_label = "Saturation";
-        ui_category = "Final Adjustments";
+        ui_label = "Saturation Far";
+        ui_category = "Final Adjustments: Far";
         ui_type = "slider";
         ui_min = -1.0;
         ui_max = 1.0;
         > = 0.0;
     uniform float vibranceD <
-        ui_label = "Vibrance";
-        ui_category = "Final Adjustments";
+        ui_label = "Vibrance Far";
+        ui_category = "Final Adjustments: Far";
         ui_type = "slider";
         ui_min = -1.0;
         ui_max = 1.0;
@@ -168,30 +168,28 @@ namespace pd80_conbrisat
         sat.w = getLuminance( color.xyz );
         return lerp( sat.w, color.xyz, 1.0f + ( x * ( 1.0f - sat.z )));
     }
-    
-    float fade( float t )
-    {
-        return t * t * t * ( t * ( t * 6.0 - 15.0 ) + 10.0 );
-    }
 
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float4 PS_CBS(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color     = tex2D( samplerColor, texcoord );
-        float depth      = ReShade::GetLinearizedDepth( texcoord );
-        depth            = fade( smoothstep( depthStart, depthEnd, depth ));
+        float depth      = ReShade::GetLinearizedDepth( texcoord ).x;
+        depth            = smoothstep( depthStart, depthEnd, depth );
         depth            = pow( depth, depthCurve );
         color.xyz        = saturate( color.xyz );
-        if( enable_depth ) {
-            color.xyz    = lerp( con( color.xyz, contrast ),   con( color.xyz, contrastD ),   depth );
-            color.xyz    = lerp( bri( color.xyz, brightness ), bri( color.xyz, brightnessD ), depth );
-            color.xyz    = lerp( sat( color.xyz, saturation ), sat( color.xyz, saturationD ), depth );
-            color.xyz    = lerp( vib( color.xyz, vibrance ),   vib( color.xyz, vibranceD ),   depth );
-        } else {
-            color.xyz    = con( color.xyz, contrast   );
-            color.xyz    = bri( color.xyz, brightness );
-            color.xyz    = sat( color.xyz, saturation );
-            color.xyz    = vib( color.xyz, vibrance   );
+        float3 dcolor    = color.xyz;
+
+        color.xyz        = con( color.xyz, contrast   );
+        color.xyz        = bri( color.xyz, brightness );
+        color.xyz        = sat( color.xyz, saturation );
+        color.xyz        = vib( color.xyz, vibrance   );
+        
+        if( enable_depth )
+        {
+            color.xyz    = lerp( color.xyz, con( dcolor.xyz, contrastD ),   depth );
+            color.xyz    = lerp( color.xyz, bri( dcolor.xyz, brightnessD ), depth );
+            color.xyz    = lerp( color.xyz, sat( dcolor.xyz, saturationD ), depth );
+            color.xyz    = lerp( color.xyz, vib( dcolor.xyz, vibranceD ),   depth );
         }
         color.xyz        = saturate( color.xyz ); // shouldn't be needed, but just to ensure no oddities are there
         if( display_depth )

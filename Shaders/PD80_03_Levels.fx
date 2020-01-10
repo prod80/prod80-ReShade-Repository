@@ -32,49 +32,103 @@
 namespace pd80_levels
 {
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
-    uniform float3 inBlackRGB <
-    ui_type = "color";
-    ui_label = "Black IN";
-    ui_category = "Levels";
-    > = float3(0.0, 0.0, 0.0);
-
-    uniform float3 inWhiteRGB <
-    ui_type = "color";
-    ui_label = "White IN";
-    ui_category = "Levels";
-    > = float3(1.0, 1.0, 1.0);
-
-    uniform bool enableLumaOutBlack <
-    ui_label = "Allow average scene luminosity to influence Black OUT.\nWhen NOT selected Black OUT minimum is ignored.";
-    ui_category = "Levels";
-    > = false;
-
-    uniform float3 outBlackRGBmin <
-    ui_type = "color";
-    ui_label = "Black OUT minimum";
-    ui_category = "Levels";
-    > = float3(0.016, 0.016, 0.016);
-
-    uniform float3 outBlackRGBmax <
-    ui_type = "color";
-    ui_label = "Black OUT maximum";
-    ui_category = "Levels";
-    > = float3(0.036, 0.036, 0.036);
-
-    uniform float3 outWhiteRGB <
-    ui_type = "color";
-    ui_label = "White OUT";
-    ui_category = "Levels";
-    > = float3(1.0, 1.0, 1.0);
-
-    uniform float inGammaGray <
-    ui_label = "Gamma Adjustment";
-    ui_category = "Levels";
-    ui_type = "slider";
-    ui_min = 0.05;
-    ui_max = 10.0;
-    > = 1.0;
-
+    uniform bool lumalevels <
+        ui_label = "Allow average scene luminosity to influence Black OUT.\nWhen NOT selected Black OUT minimum is ignored.";
+        ui_category = "Levels";
+        > = false;
+    uniform float3 ib <
+        ui_type = "color";
+        ui_label = "Black IN";
+        ui_category = "Levels";
+        > = float3(0.0, 0.0, 0.0);
+    uniform float3 iw <
+        ui_type = "color";
+        ui_label = "White IN";
+        ui_category = "Levels";
+        > = float3(1.0, 1.0, 1.0);
+    uniform float3 obmin <
+        ui_type = "color";
+        ui_label = "Black OUT minimum";
+        ui_category = "Levels";
+        > = float3(0.016, 0.016, 0.016);
+    uniform float3 obmax <
+        ui_type = "color";
+        ui_label = "Black OUT maximum";
+        ui_category = "Levels";
+        > = float3(0.036, 0.036, 0.036);
+    uniform float3 ow <
+        ui_type = "color";
+        ui_label = "White OUT";
+        ui_category = "Levels";
+        > = float3(1.0, 1.0, 1.0);
+    uniform float ig <
+        ui_label = "Gamma Adjustment";
+        ui_category = "Levels";
+        ui_type = "slider";
+        ui_min = 0.05;
+        ui_max = 10.0;
+        > = 1.0;
+    uniform bool use_depth <
+        ui_label = "Enable depth based adjustments.\nMake sure you have setup your depth buffer correctly.";
+        ui_category = "Levels: Depth";
+        > = false;
+    uniform bool display_depth <
+        ui_label = "Show depth texture.\nThe below adjustments only apply to white areas.";
+        ui_category = "Levels: Depth";
+        > = false;
+    uniform float depthStart <
+        ui_type = "slider";
+        ui_label = "Change Depth Start Plane";
+        ui_category = "Levels: Depth";
+        ui_min = 0.0f;
+        ui_max = 1.0f;
+        > = 0.0;
+    uniform float depthEnd <
+        ui_type = "slider";
+        ui_label = "Change Depth End Plane";
+        ui_category = "Levels: Depth";
+        ui_min = 0.0f;
+        ui_max = 1.0f;
+        > = 0.1;
+    uniform float depthCurve <
+        ui_label = "Depth Curve Adjustment";
+        ui_category = "Levels: Depth";
+        ui_type = "slider";
+        ui_min = 0.05;
+        ui_max = 8.0;
+        > = 1.0;
+    uniform float3 ibd <
+        ui_type = "color";
+        ui_label = "Black IN Far";
+        ui_category = "Levels: Far";
+        > = float3(0.0, 0.0, 0.0);
+    uniform float3 iwd <
+        ui_type = "color";
+        ui_label = "White IN Far";
+        ui_category = "Levels: Far";
+        > = float3(1.0, 1.0, 1.0);
+    uniform float3 obmind <
+        ui_type = "color";
+        ui_label = "Black OUT minimum Far";
+        ui_category = "Levels: Far";
+        > = float3(0.016, 0.016, 0.016);
+    uniform float3 obmaxd <
+        ui_type = "color";
+        ui_label = "Black OUT maximum Far";
+        ui_category = "Levels: Far";
+        > = float3(0.036, 0.036, 0.036);
+    uniform float3 owd <
+        ui_type = "color";
+        ui_label = "White OUT Far";
+        ui_category = "Levels: Far";
+        > = float3(1.0, 1.0, 1.0);
+    uniform float igd <
+        ui_label = "Gamma Adjustment Far";
+        ui_category = "Levels: Far";
+        ui_type = "slider";
+        ui_min = 0.05;
+        ui_max = 10.0;
+        > = 1.0;
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
     texture texCLuma { Width = 256; Height = 256; Format = R16F; MipLevels = 8; };
@@ -116,9 +170,15 @@ namespace pd80_levels
         return clr;
     }
     
-    float fade( float t )
+    float3 levels( float3 color, float3 blackin, float3 whitein, float gamma, float3 outblackmin, float3 outblackmax, float3 outwhite, float luma, bool enableluma )
     {
-        return t * t * t * ( t * ( t * 6.0 - 15.0 ) + 10.0 );
+        float3 ret       = max( color.xyz - blackin.xyz, 0.0f )/max( whitein.xyz - blackin.xyz, 0.000001f );
+        ret.xyz          = pow( ret.xyz, gamma );
+        float3 outBlack  = outblackmax.xyz;
+        if( enableluma ) 
+            outBlack.xyz = lerp( outblackmin.xyz, outblackmax.xyz, fade( min( luma * 3.0f, 1.0f )));
+        ret.xyz          = ret.xyz * max( outwhite.xyz - outBlack.xyz, 0.000001f ) + outBlack.xyz;
+        return ret;
     }
 
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
@@ -145,14 +205,22 @@ namespace pd80_levels
     {
         float4 color     = tex2D( samplerColor, texcoord );
         float avgluma    = tex2D( samplerCAvgLuma, float2( 0.5f, 0.5f )).x;
+        float depth      = ReShade::GetLinearizedDepth( texcoord ).x;
+        depth            = smoothstep( depthStart, depthEnd, depth );
+        depth            = pow( depth, depthCurve );
+        
+        color.xyz        = saturate( color.xyz );
+        float3 dcolor    = color.xyz;
 
-        color.xyz        = max( color.xyz - inBlackRGB.xyz, 0.0f )/max( inWhiteRGB.xyz - inBlackRGB.xyz, 0.000001f );
-        color.xyz        = pow( color.xyz, inGammaGray );
-        float3 outBlack  = outBlackRGBmax.xyz;
-        if( enableLumaOutBlack == TRUE )
-            outBlack.xyz = lerp( outBlackRGBmin.xyz, outBlackRGBmax.xyz, fade( min( avgluma * 3.0f, 1.0f )));
-        color.xyz        = color.xyz * max( outWhiteRGB.xyz - outBlack.xyz, 0.000001f ) + outBlack.xyz;
-        color.xyz        = max( color.xyz, 0.0f );
+        color.xyz        = levels( color.xyz, ib.xyz, iw.xyz, ig, obmin.xyz, obmax.xyz, ow.xyz, avgluma, lumalevels );
+        if( use_depth )
+        {
+            color.xyz    = lerp( color.xyz,
+                                 levels( dcolor.xyz, ibd.xyz, iwd.xyz, igd, obmind.xyz, obmaxd.xyz, owd.xyz, avgluma, lumalevels ),   depth );
+        }
+        color.xyz        = saturate( color.xyz );
+        if( display_depth )
+            color.xyz    = depth.xxx;
         return float4( color.xyz, 1.0f );
     }
 
