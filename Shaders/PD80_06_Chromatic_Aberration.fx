@@ -59,13 +59,20 @@ namespace pd80_ca
         ui_max = 48;
         ui_step = 1;
         > = 24;
-    uniform float CA_curve <
+    uniform float CA_start <
         ui_type = "slider";
-        ui_label = "CA Curve";
+        ui_label = "CA start";
         ui_category = "Chromatic Aberration";
-        ui_min = 0.05f;
-        ui_max = 10.0f;
-        > = 0.5;
+        ui_min = 0.0f;
+        ui_max = 1.0f;
+        > = 0.0;
+    uniform float CA_end <
+        ui_type = "slider";
+        ui_label = "CA end";
+        ui_category = "Chromatic Aberration";
+        ui_min = 0.0f;
+        ui_max = 1.0f;
+        > = 1.0;
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
@@ -80,6 +87,11 @@ namespace pd80_ca
         float G          = 2.0f - abs(H * 6.0f - 2.0f);
         float B          = 2.0f - abs(H * 6.0f - 4.0f);
         return saturate( float3( R,G,B ));
+    }
+
+    float fade( float t )
+    {
+        return t * t * t * ( t * ( t * 6.0 - 15.0 ) + 10.0 );
     }
 
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
@@ -97,7 +109,7 @@ namespace pd80_ca
         else
             coords.y      *= AR;
         float2 adj        = abs( coords.xy );                           // Now middle is 0.0, and all edges 1.0
-        adj.x             = pow( max( adj.x, adj.y ), CA_curve );       // Apply curve to apply less CA in center screen
+        adj.x             = fade( smoothstep ( CA_start, CA_end, max( adj.x, adj.y )));
 
         float3 huecolor   = 0.0f;
         float3 tempcolor  = 0.0f;
