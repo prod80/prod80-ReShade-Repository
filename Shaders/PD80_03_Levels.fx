@@ -170,6 +170,11 @@ namespace pd80_levels
         return clr;
     }
     
+    float fade( float t )
+    {
+        return t * t * t * ( t * ( t * 6.0 - 15.0 ) + 10.0 );
+    }
+    
     float3 levels( float3 color, float3 blackin, float3 whitein, float gamma, float3 outblackmin, float3 outblackmax, float3 outwhite, float luma, bool enableluma )
     {
         float3 ret       = max( color.xyz - blackin.xyz, 0.0f )/max( whitein.xyz - blackin.xyz, 0.000001f );
