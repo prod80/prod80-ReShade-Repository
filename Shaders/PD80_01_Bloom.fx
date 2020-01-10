@@ -35,12 +35,22 @@
 
 namespace pd80_hqbloom
 {
+    //// PREPROCESSOR DEFINITIONS ///////////////////////////////////////////////////
+
+    // Min: 0, Max: 2 | Bloom Quality, 0 is best quality (full screen) and values higher than that will progessively use lower resolution texture. Value 3 will use 1/4th screen resolution texture size
+    // 0 = Fullscreen ( x 1 )
+    // 1 = ~Halfsize   ( x 0.75 )
+    // 2 = 1/4th size ( x 0.5 )
+    #ifndef BLOOM_QUALITY
+        #define BLOOM_QUALITY		2  // Default = Low quality as difference is impossible to tell and performance 60% faster
+    #endif
+
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
     uniform bool debugBloom <
     ui_label  = "Show only bloom on screen";
     ui_category = "Bloom debug";
     > = false;
-
+    
     uniform float BloomMix <
     ui_label = "Bloom Mix";
     ui_tooltip = "...";
@@ -109,7 +119,7 @@ namespace pd80_hqbloom
     ui_label = "Initial radius";
     ui_category = "Bloom Deband";
     ui_tooltip = "The radius increases linearly for each iteration. A higher radius will find more gradients, but a lower radius will smooth more aggressively.";
-    > = 16.0;
+    > = 3.0;
 
     uniform int iterations < __UNIFORM_SLIDER_INT1
     ui_min = 1;
@@ -153,9 +163,35 @@ namespace pd80_hqbloom
     texture texBLuma { Width = 256; Height = 256; Format = R16F; MipLevels = 8; };
     texture texBAvgLuma { Format = R16F; };
     texture texBPrevAvgLuma { Format = R16F; };
-    texture texBloomIn { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; }; 
-    texture texBloomH { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; }; 
-    texture texBloom { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; }; 
+    #if( BLOOM_QUALITY == 0 )
+        texture texBloomIn { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; }; 
+        texture texBloomH { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
+        texture texBloom { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
+        #define SWIDTH   BUFFER_WIDTH
+        #define SHEIGHT  BUFFER_HEIGHT
+    #endif
+    #if( BLOOM_QUALITY == 1 )
+        #define SWIDTH   ( BUFFER_WIDTH / 4 * 3 )
+        #define SHEIGHT  ( BUFFER_HEIGHT / 4 * 3 )
+        texture texBloomIn { Width = SWIDTH; Height = SHEIGHT; }; 
+        texture texBloomH { Width = SWIDTH; Height = SHEIGHT; };
+        texture texBloom { Width = SWIDTH; Height = SHEIGHT; };
+    #endif
+    #if( BLOOM_QUALITY == 2 )
+        #define SWIDTH   ( BUFFER_WIDTH / 2 )
+        #define SHEIGHT  ( BUFFER_HEIGHT / 2 )
+        texture texBloomIn { Width = SWIDTH; Height = SHEIGHT; }; 
+        texture texBloomH { Width = SWIDTH; Height = SHEIGHT; };
+        texture texBloom { Width = SWIDTH; Height = SHEIGHT; };
+    #endif
+    #if( BLOOM_QUALITY > 2 )
+        #define SWIDTH   ( BUFFER_WIDTH / 2 )
+        #define SHEIGHT  ( BUFFER_HEIGHT / 2 )
+        texture texBloomIn { Width = SWIDTH; Height = SHEIGHT; }; 
+        texture texBloomH { Width = SWIDTH; Height = SHEIGHT; };
+        texture texBloom { Width = SWIDTH; Height = SHEIGHT; };
+    #endif
+
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerColor { Texture = texColorBuffer; };
     sampler samplerBLuma { Texture = texBLuma; };
@@ -168,7 +204,7 @@ namespace pd80_hqbloom
     uniform float Frametime < source = "frametime"; >;
     uniform int drandom < source = "random"; min = 0; max = 32767; >;
     #define LumCoeff float3(0.212656, 0.715158, 0.072186)
-    #define Q 0.985f //Used for Bloom. High Quality. Other options 1.0 (not recommended), 0.99999f (no compromise), 0.8, or 0.6 (lower is less)
+    #define Q 0.985f
     #define PI 3.141592f
     #define LOOPCOUNT 150f
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
@@ -364,16 +400,27 @@ namespace pd80_hqbloom
     float4 PS_GaussianH(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color     = tex2D( samplerBloomIn, texcoord );
-        float px         = 1.0f / BUFFER_WIDTH;
+        float px         = 1.0f / SWIDTH;
         float SigmaSum   = 0.0f;
         float pxlOffset  = 1.5f;
         float calcOffset = 0.0f;
         float2 buffSigma = 0.0f;
-
+        #if( BLOOM_QUALITY == 0 )
+            float bSigma = BlurSigma;
+        #endif
+        #if( BLOOM_QUALITY == 1 )
+            float bSigma = BlurSigma * 0.75f;
+        #endif
+        #if( BLOOM_QUALITY == 2 )
+            float bSigma = BlurSigma * 0.5f;
+        #endif
+        #if( BLOOM_QUALITY > 2 )
+            float bSigma = BlurSigma * 0.5f;
+        #endif
         //Gaussian Math
         float3 Sigma;
-        Sigma.x          = 1.0f / ( sqrt( 2.0f * PI ) * BlurSigma );
-        Sigma.y          = exp( -0.5f / ( BlurSigma * BlurSigma ));
+        Sigma.x          = 1.0f / ( sqrt( 2.0f * PI ) * bSigma );
+        Sigma.y          = exp( -0.5f / ( bSigma * bSigma ));
         Sigma.z          = Sigma.y * Sigma.y;
 
         //Center Weight
@@ -388,8 +435,8 @@ namespace pd80_hqbloom
             buffSigma.x  = Sigma.x * Sigma.y;
             calcOffset   = pxlOffset - 1.0f + buffSigma.x / Sigma.x;
             buffSigma.y  = Sigma.x + buffSigma.x;
-            color        += tex2D( samplerBloomIn, texcoord.xy + float2( calcOffset*px, 0.0f )) * buffSigma.y;
-            color        += tex2D( samplerBloomIn, texcoord.xy - float2( calcOffset*px, 0.0f )) * buffSigma.y;
+            color        += tex2D( samplerBloomIn, texcoord.xy + float2( calcOffset * px, 0.0f )) * buffSigma.y;
+            color        += tex2D( samplerBloomIn, texcoord.xy - float2( calcOffset * px, 0.0f )) * buffSigma.y;
             SigmaSum     += ( 2.0f * Sigma.x + 2.0f * buffSigma.x );
             pxlOffset    += 2.0f;
             Sigma.xy     *= Sigma.yz;
@@ -403,16 +450,27 @@ namespace pd80_hqbloom
     float4 PS_GaussianV(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color     = tex2D( samplerBloomH, texcoord );
-        float py         = 1.0f / BUFFER_HEIGHT;
+        float py         = 1.0f / SHEIGHT;
         float SigmaSum   = 0.0f;
         float pxlOffset  = 1.5f;
         float calcOffset = 0.0f;
         float2 buffSigma = 0.0f;
-
+        #if( BLOOM_QUALITY == 0 )
+            float bSigma = BlurSigma;
+        #endif
+        #if( BLOOM_QUALITY == 1 )
+            float bSigma = BlurSigma * 0.75f;
+        #endif
+        #if( BLOOM_QUALITY == 2 )
+            float bSigma = BlurSigma * 0.5f;
+        #endif
+        #if( BLOOM_QUALITY > 2 )
+            float bSigma = BlurSigma * 0.5f;
+        #endif
         //Gaussian Math
         float3 Sigma;
-        Sigma.x          = 1.0f / ( sqrt( 2.0f * PI ) * BlurSigma );
-        Sigma.y          = exp( -0.5f / ( BlurSigma * BlurSigma ));
+        Sigma.x          = 1.0f / ( sqrt( 2.0f * PI ) * bSigma );
+        Sigma.y          = exp( -0.5f / ( bSigma * bSigma ));
         Sigma.z          = Sigma.y * Sigma.y;
 
         //Center Weight
@@ -427,8 +485,8 @@ namespace pd80_hqbloom
         buffSigma.x      = Sigma.x * Sigma.y;
         calcOffset       = pxlOffset - 1.0f + buffSigma.x / Sigma.x;
         buffSigma.y      = Sigma.x + buffSigma.x;
-        color            += tex2D( samplerBloomH, texcoord.xy + float2( 0.0f, calcOffset*py )) * buffSigma.y;
-        color            += tex2D( samplerBloomH, texcoord.xy - float2( 0.0f, calcOffset*py )) * buffSigma.y;
+        color            += tex2D( samplerBloomH, texcoord.xy + float2( 0.0f, calcOffset * py )) * buffSigma.y;
+        color            += tex2D( samplerBloomH, texcoord.xy - float2( 0.0f, calcOffset * py )) * buffSigma.y;
         SigmaSum         += ( 2.0f * Sigma.x + 2.0f * buffSigma.x );
         pxlOffset        += 2.0f;
         Sigma.xy         *= Sigma.yz;
