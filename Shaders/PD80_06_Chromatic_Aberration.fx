@@ -59,6 +59,13 @@ namespace pd80_ca
         ui_max = 48;
         ui_step = 1;
         > = 24;
+    uniform float CA_curve <
+        ui_type = "slider";
+        ui_label = "CA curve";
+        ui_category = "Chromatic Aberration";
+        ui_min = 0.001f;
+        ui_max = 10.0f;
+        > = 1.0;
     uniform float CA_start <
         ui_type = "slider";
         ui_label = "CA start";
@@ -89,11 +96,6 @@ namespace pd80_ca
         return saturate( float3( R,G,B ));
     }
 
-    float fade( float t )
-    {
-        return t * t * t * ( t * ( t * 6.0 - 15.0 ) + 10.0 );
-    }
-
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float4 PS_CA(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
@@ -109,7 +111,7 @@ namespace pd80_ca
         else
             coords.y      *= AR;
         float2 adj        = abs( coords.xy );                           // Now middle is 0.0, and all edges 1.0
-        adj.x             = fade( smoothstep ( CA_start, CA_end, max( adj.x, adj.y )));
+        adj.x             = pow( smoothstep ( CA_start, CA_end, max( adj.x, adj.y )), CA_curve );
 
         float3 huecolor   = 0.0f;
         float3 tempcolor  = 0.0f;
@@ -152,5 +154,3 @@ namespace pd80_ca
         }
     }
 }
-
-
