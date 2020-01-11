@@ -29,15 +29,20 @@
 #include "ReShade.fxh"
 #include "ReShadeUI.fxh"
 
-// This feature is very dodgy, so hidden by default
-// It's added for people specilized in screenshots and able to understand
-// that using depth buffer can be odd on something like Levels
-// Uncomment to enable the line below this:
-
-//#define USE_DEPTH 
-
 namespace pd80_levels
 {
+
+    /*
+        Using depth texture to manipulate levels:
+        This feature is very dodgy, so hidden by default
+        It's added for people specilized in screenshots and able to understand
+        that using depth buffer can be odd on something like Levels
+        Uncomment ( remove "//" ) the line below to enable this feature
+    */
+
+    //#define USE_DEPTH 
+
+
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
     uniform bool lumalevels <
         ui_label = "Allow average scene luminosity to influence Black OUT.\nWhen NOT selected Black OUT minimum is ignored.";
