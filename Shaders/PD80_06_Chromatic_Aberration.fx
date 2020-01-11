@@ -33,12 +33,12 @@ namespace pd80_ca
 {
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
     uniform bool use_ca_edges <
-        ui_label = "Chromatic Aberration Only Edges.\nUse Rotation = 135 for best effect.";
+        ui_label = "Use Transverse Chromatic Aberration.\nUse Rotation = 135 for best effect.";
         ui_category = "Chromatic Aberration";
         > = true;
     uniform int degrees <
         ui_type = "slider";
-        ui_label = "CA Rotation";
+        ui_label = "CA Rotation Factor";
         ui_category = "Chromatic Aberration";
         ui_min = 90;
         ui_max = 270;
@@ -46,7 +46,7 @@ namespace pd80_ca
         > = 135;
     uniform float CA <
         ui_type = "slider";
-        ui_label = "CA Global Strength";
+        ui_label = "CA Global Width";
         ui_category = "Chromatic Aberration";
         ui_min = -20.0f;
         ui_max = 20.0f;
@@ -61,21 +61,28 @@ namespace pd80_ca
         > = 24;
     uniform float CA_curve <
         ui_type = "slider";
-        ui_label = "CA curve";
+        ui_label = "CA Curve";
         ui_category = "Chromatic Aberration";
         ui_min = 0.001f;
         ui_max = 10.0f;
         > = 1.0;
     uniform float CA_start <
         ui_type = "slider";
-        ui_label = "CA start";
+        ui_label = "CA Start Point";
         ui_category = "Chromatic Aberration";
         ui_min = 0.0f;
         ui_max = 1.0f;
         > = 0.0;
     uniform float CA_end <
         ui_type = "slider";
-        ui_label = "CA end";
+        ui_label = "CA End Point";
+        ui_category = "Chromatic Aberration";
+        ui_min = 0.0f;
+        ui_max = 1.0f;
+        > = 1.0;
+    uniform float CA_strength <
+        ui_type = "slider";
+        ui_label = "CA Effect Strength";
         ui_category = "Chromatic Aberration";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -96,11 +103,17 @@ namespace pd80_ca
         return saturate( float3( R,G,B ));
     }
 
+    float smootherstep( float minval, float maxval, float x )
+    {
+        float v           = saturate(( x - minval ) / ( maxval - minval ));
+        return v * v * v * ( v * ( v * 6.0f - 15.0f ) + 10.0f );
+    }
+
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float4 PS_CA(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
-        float4 orig       = tex2D( samplerColor, texcoord );
-        float3 color      = 0.0f;
+        float4 color      = 0.0f;
+        float3 orig       = tex2D( samplerColor, texcoord );
         float AR          = max( BUFFER_WIDTH, BUFFER_HEIGHT ) / min( BUFFER_WIDTH, BUFFER_HEIGHT );
 
         float2 coords     = texcoord.xy * 2.0f - 1.0f;                 // Middle screen is 0.0, to all edges -1.0...1.0
@@ -111,7 +124,7 @@ namespace pd80_ca
         else
             coords.y      *= AR;
         float2 adj        = abs( coords.xy );                           // Now middle is 0.0, and all edges 1.0
-        adj.x             = pow( smoothstep ( CA_start, CA_end, max( adj.x, adj.y )), CA_curve );
+        adj.x             = pow( smootherstep( CA_start, CA_end, max( adj.x, adj.y )), CA_curve );
 
         float3 huecolor   = 0.0f;
         float3 tempcolor  = 0.0f;
@@ -140,7 +153,8 @@ namespace pd80_ca
             d.xyz         += huecolor.xyz;
         }
         //color.xyz         /= ( sampleSTEPS / 3.0f * 2.0f ); // Too crude and doesn't work with low sampleSTEPS ( too dim )
-        color.xyz           /= dot( d.xyz, 0.333333f ); // seems so-so OK    
+        color.xyz           /= dot( d.xyz, 0.333333f ); // seems so-so OK
+        color.xyz           = lerp( orig.xyz, color.xyz, CA_strength );
         return float4( color.xyz, 1.0f );
     }
 
