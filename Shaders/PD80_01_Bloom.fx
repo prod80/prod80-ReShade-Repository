@@ -47,117 +47,112 @@ namespace pd80_hqbloom
 
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
     uniform bool debugBloom <
-    ui_label  = "Show only bloom on screen";
-    ui_category = "Bloom debug";
-    > = false;
-    
+        ui_label  = "Show only bloom on screen";
+        ui_category = "Bloom debug";
+        > = false;
     uniform float BloomMix <
-    ui_label = "Bloom Mix";
-    ui_tooltip = "...";
-    ui_category = "Bloom";
-    ui_type = "slider";
-    ui_min = 0.0;
-    ui_max = 1.0;
-    > = 0.5;
-
+        ui_label = "Bloom Mix";
+        ui_tooltip = "...";
+        ui_category = "Bloom";
+        ui_type = "slider";
+        ui_min = 0.0;
+        ui_max = 1.0;
+        > = 0.5;
     uniform float BloomLimit <
-    ui_label = "Bloom Threshold";
-    ui_tooltip = "The maximum level of Bloom";
-    ui_category = "Bloom";
-    ui_type = "slider";
-    ui_min = 0.0;
-    ui_max = 1.0;
-    > = 0.25;
-
+        ui_label = "Bloom Threshold";
+        ui_tooltip = "The maximum level of Bloom";
+        ui_category = "Bloom";
+        ui_type = "slider";
+        ui_min = 0.0;
+        ui_max = 1.0;
+        > = 0.25;
     uniform float GreyValue <
-    ui_label = "Bloom Exposure";
-    ui_tooltip = "Bloom Exposure Compensation";
-    ui_category = "Bloom";
-    ui_type = "slider";
-    ui_min = 0.0;
-    ui_max = 1.0;
-    > = 0.333;
-
+        ui_label = "Bloom Exposure 50% Greyvalue";
+        ui_tooltip = "Bloom Exposure Compensation";
+        ui_category = "Bloom";
+        ui_type = "slider";
+        ui_min = 0.0;
+        ui_max = 1.0;
+        > = 0.333;
+    uniform float bExposure <
+        ui_label = "Bloom Exposure";
+        ui_tooltip = "Bloom Exposure Compensation";
+        ui_category = "Bloom";
+        ui_type = "slider";
+        ui_min = -1.0;
+        ui_max = 1.0;
+        > = 0.0;
     uniform float BlurSigma <
-    ui_label = "Bloom Width";
-    ui_tooltip = "...";
-    ui_category = "Bloom";
-    ui_type = "slider";
-    ui_min = 0.0;
-    ui_max = 80.0;
-    > = 40.0;
-
+        ui_label = "Bloom Width";
+        ui_tooltip = "...";
+        ui_category = "Bloom";
+        ui_type = "slider";
+        ui_min = 0.0;
+        ui_max = 80.0;
+        > = 40.0;
     uniform bool enableBKelvin <
-    ui_label  = "Enable Bloom Color Temp (K)";
-    ui_category = "Bloom Color Temperature";
-    > = false;
-
+        ui_label  = "Enable Bloom Color Temp (K)";
+        ui_category = "Bloom Color Temperature";
+        > = false;
     uniform uint BKelvin <
-    ui_type = "slider";
-    ui_label = "Bloom Color Temp (K)";
-    ui_category = "Bloom Color Temperature";
-    ui_min = 1000;
-    ui_max = 40000;
-    > = 6500;
-
+        ui_type = "slider";
+        ui_label = "Bloom Color Temp (K)";
+        ui_category = "Bloom Color Temperature";
+        ui_min = 1000;
+        ui_max = 40000;
+        > = 6500;
     uniform bool enableBDeband <
-    ui_label  = "Enable Bloom Deband";
-    ui_category = "Bloom Deband";
-    > = true;
-
+        ui_label  = "Enable Bloom Deband";
+        ui_category = "Bloom Deband";
+        > = true;
     uniform int threshold_preset < __UNIFORM_COMBO_INT1
-    ui_label = "Debanding strength";
-    ui_category = "Bloom Deband";
-    ui_items = "Low\0Medium\0High\0Custom\0";
-    ui_tooltip = "Debanding presets. Use Custom to be able to use custom thresholds in the advanced section.";
-    > = 2;
-
+        ui_label = "Debanding strength";
+        ui_category = "Bloom Deband";
+        ui_items = "Low\0Medium\0High\0Custom\0";
+        ui_tooltip = "Debanding presets. Use Custom to be able to use custom thresholds in the advanced section.";
+        > = 2;
     uniform float range < __UNIFORM_SLIDER_FLOAT1
-    ui_min = 1.0;
-    ui_max = 32.0;
-    ui_step = 1.0;
-    ui_label = "Initial radius";
-    ui_category = "Bloom Deband";
-    ui_tooltip = "The radius increases linearly for each iteration. A higher radius will find more gradients, but a lower radius will smooth more aggressively.";
-    > = 3.0;
-
+        ui_min = 1.0;
+        ui_max = 32.0;
+        ui_step = 1.0;
+        ui_label = "Initial radius";
+        ui_category = "Bloom Deband";
+        ui_tooltip = "The radius increases linearly for each iteration. A higher radius will find more gradients, but a lower radius will smooth more aggressively.";
+        > = 3.0;
     uniform int iterations < __UNIFORM_SLIDER_INT1
-    ui_min = 1;
-    ui_max = 4;
-    ui_label = "Iterations";
-    ui_category = "Bloom Deband";
-    ui_tooltip = "The number of debanding steps to perform per sample. Each step reduces a bit more banding, but takes time to compute.";
-    > = 4;
-
+        ui_min = 1;
+        ui_max = 4;
+        ui_label = "Iterations";
+        ui_category = "Bloom Deband";
+        ui_tooltip = "The number of debanding steps to perform per sample. Each step reduces a bit more banding, but takes time to compute.";
+        > = 4;
     uniform float custom_avgdiff < __UNIFORM_SLIDER_FLOAT1
-    ui_min = 0.0;
-    ui_max = 255.0;
-    ui_step = 0.1;
-    ui_label = "Average threshold";
-    ui_category = "Bloom Deband";
-    ui_tooltip = "Threshold for the difference between the average of reference pixel values and the original pixel value. Higher numbers increase the debanding strength but progressively diminish image details. In pixel shaders a 8-bit color step equals to 1.0/255.0";
-    ui_category = "Advanced";
-    > = 1.8;
-
+        ui_min = 0.0;
+        ui_max = 255.0;
+        ui_step = 0.1;
+        ui_label = "Average threshold";
+        ui_category = "Bloom Deband";
+        ui_tooltip = "Threshold for the difference between the average of reference pixel values and the original pixel value. Higher numbers increase the debanding strength but progressively diminish image details. In pixel shaders a 8-bit color step equals to 1.0/255.0";
+        ui_category = "Advanced";
+        > = 1.8;
     uniform float custom_maxdiff < __UNIFORM_SLIDER_FLOAT1
-    ui_min = 0.0;
-    ui_max = 255.0;
-    ui_step = 0.1;
-    ui_label = "Maximum threshold";
-    ui_category = "Bloom Deband";
-    ui_tooltip = "Threshold for the difference between the maximum difference of one of the reference pixel values and the original pixel value. Higher numbers increase the debanding strength but progressively diminish image details. In pixel shaders a 8-bit color step equals to 1.0/255.0";
-    ui_category = "Advanced";
-    > = 4.0;
-
+        ui_min = 0.0;
+        ui_max = 255.0;
+        ui_step = 0.1;
+        ui_label = "Maximum threshold";
+        ui_category = "Bloom Deband";
+        ui_tooltip = "Threshold for the difference between the maximum difference of one of the reference pixel values and the original pixel value. Higher numbers increase the debanding strength but progressively diminish image details. In pixel shaders a 8-bit color step equals to 1.0/255.0";
+        ui_category = "Advanced";
+        > = 4.0;
     uniform float custom_middiff < __UNIFORM_SLIDER_FLOAT1
-    ui_min = 0.0;
-    ui_max = 255.0;
-    ui_step = 0.1;
-    ui_label = "Middle threshold";
-    ui_category = "Bloom Deband";
-    ui_tooltip = "Threshold for the difference between the average of diagonal reference pixel values and the original pixel value. Higher numbers increase the debanding strength but progressively diminish image details. In pixel shaders a 8-bit color step equals to 1.0/255.0";
-    ui_category = "Advanced";
-    > = 2.0;
+        ui_min = 0.0;
+        ui_max = 255.0;
+        ui_step = 0.1;
+        ui_label = "Middle threshold";
+        ui_category = "Bloom Deband";
+        ui_tooltip = "Threshold for the difference between the average of diagonal reference pixel values and the original pixel value. Higher numbers increase the debanding strength but progressively diminish image details. In pixel shaders a 8-bit color step equals to 1.0/255.0";
+        ui_category = "Advanced";
+        > = 2.0;
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
     texture texBLuma { Width = 256; Height = 256; Format = R16F; MipLevels = 8; };
@@ -392,7 +387,7 @@ namespace pd80_hqbloom
         float luma       = tex2D( samplerBAvgLuma, float2( 0.5f, 0.5f )).x;
         color.xyz        = max( color.xyz - luma, 0.0f );
         color.xyz        = SRGBToLinear( color.xyz );
-        color.xyz        = CalcExposedColor( color.xyz, luma, 0.0f, GreyValue );
+        color.xyz        = CalcExposedColor( color.xyz, luma, bExposure, GreyValue );
         color.xyz        = LinearTosRGB( color.xyz );
         return float4( color.xyz, 1.0f ); 
     }
@@ -482,15 +477,15 @@ namespace pd80_hqbloom
 
         for( int i = 0; i < LOOPCOUNT && SigmaSum < Q; ++i )
         {
-        buffSigma.x      = Sigma.x * Sigma.y;
-        calcOffset       = pxlOffset - 1.0f + buffSigma.x / Sigma.x;
-        buffSigma.y      = Sigma.x + buffSigma.x;
-        color            += tex2D( samplerBloomH, texcoord.xy + float2( 0.0f, calcOffset * py )) * buffSigma.y;
-        color            += tex2D( samplerBloomH, texcoord.xy - float2( 0.0f, calcOffset * py )) * buffSigma.y;
-        SigmaSum         += ( 2.0f * Sigma.x + 2.0f * buffSigma.x );
-        pxlOffset        += 2.0f;
-        Sigma.xy         *= Sigma.yz;
-        Sigma.xy         *= Sigma.yz;
+            buffSigma.x  = Sigma.x * Sigma.y;
+            calcOffset   = pxlOffset - 1.0f + buffSigma.x / Sigma.x;
+            buffSigma.y  = Sigma.x + buffSigma.x;
+            color        += tex2D( samplerBloomH, texcoord.xy + float2( 0.0f, calcOffset * py )) * buffSigma.y;
+            color        += tex2D( samplerBloomH, texcoord.xy - float2( 0.0f, calcOffset * py )) * buffSigma.y;
+            SigmaSum     += ( 2.0f * Sigma.x + 2.0f * buffSigma.x );
+            pxlOffset    += 2.0f;
+            Sigma.xy     *= Sigma.yz;
+            Sigma.xy     *= Sigma.yz;
         }
 
         color.xyz        /= SigmaSum;
