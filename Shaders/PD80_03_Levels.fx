@@ -29,6 +29,13 @@
 #include "ReShade.fxh"
 #include "ReShadeUI.fxh"
 
+// This feature is very dodgy, so hidden by default
+// It's added for people specilized in screenshots and able to understand
+// that using depth buffer can be odd on something like Levels
+// Uncomment to enable the line below this:
+
+//#define USE_DEPTH 
+
 namespace pd80_levels
 {
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
@@ -68,6 +75,7 @@ namespace pd80_levels
         ui_min = 0.05;
         ui_max = 10.0;
         > = 1.0;
+    #ifdef USE_DEPTH
     uniform bool use_depth <
         ui_label = "Enable depth based adjustments.\nMake sure you have setup your depth buffer correctly.";
         ui_category = "Levels: Depth";
@@ -129,6 +137,7 @@ namespace pd80_levels
         ui_min = 0.05;
         ui_max = 10.0;
         > = 1.0;
+    #endif
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
     texture texCLuma { Width = 256; Height = 256; Format = R16F; MipLevels = 8; };
@@ -210,22 +219,33 @@ namespace pd80_levels
     {
         float4 color     = tex2D( samplerColor, texcoord );
         float avgluma    = tex2D( samplerCAvgLuma, float2( 0.5f, 0.5f )).x;
+        
+        #ifdef USE_DEPTH
         float depth      = ReShade::GetLinearizedDepth( texcoord ).x;
         depth            = smoothstep( depthStart, depthEnd, depth );
         depth            = pow( depth, depthCurve );
-        
+        #endif
+
         color.xyz        = saturate( color.xyz );
         float3 dcolor    = color.xyz;
 
         color.xyz        = levels( color.xyz, ib.xyz, iw.xyz, ig, obmin.xyz, obmax.xyz, ow.xyz, avgluma, lumalevels );
+        
+        #ifdef USE_DEPTH
         if( use_depth )
         {
             color.xyz    = lerp( color.xyz,
                                  levels( dcolor.xyz, ibd.xyz, iwd.xyz, igd, obmind.xyz, obmaxd.xyz, owd.xyz, avgluma, lumalevels ),   depth );
         }
+        #endif
+        
         color.xyz        = saturate( color.xyz );
+        
+        #ifdef USE_DEPTH
         if( display_depth )
             color.xyz    = depth.xxx;
+        #endif
+        
         return float4( color.xyz, 1.0f );
     }
 
