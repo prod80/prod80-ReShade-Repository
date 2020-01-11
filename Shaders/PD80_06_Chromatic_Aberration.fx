@@ -127,7 +127,7 @@ namespace pd80_ca
         adj.x             = pow( smootherstep( CA_start, CA_end, max( adj.x, adj.y )), CA_curve );
 
         float3 huecolor   = 0.0f;
-        float3 tempcolor  = 0.0f;
+        float3 temp       = 0.0f;
         float o1          = sampleSTEPS - 1.0f;
         float o2          = 0.0f;
         float3 d          = 0.0f;
@@ -148,8 +148,8 @@ namespace pd80_ca
         {
             huecolor.xyz  = HUEToRGB( i / sampleSTEPS );
             o2            = lerp( -caWidth, caWidth, i / o1 );
-            tempcolor.xyz = tex2D( samplerColor, texcoord.xy + float2( o2 * offsetX, o2 * offsetY )).xyz;
-            color.xyz     += tempcolor.xyz * huecolor.xyz;
+            temp.xyz      = tex2D( samplerColor, texcoord.xy + float2( o2 * offsetX, o2 * offsetY )).xyz;
+            color.xyz     += temp.xyz * huecolor.xyz;
             d.xyz         += huecolor.xyz;
         }
         //color.xyz         /= ( sampleSTEPS / 3.0f * 2.0f ); // Too crude and doesn't work with low sampleSTEPS ( too dim )
