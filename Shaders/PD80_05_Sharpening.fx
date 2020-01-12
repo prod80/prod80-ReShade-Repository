@@ -42,7 +42,7 @@ namespace pd80_lumasharpen
     ui_category = "Sharpening";
     ui_type = "slider";
     ui_min = 0.3;
-    ui_max = 2.0;
+    ui_max = 1.2;
     > = 0.45;
 
     uniform float Sharpening <
@@ -79,6 +79,7 @@ namespace pd80_lumasharpen
     sampler samplerGaussian { Texture = texGaussian; };
     //// DEFINES ////////////////////////////////////////////////////////////////////
     #define PI 3.141592f
+    #define LOOPS ( BUFFER_WIDTH / 1920 * 4 ) // Scalar
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
     float3 HUEToRGB( in float H )
     {
@@ -132,8 +133,9 @@ namespace pd80_lumasharpen
 
         //Gaussian Math
         float3 Sigma;
-        Sigma.x          = 1.0f / ( sqrt( 2.0f * PI ) * BlurSigma );
-        Sigma.y          = exp( -0.5f / ( BlurSigma * BlurSigma ));
+        float bSigma     = BlurSigma * ( BUFFER_WIDTH / 1920.0f ); // Scalar
+        Sigma.x          = 1.0f / ( sqrt( 2.0f * PI ) * bSigma );
+        Sigma.y          = exp( -0.5f / ( bSigma * bSigma ));
         Sigma.z          = Sigma.y * Sigma.y;
 
         //Center Weight
@@ -143,7 +145,7 @@ namespace pd80_lumasharpen
         //Setup next weight
         Sigma.xy         *= Sigma.yz;
 
-        for( int i = 0; i < 7; ++i )
+        for( int i = 0; i < LOOPS; ++i )
         {
             color        += tex2D( samplerColor, texcoord.xy + float2( pxlOffset*px, 0.0f )) * Sigma.x;
             color        += tex2D( samplerColor, texcoord.xy - float2( pxlOffset*px, 0.0f )) * Sigma.x;
@@ -165,8 +167,9 @@ namespace pd80_lumasharpen
 
         //Gaussian Math
         float3 Sigma;
-        Sigma.x          = 1.0f / ( sqrt( 2.0f * PI ) * BlurSigma );
-        Sigma.y          = exp( -0.5f / ( BlurSigma * BlurSigma ));
+        float bSigma     = BlurSigma * ( BUFFER_WIDTH / 1920.0f ); // Scalar
+        Sigma.x          = 1.0f / ( sqrt( 2.0f * PI ) * bSigma );
+        Sigma.y          = exp( -0.5f / ( bSigma * bSigma ));
         Sigma.z          = Sigma.y * Sigma.y;
 
         //Center Weight
@@ -176,7 +179,7 @@ namespace pd80_lumasharpen
         //Setup next weight
         Sigma.xy         *= Sigma.yz;
 
-        for( int i = 0; i < 7; ++i )
+        for( int i = 0; i < LOOPS; ++i )
         {
             color        += tex2D( samplerGaussianH, texcoord.xy + float2( 0.0f, pxlOffset*py )) * Sigma.x;
             color        += tex2D( samplerGaussianH, texcoord.xy - float2( 0.0f, pxlOffset*py )) * Sigma.x;
