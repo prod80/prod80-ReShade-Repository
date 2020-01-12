@@ -57,7 +57,7 @@ namespace pd80_hqbloom
         ui_type = "slider";
         ui_min = 0.0;
         ui_max = 1.0;
-        > = 0.5;
+        > = 0.4;
     uniform float BloomLimit <
         ui_label = "Bloom Threshold";
         ui_tooltip = "The maximum level of Bloom";
@@ -89,7 +89,7 @@ namespace pd80_hqbloom
         ui_type = "slider";
         ui_min = 0.0;
         ui_max = 80.0;
-        > = 40.0;
+        > = 30.0;
     uniform bool enableBKelvin <
         ui_label  = "Enable Bloom Color Temp (K)";
         ui_category = "Bloom Color Temperature";
@@ -620,7 +620,7 @@ namespace pd80_hqbloom
     }
 
     //// TECHNIQUES /////////////////////////////////////////////////////////////////
-    technique prod80_01_Bloom
+    technique prod80_02_Bloom
     {
         pass BLuma
         {

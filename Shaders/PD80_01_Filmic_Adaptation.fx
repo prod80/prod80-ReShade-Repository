@@ -41,110 +41,27 @@
 namespace pd80_filmicadaptation
 {
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
-    uniform float shoulder <
-    ui_label = "A: Adjust Shoulder";
-    ui_tooltip = "Highlights";
-    ui_category = "Tonemapping";
-    ui_type = "slider";
-    ui_min = 0.0;
-    ui_max = 5.0;
-    > = 0.115;
-
-    uniform float linear_str <
-    ui_label = "B: Adjust Linear Strength";
-    ui_tooltip = "Curve Linearity";
-    ui_category = "Tonemapping";
-    ui_type = "slider";
-    ui_min = 0.0;
-    ui_max = 5.0;
-    > = 0.065;
-
-    uniform float angle <
-    ui_label = "C: Adjust Angle";
-    ui_tooltip = "Curve Angle";
-    ui_category = "Tonemapping";
-    ui_type = "slider";
-    ui_min = 0.0;
-    ui_max = 5.0;
-    > = 0.43;
-
-    uniform float toe <
-    ui_label = "D: Adjust Toe";
-    ui_tooltip = "Shadows";
-    ui_category = "Tonemapping";
-    ui_type = "slider";
-    ui_min = 0.0;
-    ui_max = 5.0;
-    > = 0.65;
-
-    uniform float toe_num <
-    ui_label = "E: Adjust Toe Numerator";
-    ui_tooltip = "Shadow Curve";
-    ui_category = "Tonemapping";
-    ui_type = "slider";
-    ui_min = 0.0;
-    ui_max = 5.0;
-    > = 0.07;
-
-    uniform float toe_denom <
-    ui_label = "F: Adjust Toe Denominator";
-    ui_tooltip = "Shadow Curve (must be more than E)";
-    ui_category = "Tonemapping";
-    ui_type = "slider";
-    ui_min = 0.0;
-    ui_max = 5.0;
-    > = 0.41;
-
-    uniform float white <
-    ui_label = "White Level";
-    ui_tooltip = "White Limiter";
-    ui_category = "Tonemapping";
-    ui_type = "slider";
-    ui_min = 0.0;
-    ui_max = 20.0;
-    > = 1.32;
-
-    uniform float exposureMod <
-    ui_label = "Exposure";
-    ui_tooltip = "Exposure Adjustment";
-    ui_category = "Tonemapping";
-    ui_type = "slider";
-    ui_min = -2.0;
-    ui_max = 2.0;
-    > = 0.0;
-
-    uniform float adaptationMin <
-    ui_label = "Minimum Exposure Adaptation";
-    ui_category = "Tonemapping";
-    ui_type = "slider";
-    ui_min = 0.0;
-    ui_max = 1.0;
-    > = 0.42;
-
-    uniform float adaptationMax <
-    ui_label = "Maximum Exposure Adaptation";
-    ui_category = "Tonemapping";
-    ui_type = "slider";
-    ui_min = 0.0;
-    ui_max = 1.0;
-    > = 0.6;
-
-    uniform float setDelay <
-    ui_label = "Adaptation Time Delay (sec)";
-    ui_category = "Tonemapping";
-    ui_type = "slider";
-    ui_min = 0.1;
-    ui_max = 5.0;
-    > = 1.0;
-
-    uniform float GreyValue <
-    ui_label = "50% Grey Value";
-    ui_tooltip = "Target Grey Value used for exposure";
-    ui_category = "Tonemapping";
-    ui_type = "slider";
-    ui_min = 0;
-    ui_max = 1;
-    > = 0.735;
+    uniform float adj_shoulder <
+    	ui_label = "Adjust Highlights";
+        ui_category = "Tonemapping";
+        ui_type = "slider";
+        ui_min = 1.0;
+        ui_max = 5.0;
+        > = 1.0;
+    uniform float adj_linear <
+    	ui_label = "Adjust Linearity";
+        ui_category = "Tonemapping";
+        ui_type = "slider";
+        ui_min = 1.0;
+        ui_max = 10.0;
+        > = 1.0;
+    uniform float adj_toe <
+    	ui_label = "Adjust Shadows";
+        ui_category = "Tonemapping";
+        ui_type = "slider";
+        ui_min = 1.0;
+        ui_max = 5.0;
+        > = 1.0;
 
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
@@ -185,24 +102,18 @@ namespace pd80_filmicadaptation
         clr.g            = color.g <= 0.04045f ? x.g : y.g;
         clr.b            = color.b <= 0.04045f ? x.b : y.b;
         return clr;
-    }    
-
-    float Log2Exposure( in float avgLuminance, in float GreyValue )
-    {
-        float exposure   = 0.0f;
-        avgLuminance     = max(avgLuminance, 0.000001f);
-        // GreyValue should be 0.148 based on https://placeholderart.wordpress.com/2014/11/21/implementing-a-physically-based-camera-manual-exposure/
-        // But more success using higher values >= 0.5
-        float linExp     = GreyValue / avgLuminance;
-        exposure         = log2( linExp );
-        return exposure;
     }
 
-    float3 CalcExposedColor( in float3 color, in float avgLuminance, in float offset, in float GreyValue )
+    float3 softlight(float3 c, float3 b) 	{ return b<0.5f ? (2.0f*c*b+c*c*(1.0f-2.0f*b)):(sqrt(c)*(2.0f*b-1.0f)+2.0f*c*(1.0f-b));}
+
+    float3 con( float3 res, float x )
     {
-        float exposure   = Log2Exposure( avgLuminance, GreyValue );
-        exposure         += offset; //offset = exposure
-        return exp2( exposure ) * color;
+        //softlight
+        float3 c = softlight( res.xyz, res.xyz );
+        float c1 = 0.0f;
+        if( x < 0.0f ) c1 = x * 0.5f;
+        else           c1 = x;
+        return lerp( res.xyz, c.xyz, c1 );
     }
 
     float3 Filmic( in float3 Fc, in float FA, in float FB, in float FC, in float FD, in float FE, in float FF, in float FWhite )
@@ -210,6 +121,7 @@ namespace pd80_filmicadaptation
         float3 num       = (( Fc * ( FA * Fc + FC * FB ) + FD * FE ) / ( Fc * ( FA * Fc + FB ) + FD * FF )) - FE / FF;
         float3 denom     = (( FWhite * ( FA * FWhite + FC * FB ) + FD * FE ) / ( FWhite * ( FA * FWhite + FB ) + FD * FF )) - FE / FF;
         return LinearTosRGB( num / denom );
+        //return num / denom;
     }
 
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
@@ -228,20 +140,27 @@ namespace pd80_filmicadaptation
         luma             = exp2( luma );
         float prevluma   = tex2D( samplerPrevAvgLuma, float2( 0.5f, 0.5f )).x;
         float fps        = 1000.0f / Frametime;
-        float delay      = fps * ( setDelay / 2.0f );	
+        float delay      = fps; //* 0.5f 	
         float avgLuma    = lerp( prevluma, luma, 1.0f / delay );
         return avgLuma;
     }
 
     float4 PS_Tonemap(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
+    	// Filmic operators, most fixed with no GUI
+        float A          = 0.65f  * adj_shoulder;
+    	float B          = 0.085f * adj_linear;
+    	float C          = 1.83f;
+    	float D          = 0.55f  * adj_toe;
+    	float E          = 0.05f;
+    	float F          = 0.57f;
+    	float W          = 1.0f;
         float4 color     = tex2D( samplerColor, texcoord );
-        float lumaMod    = tex2D( samplerAvgLuma, float2( 0.5f, 0.5f )).x;
-        lumaMod          = max( lumaMod, adaptationMin );
-        lumaMod          = min( lumaMod, adaptationMax );
+        float luma       = tex2D( samplerAvgLuma, float2( 0.5f, 0.5f )).x;
         color.xyz        = SRGBToLinear( color.xyz );
-        color.xyz        = CalcExposedColor( color.xyz, lumaMod, exposureMod, GreyValue );
-        color.xyz        = Filmic( color.xyz, shoulder, linear_str, angle, toe, toe_num, toe_denom, white );
+        float exp        = lerp( 1.0f, 8.0f, luma ); // Increase Toe when brightness goes up
+        float toe        = max( D * exp, D );
+        color.xyz        = Filmic( color.xyz, A, B, C, toe, E, F, W );
 
         return float4( color.xyz, 1.0f );
     }
@@ -253,7 +172,7 @@ namespace pd80_filmicadaptation
     }
 
     //// TECHNIQUES /////////////////////////////////////////////////////////////////
-    technique prod80_02_FilmicTonemap
+    technique prod80_01_FilmicTonemap
     {
         pass Luma
         {
