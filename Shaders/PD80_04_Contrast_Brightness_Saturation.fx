@@ -135,38 +135,38 @@ namespace pd80_conbrisat
     float3 lineardodge(float3 c, float3 b) 	{ return min(c+b, 1.0f);}
     float3 softlight(float3 c, float3 b) 	{ return b<0.5f ? (2.0f*c*b+c*c*(1.0f-2.0f*b)):(sqrt(c)*(2.0f*b-1.0f)+2.0f*c*(1.0f-b));}
 
-    float3 con( float3 color, float x )
+    float3 con( float3 res, float x )
     {
         //softlight
-        float3 c = softlight( color.xyz, color.xyz );
+        float3 c = softlight( res.xyz, res.xyz );
         float c1 = 0.0f;
         if( x < 0.0f ) c1 = x * 0.5f;
         else           c1 = x;
-        return lerp( color.xyz, c.xyz, c1 );
+        return lerp( res.xyz, c.xyz, c1 );
     }
 
-    float3 bri( float3 color, float x )
+    float3 bri( float3 res, float x )
     {
         //lineardodge
-        float3 c = lineardodge( color.xyz, color.xyz );
+        float3 c = lineardodge( res.xyz, res.xyz );
         float b = 0.0f;
         if( x < 0.0f ) b = x * 0.5f;
         else           b = x;
-        return lerp( color.xyz, c.xyz, b );   
+        return lerp( res.xyz, c.xyz, b );   
     }
 
-    float3 sat( float3 color, float x )
+    float3 sat( float3 res, float x )
     {
-        return min( lerp( getLuminance( color.xyz ), color.xyz, x + 1.0f ), 1.0f );
+        return min( lerp( getLuminance( res.xyz ), res.xyz, x + 1.0f ), 1.0f );
     }
 
-    float3 vib( float3 color, float x )
+    float3 vib( float3 res, float x )
     {
         float4 sat = 0.0f;
-        sat.xy = float2( min( min( color.x, color.y ), color.z ), max( max( color.x, color.y ), color.z ));
+        sat.xy = float2( min( min( res.x, res.y ), res.z ), max( max( res.x, res.y ), res.z ));
         sat.z = sat.y - sat.x;
-        sat.w = getLuminance( color.xyz );
-        return lerp( sat.w, color.xyz, 1.0f + ( x * ( 1.0f - sat.z )));
+        sat.w = getLuminance( res.xyz );
+        return lerp( sat.w, res.xyz, 1.0f + ( x * ( 1.0f - sat.z )));
     }
 
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
@@ -183,13 +183,14 @@ namespace pd80_conbrisat
         color.xyz        = bri( color.xyz, brightness );
         color.xyz        = sat( color.xyz, saturation );
         color.xyz        = vib( color.xyz, vibrance   );
-        
+
         if( enable_depth )
         {
-            color.xyz    = lerp( color.xyz, con( dcolor.xyz, contrastD ),   depth );
-            color.xyz    = lerp( color.xyz, bri( dcolor.xyz, brightnessD ), depth );
-            color.xyz    = lerp( color.xyz, sat( dcolor.xyz, saturationD ), depth );
-            color.xyz    = lerp( color.xyz, vib( dcolor.xyz, vibranceD ),   depth );
+            dcolor.xyz   = con( dcolor.xyz, contrastD   );
+            dcolor.xyz   = bri( dcolor.xyz, brightnessD );
+            dcolor.xyz   = sat( dcolor.xyz, saturationD );
+            dcolor.xyz   = vib( dcolor.xyz, vibranceD   );
+            color.xyz    = lerp( color.xyz, dcolor.xyz, depth );
         }
         color.xyz        = saturate( color.xyz ); // shouldn't be needed, but just to ensure no oddities are there
         if( display_depth )
