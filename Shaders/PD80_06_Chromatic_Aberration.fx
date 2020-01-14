@@ -49,15 +49,15 @@ namespace pd80_ca
         ui_type = "slider";
         ui_label = "CA Global Width";
         ui_category = "Chromatic Aberration";
-        ui_min = -100.0f;
-        ui_max = 100.0f;
+        ui_min = -150.0f;
+        ui_max = 150.0f;
         > = -12.0;
     uniform int sampleSTEPS <
         ui_type = "slider";
         ui_label = "Number of Hues";
         ui_category = "Chromatic Aberration";
         ui_min = 8;
-        ui_max = 48;
+        ui_max = 96;
         ui_step = 1;
         > = 24;
     uniform float CA_strength <
@@ -140,7 +140,8 @@ namespace pd80_ca
         float4 color      = 0.0f;
         float3 orig       = tex2D( samplerColor, texcoord ).xyz;
 
-        float2 coords     = clamp( texcoord.xy * 2.0f - float2( oX + 1.0f, oY + 1.0f ), -1.0f, 1.0f );
+        //float2 coords     = clamp( texcoord.xy * 2.0f - float2( oX + 1.0f, oY + 1.0f ), -1.0f, 1.0f );
+        float2 coords     = texcoord.xy * 2.0f - float2( oX + 1.0f, oY + 1.0f ); // Let it ripp, and not clamp!
         float2 uv         = coords.xy;
         coords.xy         /= float2( CA_shapeX, CA_shapeY );
         float2 caintensity= sqrt( dot ( coords.xy, coords.xy )) * CA_width;
