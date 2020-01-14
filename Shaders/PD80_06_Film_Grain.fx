@@ -4,10 +4,9 @@
     License     : MIT, Copyright (c) 2020 prod80
 
     Additional credits
-    - Noise/Grain code adopted, modified, and adjusted on work by Stefan Gustavson.
-      https://github.com/stegu/perlin-noise/tree/master/src
+    - Noise/Grain code adopted, modified, and adjusted from Stefan Gustavson.
       License: MIT, Copyright (c) 2011 stegu
-
+      
 
     MIT License
 
@@ -213,5 +212,3 @@ namespace pd80_filmgrain
         }
     }
 }
-
-

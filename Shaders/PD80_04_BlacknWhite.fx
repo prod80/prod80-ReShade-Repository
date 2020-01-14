@@ -280,7 +280,7 @@ namespace pd80_blackandwhite
         float2 o          = float2( cos( dir ), sin( dir ));
         for ( int i = 1; i <= 4; ++i )
         {
-            float dist    = rand(h) * 24.0f * i;
+            float dist    = rand(h) * 3.0f * i;
             float2 pt     = dist * ReShade::PixelSize;
             analyze_pixels(ori, samplerBlur, texcoord, pt, o,
                             ref_avg,

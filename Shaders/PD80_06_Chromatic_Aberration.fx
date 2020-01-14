@@ -40,8 +40,8 @@ namespace pd80_ca
         ui_type = "slider";
         ui_label = "CA Rotation Factor";
         ui_category = "Chromatic Aberration";
-        ui_min = 90;
-        ui_max = 270;
+        ui_min = 0;
+        ui_max = 360;
         ui_step = 1;
         > = 135;
     uniform float CA <
@@ -51,6 +51,52 @@ namespace pd80_ca
         ui_min = -20.0f;
         ui_max = 20.0f;
         > = -8.0;
+    uniform bool show_CA <
+        ui_label = "CA Show Center";
+        ui_category = "Chromatic Aberration";
+        > = false;
+    uniform float CA_width <
+        ui_type = "slider";
+        ui_label = "CA Width";
+        ui_category = "Chromatic Aberration";
+        ui_min = 0.0f;
+        ui_max = 5.0f;
+        > = 1.0;
+    uniform float CA_curve <
+        ui_type = "slider";
+        ui_label = "CA Curve";
+        ui_category = "Chromatic Aberration";
+        ui_min = 0.1f;
+        ui_max = 12.0f;
+        > = 1.0;
+    uniform float oX <
+        ui_type = "slider";
+        ui_label = "CA Center (X)";
+        ui_category = "Chromatic Aberration";
+        ui_min = -1.0f;
+        ui_max = 1.0f;
+        > = 0.0;
+    uniform float oY <
+        ui_type = "slider";
+        ui_label = "CA Center (Y)";
+        ui_category = "Chromatic Aberration";
+        ui_min = -1.0f;
+        ui_max = 1.0f;
+        > = 0.0;
+    uniform float CA_shapeX <
+        ui_type = "slider";
+        ui_label = "CA Shape (X)";
+        ui_category = "Chromatic Aberration";
+        ui_min = 0.2f;
+        ui_max = 6.0f;
+        > = 1.0;
+    uniform float CA_shapeY <
+        ui_type = "slider";
+        ui_label = "CA Shape (Y)";
+        ui_category = "Chromatic Aberration";
+        ui_min = 0.2f;
+        ui_max = 6.0f;
+        > = 1.0;
     uniform int sampleSTEPS <
         ui_type = "slider";
         ui_label = "Number of Hues";
@@ -59,27 +105,6 @@ namespace pd80_ca
         ui_max = 48;
         ui_step = 1;
         > = 24;
-    uniform float CA_curve <
-        ui_type = "slider";
-        ui_label = "CA Curve";
-        ui_category = "Chromatic Aberration";
-        ui_min = 0.001f;
-        ui_max = 10.0f;
-        > = 1.0;
-    uniform float CA_start <
-        ui_type = "slider";
-        ui_label = "CA Start Point";
-        ui_category = "Chromatic Aberration";
-        ui_min = 0.0f;
-        ui_max = 1.0f;
-        > = 0.0;
-    uniform float CA_end <
-        ui_type = "slider";
-        ui_label = "CA End Point";
-        ui_category = "Chromatic Aberration";
-        ui_min = 0.0f;
-        ui_max = 1.0f;
-        > = 1.0;
     uniform float CA_strength <
         ui_type = "slider";
         ui_label = "CA Effect Strength";
@@ -113,18 +138,17 @@ namespace pd80_ca
     float4 PS_CA(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color      = 0.0f;
-        float3 orig       = tex2D( samplerColor, texcoord );
-        float AR          = max( BUFFER_WIDTH, BUFFER_HEIGHT ) / min( BUFFER_WIDTH, BUFFER_HEIGHT );
+        float3 orig       = tex2D( samplerColor, texcoord ).xyz;
 
-        float2 coords     = texcoord.xy * 2.0f - 1.0f;                 // Middle screen is 0.0, to all edges -1.0...1.0
-        float c           = cos( radians( degrees )) * coords.x;       // Influence rotation based on screen position
-        float s           = sin( radians( degrees )) * coords.y;       // ...
-        if( BUFFER_WIDTH > BUFFER_HEIGHT )
-            coords.x      *= AR;
-        else
-            coords.y      *= AR;
-        float2 adj        = abs( coords.xy );                           // Now middle is 0.0, and all edges 1.0
-        adj.x             = pow( smootherstep( CA_start, CA_end, max( adj.x, adj.y )), CA_curve );
+        float2 coords     = clamp( texcoord.xy * 2.0f - float2( oX + 1.0f, oY + 1.0f ), -1.0f, 1.0f );
+        coords.xy         /= float2( CA_shapeX, CA_shapeY );
+        float2 caintensity= sqrt( dot ( coords.xy, coords.xy )) * CA_width;
+        caintensity.y     = caintensity.x * caintensity.x + 1.0f;
+        caintensity.x     = 1.0f - ( 1.0f / ( caintensity.y * caintensity.y ));
+        caintensity.x     = pow( caintensity.x, CA_curve );
+
+        float c           = cos( radians( degrees )) * caintensity.x;       // Influence rotation based on screen position
+        float s           = sin( radians( degrees )) * caintensity.x;       // ...
 
         float3 huecolor   = 0.0f;
         float3 temp       = 0.0f;
@@ -134,15 +158,15 @@ namespace pd80_ca
 
         if ( !use_ca_edges )
         {
-            adj.x         = 1.0f;
+            caintensity.x = 1.0f;
             c             = cos( radians( degrees ));
             s             = sin( radians( degrees ));
         }
         // Scale CA (hackjob!)
         float caWidth     = CA * ( max( BUFFER_WIDTH, BUFFER_HEIGHT ) / 1920.0f ); // Scaled for 1920, raising resolution in X or Y should raise scale
 
-        float offsetX     = px * c * adj.x;
-        float offsetY     = py * s * adj.x;
+        float offsetX     = px * c * caintensity.x;
+        float offsetY     = py * s * caintensity.x;
 
         for( float i = 0; i < sampleSTEPS; i++ )
         {
@@ -155,6 +179,9 @@ namespace pd80_ca
         //color.xyz         /= ( sampleSTEPS / 3.0f * 2.0f ); // Too crude and doesn't work with low sampleSTEPS ( too dim )
         color.xyz           /= dot( d.xyz, 0.333333f ); // seems so-so OK
         color.xyz           = lerp( orig.xyz, color.xyz, CA_strength );
+        if( show_CA )
+            color.xyz       = float3( 1.0f, 0.0f, 0.0f ) * caintensity.x + ( 1.0f - caintensity.x ) * color.xyz;
+
         return float4( color.xyz, 1.0f );
     }
 
