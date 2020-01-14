@@ -51,7 +51,7 @@ namespace pd80_ca
         ui_category = "Chromatic Aberration";
         ui_min = -100.0f;
         ui_max = 100.0f;
-        > = -8.0;
+        > = -12.0;
     uniform int sampleSTEPS <
         ui_type = "slider";
         ui_label = "Number of Hues";
@@ -203,7 +203,7 @@ namespace pd80_ca
         color.xyz           /= dot( d.xyz, 0.333333f ); // seems so-so OK
         color.xyz           = lerp( orig.xyz, color.xyz, CA_strength );
         if( show_CA )
-            color.xyz       = float3( 1.0f, 0.0f, 0.0f ) * caintensity.x + ( 1.0f - caintensity.x ) * color.xyz;
+            color.xyz       = float3( 0.0f, 0.0f, 0.0f ) * caintensity.x + ( 1.0f - caintensity.x ) * color.xyz;
 
         return float4( color.xyz, 1.0f );
     }
