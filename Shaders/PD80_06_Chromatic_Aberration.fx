@@ -68,9 +68,14 @@ namespace pd80_ca
         ui_max = 1.0f;
         > = 1.0;
     uniform bool show_CA <
-        ui_label = "CA Show Center";
+        ui_label = "CA Show Center / Vignette";
         ui_category = "CA: Center Weighted";
         > = false;
+    uniform float3 vignetteColor <
+        ui_type = "color";
+        ui_label = "Vignette Color";
+        ui_category = "CA: Center Weighted";
+        > = float3(0.0, 0.0, 0.0);
     uniform float CA_width <
         ui_type = "slider";
         ui_label = "CA Width";
@@ -203,7 +208,7 @@ namespace pd80_ca
         color.xyz           /= dot( d.xyz, 0.333333f ); // seems so-so OK
         color.xyz           = lerp( orig.xyz, color.xyz, CA_strength );
         if( show_CA )
-            color.xyz       = float3( 0.0f, 0.0f, 0.0f ) * caintensity.x + ( 1.0f - caintensity.x ) * color.xyz;
+            color.xyz       = vignetteColor.xyz * caintensity.x + ( 1.0f - caintensity.x ) * color.xyz;
 
         return float4( color.xyz, 1.0f );
     }
