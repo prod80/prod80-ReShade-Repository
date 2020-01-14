@@ -36,6 +36,10 @@ namespace pd80_ca
         ui_label = "Use Transverse Chromatic Aberration.\nUse Rotation = 135 for best effect.";
         ui_category = "Chromatic Aberration";
         > = true;
+    uniform bool use_radialCA <
+        ui_label = "Use Radial Chromatic Aberration.\nTransverse has to be enabled for it to work.";
+        ui_category = "Chromatic Aberration";
+        > = true;
     uniform int degrees <
         ui_type = "slider";
         ui_label = "CA Rotation Factor";
@@ -48,8 +52,8 @@ namespace pd80_ca
         ui_type = "slider";
         ui_label = "CA Global Width";
         ui_category = "Chromatic Aberration";
-        ui_min = -20.0f;
-        ui_max = 20.0f;
+        ui_min = -100.0f;
+        ui_max = 100.0f;
         > = -8.0;
     uniform bool show_CA <
         ui_label = "CA Show Center";
@@ -141,14 +145,22 @@ namespace pd80_ca
         float3 orig       = tex2D( samplerColor, texcoord ).xyz;
 
         float2 coords     = clamp( texcoord.xy * 2.0f - float2( oX + 1.0f, oY + 1.0f ), -1.0f, 1.0f );
+        float2 uv         = coords.xy;
         coords.xy         /= float2( CA_shapeX, CA_shapeY );
         float2 caintensity= sqrt( dot ( coords.xy, coords.xy )) * CA_width;
         caintensity.y     = caintensity.x * caintensity.x + 1.0f;
         caintensity.x     = 1.0f - ( 1.0f / ( caintensity.y * caintensity.y ));
         caintensity.x     = pow( caintensity.x, CA_curve );
 
-        float c           = cos( radians( degrees )) * caintensity.x;       // Influence rotation based on screen position
-        float s           = sin( radians( degrees )) * caintensity.x;       // ...
+        int degreesY      = degrees;
+        if( use_radialCA )
+        {
+            degreesY      = degrees + 90;
+            if ( degrees + 90 > 360 )
+                degreesY  = degrees + 90 - 360;
+        }
+        float c           = cos( radians( degrees )) * uv.x;       // Influence rotation based on screen position
+        float s           = sin( radians( degreesY )) * uv.y;       // ...
 
         float3 huecolor   = 0.0f;
         float3 temp       = 0.0f;
