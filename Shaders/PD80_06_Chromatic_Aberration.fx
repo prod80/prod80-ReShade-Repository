@@ -32,17 +32,14 @@
 namespace pd80_ca
 {
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
-    uniform bool use_ca_edges <
-        ui_label = "Use Transverse Chromatic Aberration.\nUse Rotation = 135 for best effect.";
+    uniform int CA_type < __UNIFORM_COMBO_INT1
+        ui_label = "Chromatic Aberration Type";
         ui_category = "Chromatic Aberration";
-        > = true;
-    uniform bool use_radialCA <
-        ui_label = "Use Radial Chromatic Aberration.\nTransverse has to be enabled for it to work.";
-        ui_category = "Chromatic Aberration";
-        > = true;
+        ui_items = "Center Weighted Radial\0Center Weighted Longitudinal\0Full screen Radial\0Full screen Longitudinal\0";
+        > = 0;
     uniform int degrees <
         ui_type = "slider";
-        ui_label = "CA Rotation Factor";
+        ui_label = "CA Rotation Offset";
         ui_category = "Chromatic Aberration";
         ui_min = 0;
         ui_max = 360;
@@ -55,52 +52,6 @@ namespace pd80_ca
         ui_min = -100.0f;
         ui_max = 100.0f;
         > = -8.0;
-    uniform bool show_CA <
-        ui_label = "CA Show Center";
-        ui_category = "Chromatic Aberration";
-        > = false;
-    uniform float CA_width <
-        ui_type = "slider";
-        ui_label = "CA Width";
-        ui_category = "Chromatic Aberration";
-        ui_min = 0.0f;
-        ui_max = 5.0f;
-        > = 1.0;
-    uniform float CA_curve <
-        ui_type = "slider";
-        ui_label = "CA Curve";
-        ui_category = "Chromatic Aberration";
-        ui_min = 0.1f;
-        ui_max = 12.0f;
-        > = 1.0;
-    uniform float oX <
-        ui_type = "slider";
-        ui_label = "CA Center (X)";
-        ui_category = "Chromatic Aberration";
-        ui_min = -1.0f;
-        ui_max = 1.0f;
-        > = 0.0;
-    uniform float oY <
-        ui_type = "slider";
-        ui_label = "CA Center (Y)";
-        ui_category = "Chromatic Aberration";
-        ui_min = -1.0f;
-        ui_max = 1.0f;
-        > = 0.0;
-    uniform float CA_shapeX <
-        ui_type = "slider";
-        ui_label = "CA Shape (X)";
-        ui_category = "Chromatic Aberration";
-        ui_min = 0.2f;
-        ui_max = 6.0f;
-        > = 1.0;
-    uniform float CA_shapeY <
-        ui_type = "slider";
-        ui_label = "CA Shape (Y)";
-        ui_category = "Chromatic Aberration";
-        ui_min = 0.2f;
-        ui_max = 6.0f;
-        > = 1.0;
     uniform int sampleSTEPS <
         ui_type = "slider";
         ui_label = "Number of Hues";
@@ -115,6 +66,52 @@ namespace pd80_ca
         ui_category = "Chromatic Aberration";
         ui_min = 0.0f;
         ui_max = 1.0f;
+        > = 1.0;
+    uniform bool show_CA <
+        ui_label = "CA Show Center";
+        ui_category = "CA: Center Weighted";
+        > = false;
+    uniform float CA_width <
+        ui_type = "slider";
+        ui_label = "CA Width";
+        ui_category = "CA: Center Weighted";
+        ui_min = 0.0f;
+        ui_max = 5.0f;
+        > = 1.0;
+    uniform float CA_curve <
+        ui_type = "slider";
+        ui_label = "CA Curve";
+        ui_category = "CA: Center Weighted";
+        ui_min = 0.1f;
+        ui_max = 12.0f;
+        > = 1.0;
+    uniform float oX <
+        ui_type = "slider";
+        ui_label = "CA Center (X)";
+        ui_category = "CA: Center Weighted";
+        ui_min = -1.0f;
+        ui_max = 1.0f;
+        > = 0.0;
+    uniform float oY <
+        ui_type = "slider";
+        ui_label = "CA Center (Y)";
+        ui_category = "CA: Center Weighted";
+        ui_min = -1.0f;
+        ui_max = 1.0f;
+        > = 0.0;
+    uniform float CA_shapeX <
+        ui_type = "slider";
+        ui_label = "CA Shape (X)";
+        ui_category = "CA: Center Weighted";
+        ui_min = 0.2f;
+        ui_max = 6.0f;
+        > = 1.0;
+    uniform float CA_shapeY <
+        ui_type = "slider";
+        ui_label = "CA Shape (Y)";
+        ui_category = "CA: Center Weighted";
+        ui_min = 0.2f;
+        ui_max = 6.0f;
         > = 1.0;
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
@@ -153,14 +150,38 @@ namespace pd80_ca
         caintensity.x     = pow( caintensity.x, CA_curve );
 
         int degreesY      = degrees;
-        if( use_radialCA )
+        float c           = 0.0f;
+        float s           = 0.0f;
+        // Radial: Y + 90 w/ multiplying with uv.xy
+        if( CA_type == 0 )
         {
             degreesY      = degrees + 90;
             if ( degrees + 90 > 360 )
                 degreesY  = degrees + 90 - 360;
+            
+            c             = cos( radians( degrees )) * uv.x;
+            s             = sin( radians( degreesY )) * uv.y;
         }
-        float c           = cos( radians( degrees )) * uv.x;       // Influence rotation based on screen position
-        float s           = sin( radians( degreesY )) * uv.y;       // ...
+        // Longitudinal: X = Y w/o multiplying with uv.xy
+        if( CA_type == 1 )
+        {
+            c             = cos( radians( degrees ));
+            s             = sin( radians( degreesY ));
+        }
+        // Full screen Radial
+        if( CA_type == 2 )
+        {
+            caintensity.x = 1.0f;
+            c             = cos( radians( degrees )) * uv.x;
+            s             = sin( radians( degreesY )) * uv.y;
+        }
+        // Full screen Longitudinal
+        if( CA_type == 3 )
+        {
+            caintensity.x = 1.0f;
+            c             = cos( radians( degrees ));
+            s             = sin( radians( degreesY ));
+        }
 
         float3 huecolor   = 0.0f;
         float3 temp       = 0.0f;
@@ -168,12 +189,6 @@ namespace pd80_ca
         float o2          = 0.0f;
         float3 d          = 0.0f;
 
-        if ( !use_ca_edges )
-        {
-            caintensity.x = 1.0f;
-            c             = cos( radians( degrees ));
-            s             = sin( radians( degrees ));
-        }
         // Scale CA (hackjob!)
         float caWidth     = CA * ( max( BUFFER_WIDTH, BUFFER_HEIGHT ) / 1920.0f ); // Scaled for 1920, raising resolution in X or Y should raise scale
 
