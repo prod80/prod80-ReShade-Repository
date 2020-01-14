@@ -129,12 +129,6 @@ namespace pd80_ca
         return saturate( float3( R,G,B ));
     }
 
-    float smootherstep( float minval, float maxval, float x )
-    {
-        float v           = saturate(( x - minval ) / ( maxval - minval ));
-        return v * v * v * ( v * ( v * 6.0f - 15.0f ) + 10.0f );
-    }
-
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float4 PS_CA(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
@@ -158,7 +152,6 @@ namespace pd80_ca
             degreesY      = degrees + 90;
             if ( degrees + 90 > 360 )
                 degreesY  = degrees + 90 - 360;
-            
             c             = cos( radians( degrees )) * uv.x;
             s             = sin( radians( degreesY )) * uv.y;
         }
@@ -171,6 +164,9 @@ namespace pd80_ca
         // Full screen Radial
         if( CA_type == 2 )
         {
+            degreesY      = degrees + 90;
+            if ( degrees + 90 > 360 )
+                degreesY  = degrees + 90 - 360;
             caintensity.x = 1.0f;
             c             = cos( radians( degrees )) * uv.x;
             s             = sin( radians( degreesY )) * uv.y;
