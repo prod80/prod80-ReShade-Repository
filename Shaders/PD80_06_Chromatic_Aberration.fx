@@ -125,6 +125,7 @@ namespace pd80_ca
     //// DEFINES ////////////////////////////////////////////////////////////////////
     #define px          1.0f / BUFFER_WIDTH
     #define py          1.0f / BUFFER_HEIGHT
+    #define aspect      ( float( BUFFER_WIDTH ) / float( BUFFER_HEIGHT ))
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
     float3 HUEToRGB( in float H )
     {
@@ -143,8 +144,8 @@ namespace pd80_ca
         //float2 coords     = clamp( texcoord.xy * 2.0f - float2( oX + 1.0f, oY + 1.0f ), -1.0f, 1.0f );
         float2 coords     = texcoord.xy * 2.0f - float2( oX + 1.0f, oY + 1.0f ); // Let it ripp, and not clamp!
         float2 uv         = coords.xy;
-        coords.xy         /= float2( CA_shapeX, CA_shapeY );
-        float2 caintensity= sqrt( dot ( coords.xy, coords.xy )) * CA_width;
+        coords.xy         /= float2( CA_shapeX / aspect, CA_shapeY );
+        float2 caintensity= length( coords.xy ) * CA_width;
         caintensity.y     = caintensity.x * caintensity.x + 1.0f;
         caintensity.x     = 1.0f - ( 1.0f / ( caintensity.y * caintensity.y ));
         caintensity.x     = pow( caintensity.x, CA_curve );
