@@ -37,12 +37,14 @@ namespace pd80_hqbloom
 {
     //// PREPROCESSOR DEFINITIONS ///////////////////////////////////////////////////
 
-    // Min: 0, Max: 2 | Bloom Quality, 0 is best quality (full screen) and values higher than that will progessively use lower resolution texture. Value 3 will use 1/4th screen resolution texture size
-    // 0 = Fullscreen ( x 1 )
-    // 1 = ~Halfsize   ( x 0.75 )
-    // 2 = 1/4th size ( x 0.5 )
+    // Min: 0, Max: 3 | Bloom Quality, 0 is best quality (full screen) and values higher than that will progessively use lower resolution texture. Value 3 will use 1/4th screen resolution texture size
+    // 0 = Fullscreen   - Ultra
+    // 1 = 1/2th size   - High
+    // 2 = 1/4th size   - Medium
+    // 3 = 1/9th size   - Low
+    // 4 = 1/16th size  - Very Low
     #ifndef BLOOM_QUALITY
-        #define BLOOM_QUALITY		2  // Default = Low quality as difference is impossible to tell and performance 60% faster
+        #define BLOOM_QUALITY		2  // Default = Medium quality (2) as difference is nearly impossible to tell during gameplay, and performance 60% faster than Ultra (0)
     #endif
 
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
@@ -179,9 +181,16 @@ namespace pd80_hqbloom
         texture texBloomH { Width = SWIDTH; Height = SHEIGHT; };
         texture texBloom { Width = SWIDTH; Height = SHEIGHT; };
     #endif
-    #if( BLOOM_QUALITY > 2 )
-        #define SWIDTH   ( BUFFER_WIDTH / 2 )
-        #define SHEIGHT  ( BUFFER_HEIGHT / 2 )
+    #if( BLOOM_QUALITY == 3 )
+        #define SWIDTH   ( BUFFER_WIDTH / 3 )
+        #define SHEIGHT  ( BUFFER_HEIGHT / 3 )
+        texture texBloomIn { Width = SWIDTH; Height = SHEIGHT; }; 
+        texture texBloomH { Width = SWIDTH; Height = SHEIGHT; };
+        texture texBloom { Width = SWIDTH; Height = SHEIGHT; };
+    #endif
+    #if( BLOOM_QUALITY == 4 )
+        #define SWIDTH   ( BUFFER_WIDTH / 4 )
+        #define SHEIGHT  ( BUFFER_HEIGHT / 4 )
         texture texBloomIn { Width = SWIDTH; Height = SHEIGHT; }; 
         texture texBloomH { Width = SWIDTH; Height = SHEIGHT; };
         texture texBloom { Width = SWIDTH; Height = SHEIGHT; };
@@ -409,8 +418,11 @@ namespace pd80_hqbloom
         #if( BLOOM_QUALITY == 2 )
             float bSigma = BlurSigma * 0.5f;
         #endif
-        #if( BLOOM_QUALITY > 2 )
-            float bSigma = BlurSigma * 0.5f;
+        #if( BLOOM_QUALITY == 3 )
+            float bSigma = BlurSigma * 0.333f;
+        #endif
+        #if( BLOOM_QUALITY == 4 )
+            float bSigma = BlurSigma * 0.25f;
         #endif
         //Gaussian Math
         float3 Sigma;
@@ -459,8 +471,11 @@ namespace pd80_hqbloom
         #if( BLOOM_QUALITY == 2 )
             float bSigma = BlurSigma * 0.5f;
         #endif
-        #if( BLOOM_QUALITY > 2 )
-            float bSigma = BlurSigma * 0.5f;
+        #if( BLOOM_QUALITY == 3 )
+            float bSigma = BlurSigma * 0.333f;
+        #endif
+        #if( BLOOM_QUALITY == 4 )
+            float bSigma = BlurSigma * 0.25f;
         #endif
         //Gaussian Math
         float3 Sigma;
