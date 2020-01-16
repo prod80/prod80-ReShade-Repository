@@ -53,7 +53,7 @@ namespace pd80_filmgrain
         ui_label = "Grain Size";
         ui_category = "Film Grain (simplex)";
         ui_min = 1;
-        ui_max = 100;
+        ui_max = 24;
         > = 1;
     uniform float grainColor <
         ui_type = "slider";
