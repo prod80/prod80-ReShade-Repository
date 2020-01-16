@@ -35,6 +35,18 @@
 
 namespace pd80_blackandwhite
 {
+    //// PREPROCESSOR DEFINITIONS ///////////////////////////////////////////////////
+    #ifndef ENABLE_DEBAND
+        #define ENABLE_DEBAND       0  // Default is OFF ( 0 ) as only makes sense on wide blur ranges which is generally not needed in this effect
+    #endif
+    
+    // Min: 0, Max: 3 | Blur Quality, 0 is best quality (full screen) and values higher than that will progessively use lower resolution texture. Value 3 will use 1/4th screen resolution texture size
+    // 0 = Fullscreen   - Ultra
+    // 1 = 1/2th size   - High
+    // 2 = 1/4th size   - Medium
+    #ifndef GAUSSIAN_QUALITY
+        #define GAUSSIAN_QUALITY	1  // Default = High quality (1) which strikes a balance between performance and image quality
+    #endif
 
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
     uniform float3 luminosity <
@@ -46,91 +58,72 @@ namespace pd80_blackandwhite
     uniform float BlurSigma <
         ui_type = "slider";
         ui_label = "Blur Width";
-        ui_category = "Black & White Blend Mode (Blur)";
-        ui_min = 0.001f;
-        ui_max = 30.0f;
-        > = 4.0;
-    uniform int BlendModeB < __UNIFORM_COMBO_INT1
+        ui_category = "Black & White Blend Mode";
+        ui_min = 2.0f;
+        ui_max = 10.0f;
+        > = 6.0;
+    uniform int basecolor_1 < __UNIFORM_COMBO_INT1
+        ui_label = "Base Image";
+        ui_category = "Black & White Blend Mode";
+        ui_items = "Original Color\0Black & White\0Black & White Gaussian\0";
+        > = 1;
+    uniform int blendcolor_1 < __UNIFORM_COMBO_INT1
+        ui_label = "Blend Image";
+        ui_category = "Black & White Blend Mode";
+        ui_items = "Original Color\0Black & White\0Black & White Gaussian\0";
+        > = 2;
+    uniform int blendmode_1 < __UNIFORM_COMBO_INT1
         ui_label = "Blend Mode";
-        ui_category = "Black & White Blend Mode (Blur)";
+        ui_category = "Black & White Blend Mode";
         ui_items = "Normal\0Darken\0Multiply\0Linearburn\0Colorburn\0Lighten\0Screen\0Colordodge\0Lineardodge\0Overlay\0Softlight\0Vividlight\0Linearlight\0Pinlight\0";
         > = 10;
-    uniform float opacityB <
+    uniform float opacity_1 <
         ui_type = "slider";
         ui_label = "Opacity";
-        ui_category = "Black & White Blend Mode (Blur)";
+        ui_category = "Black & White Blend Mode";
         ui_min = 0.0f;
         ui_max = 1.0f;
         > = 0.333;
-    uniform bool use_unblur <
-        ui_label = "Use Unblurred Image as Blend";
-        ui_category = "Black & White Blend Mode (Gradient or Unblur)";
-        > = false;
-    uniform bool use_gradient <
-        ui_label = "Use Gradient Image as Blend";
-        ui_category = "Black & White Blend Mode (Gradient or Unblur)";
-        > = false;
-    uniform float3 LightColor <
-        ui_type = "color";
-        ui_label = "Highlight Color Gradient";
-        ui_category = "Black & White Blend Mode (Gradient or Unblur)";
-        > = float3(1.0, 0.5, 0.0);
-    uniform float3 DarkColor <
-        ui_type = "color";
-        ui_label = "Shadow Color Gradient";
-        ui_category = "Black & White Blend Mode (Gradient or Unblur)";
-        > = float3(0.0, 0.5, 1.0);
-    uniform int BlendMode < __UNIFORM_COMBO_INT1
-        ui_label = "Blend Mode";
-        ui_category = "Black & White Blend Mode (Gradient or Unblur)";
-        ui_items = "Normal\0Darken\0Multiply\0Linearburn\0Colorburn\0Lighten\0Screen\0Colordodge\0Lineardodge\0Overlay\0Softlight\0Vividlight\0Linearlight\0Pinlight\0";
-        > = 5;
-    uniform float opacity <
-        ui_type = "slider";
-        ui_label = "Opacity";
-        ui_category = "Black & White Blend Mode (Gradient or Unblur)";
-        ui_min = 0.0f;
-        ui_max = 1.0f;
-        > = 0.0;
-    uniform bool blendOrig <
-        ui_label = "Blend Black & White with Original";
-        ui_category = "Black & White Blend Mode (Blend Original)";
-        > = false;
-    uniform bool flipColorBlend <
-        ui_label = "Flip Blend Layers";
-        ui_category = "Black & White Blend Mode (Blend Original)";
-        > = false;
-    uniform int BlendModeO < __UNIFORM_COMBO_INT1
-        ui_label = "Blend Mode";
-        ui_category = "Black & White Blend Mode (Blend Original)";
-        ui_items = "Normal\0Darken\0Multiply\0Linearburn\0Colorburn\0Lighten\0Screen\0Colordodge\0Lineardodge\0Overlay\0Softlight\0Vividlight\0Linearlight\0Pinlight\0";
-        > = 0;
-    uniform float opacityO <
-        ui_type = "slider";
-        ui_label = "Opacity";
-        ui_category = "Black & White Blend Mode (Blend Original)";
-        ui_min = 0.0f;
-        ui_max = 1.0f;
-        > = 0.0;
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
-    texture texColorNew { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; }; 
-    texture texBlurH { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; }; 
-    texture texBlur { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
+    texture texColorNew { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
+    #if( GAUSSIAN_QUALITY == 0 )
+        #define SWIDTH   BUFFER_WIDTH
+        #define SHEIGHT  BUFFER_HEIGHT
+        texture texBlurIn { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; }; 
+        texture texBlurH { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
+        texture texBlur { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
+    #endif
+    #if( GAUSSIAN_QUALITY == 1 )
+        #define SWIDTH   ( BUFFER_WIDTH / 4 * 3 )
+        #define SHEIGHT  ( BUFFER_HEIGHT / 4 * 3 )
+        texture texBlurIn { Width = SWIDTH; Height = SHEIGHT; }; 
+        texture texBlurH { Width = SWIDTH; Height = SHEIGHT; };
+        texture texBlur { Width = SWIDTH; Height = SHEIGHT; };
+    #endif
+    #if( GAUSSIAN_QUALITY == 2 )
+        #define SWIDTH   ( BUFFER_WIDTH / 2 )
+        #define SHEIGHT  ( BUFFER_HEIGHT / 2 )
+        texture texBlurIn { Width = SWIDTH; Height = SHEIGHT; }; 
+        texture texBlurH { Width = SWIDTH; Height = SHEIGHT; };
+        texture texBlur { Width = SWIDTH; Height = SHEIGHT; };
+    #endif
     texture texBlurDeband { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerColor { Texture = texColorBuffer; };
     sampler samplerColorNew { Texture = texColorNew; };
+    sampler samplerBlurIn { Texture = texBlurIn; };
     sampler samplerBlurH { Texture = texBlurH; };
     sampler samplerBlur { Texture = texBlur; };
     sampler samplerBlurDeband { Texture = texBlurDeband; };
     //// DEFINES ////////////////////////////////////////////////////////////////////
     #define Pi          3.141592f
-    #define Loops       150
+    #define Loops       30 * ( float( BUFFER_WIDTH ) / 1920.0f )
     #define Quality     0.985f
-    #define px          1.0f / BUFFER_WIDTH
-    #define py          1.0f / BUFFER_HEIGHT
+    #define px          rcp( SWIDTH )
+    #define py          rcp( SHEIGHT )
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
+    #if( ENABLE_DEBAND == 1 )
     uniform int drandom < source = "random"; min = 0; max = 32767; >;
 
     void analyze_pixels(float3 ori, sampler2D tex, float2 texcoord, float2 _range, float2 dir, out float3 ref_avg, out float3 ref_avg_diff, out float3 ref_max_diff, out float3 ref_mid_diff1, out float3 ref_mid_diff2)
@@ -173,6 +166,7 @@ namespace pd80_blackandwhite
     {
         return frac(x / 41.0f);
     }
+    #endif
 
     float3 darken(float3 c, float3 b) 		{ return min(b, c);}
     float3 multiply(float3 c, float3 b) 	{ return c*b;}
@@ -188,6 +182,28 @@ namespace pd80_blackandwhite
     float3 linearlight(float3 c, float3 b) 	{ return b<0.5f ? linearburn(c, (2.0f*b)):lineardodge(c, (2.0f*(b-0.5f)));}
     float3 pinlight(float3 c, float3 b) 	{ return b<0.5f ? darken(c, (2.0f*b)):lighten(c, (2.0f*(b-0.5f)));}
 
+    float3 createBlend( float3 c, float3 b, int mode )
+    {
+    switch( mode )
+        {
+        case 0:  return b.xyz;
+        case 1:  return darken( c.xyz, b.xyz);
+        case 2:  return multiply( c.xyz, b.xyz);
+        case 3:  return linearburn( c.xyz, b.xyz);
+        case 4:  return colorburn( c.xyz, b.xyz);
+        case 5:  return lighten( c.xyz, b.xyz);
+        case 6:  return screen( c.xyz, b.xyz);
+        case 7:  return colordodge( c.xyz, b.xyz);
+        case 8:  return lineardodge( c.xyz, b.xyz);
+        case 9:  return overlay( c.xyz, b.xyz);
+        case 10: return softlight( c.xyz, b.xyz);
+        case 11: return vividlight( c.xyz, b.xyz);
+        case 12: return linearlight( c.xyz, b.xyz);
+        case 13: return pinlight( c.xyz, b.xyz);
+        default: return b.xyz;
+        }
+    }
+
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float4 PS_BlackandWhite(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
@@ -201,17 +217,34 @@ namespace pd80_blackandwhite
         // TODO
         return float4( color.xyz, 1.0f ); // Writes to texColorNew
     }
+
+    float4 PS_DownscaleImg(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
+    {
+        float4 color      = tex2D( samplerColorNew, texcoord );
+        return float4( color.xyz, 1.0f ); // Writes to texColorNew
+    }
     
     float4 PS_GaussianH(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
-        float4 color      = tex2D( samplerColorNew, texcoord );
+        float4 color      = tex2D( samplerBlurIn, texcoord );
         float SigmaSum    = 0.0f;
         float pxlOffset   = 1.5f;
         float calcOffset  = 0.0f;
         float2 buffSigma  = 0.0f;
         float3 Sigma;
-        Sigma.x           = 1.0f / ( sqrt( 2.0f * Pi ) * BlurSigma );
-        Sigma.y           = exp( -0.5f / ( BlurSigma * BlurSigma ));
+        float bSigma;
+        #if( GAUSSIAN_QUALITY == 0 )
+            bSigma        = BlurSigma;
+        #endif
+        #if( GAUSSIAN_QUALITY == 1 )
+            bSigma        = BlurSigma * 0.75f;
+        #endif
+        #if( GAUSSIAN_QUALITY == 2 )
+            bSigma        = BlurSigma * 0.5f;
+        #endif
+        bSigma            = bSigma * ( float( BUFFER_WIDTH ) / 1920.0 );
+        Sigma.x           = 1.0f / ( sqrt( 2.0f * Pi ) * bSigma );
+        Sigma.y           = exp( -0.5f / ( bSigma * bSigma ));
         Sigma.z           = Sigma.y * Sigma.y;
         color.xyz         *= Sigma.x;
         SigmaSum          += Sigma.x;
@@ -219,10 +252,9 @@ namespace pd80_blackandwhite
         for( int i = 0; i < Loops && SigmaSum <= Quality; ++i )
         {
             buffSigma.x   = Sigma.x * Sigma.y;
-            calcOffset    = pxlOffset - 1.0f + buffSigma.x / Sigma.x;
             buffSigma.y   = Sigma.x + buffSigma.x;
-            color         += tex2D( samplerColorNew, texcoord.xy + float2( calcOffset*px, 0.0f )) * buffSigma.y;
-            color         += tex2D( samplerColorNew, texcoord.xy - float2( calcOffset*px, 0.0f )) * buffSigma.y;
+            color         += tex2D( samplerBlurIn, texcoord.xy + float2( pxlOffset*px, 0.0f )) * buffSigma.y;
+            color         += tex2D( samplerBlurIn, texcoord.xy - float2( pxlOffset*px, 0.0f )) * buffSigma.y;
             SigmaSum      += ( 2.0f * Sigma.x + 2.0f * buffSigma.x );
             pxlOffset     += 2.0f;
             Sigma.xy      *= Sigma.yz;
@@ -240,8 +272,19 @@ namespace pd80_blackandwhite
         float calcOffset  = 0.0f;
         float2 buffSigma  = 0.0f;
         float3 Sigma;
-        Sigma.x           = 1.0f / ( sqrt( 2.0f * Pi ) * BlurSigma );
-        Sigma.y           = exp( -0.5f / ( BlurSigma * BlurSigma ));
+        float bSigma;
+        #if( GAUSSIAN_QUALITY == 0 )
+            bSigma        = BlurSigma;
+        #endif
+        #if( GAUSSIAN_QUALITY == 1 )
+            bSigma        = BlurSigma * 0.75f;
+        #endif
+        #if( GAUSSIAN_QUALITY == 2 )
+            bSigma        = BlurSigma * 0.5f;
+        #endif
+        bSigma            = bSigma * ( float( BUFFER_WIDTH ) / 1920.0 );
+        Sigma.x           = 1.0f / ( sqrt( 2.0f * Pi ) * bSigma );
+        Sigma.y           = exp( -0.5f / ( bSigma * bSigma ));
         Sigma.z           = Sigma.y * Sigma.y;
         color.xyz         *= Sigma.x;
         SigmaSum          += Sigma.x;
@@ -249,10 +292,9 @@ namespace pd80_blackandwhite
         for( int i = 0; i < Loops && SigmaSum < Quality; ++i )
         {
             buffSigma.x   = Sigma.x * Sigma.y;
-            calcOffset    = pxlOffset - 1.0f + buffSigma.x / Sigma.x;
             buffSigma.y   = Sigma.x + buffSigma.x;
-            color         += tex2D( samplerBlurH, texcoord.xy + float2( 0.0f, calcOffset*py )) * buffSigma.y;
-            color         += tex2D( samplerBlurH, texcoord.xy - float2( 0.0f, calcOffset*py )) * buffSigma.y;
+            color         += tex2D( samplerBlurH, texcoord.xy + float2( 0.0f, pxlOffset*py )) * buffSigma.y;
+            color         += tex2D( samplerBlurH, texcoord.xy - float2( 0.0f, pxlOffset*py )) * buffSigma.y;
             SigmaSum      += ( 2.0f * Sigma.x + 2.0f * buffSigma.x );
             pxlOffset     += 2.0f;
             Sigma.xy      *= Sigma.yz;
@@ -261,6 +303,8 @@ namespace pd80_blackandwhite
         color.xyz         /= SigmaSum;
         return float4( color.xyz, 1.0f ); // Writes to texBlur
     }
+
+    #if( ENABLE_DEBAND == 1 )
 
     float4 PS_BloomDeband(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
@@ -278,10 +322,11 @@ namespace pd80_blackandwhite
         float3 res;
         float dir         = rand( permute( h )) * 6.2831853f;
         float2 o          = float2( cos( dir ), sin( dir ));
+        float range       = 6.0f / ( GAUSSIAN_QUALITY + 1 );
         for ( int i = 1; i <= 4; ++i )
         {
-            float dist    = rand(h) * 3.0f * i;
-            float2 pt     = dist * ReShade::PixelSize;
+            float dist    = rand(h) * range * i;
+            float2 pt     = dist * float2( px, py );
             analyze_pixels(ori, samplerBlur, texcoord, pt, o,
                             ref_avg,
                             ref_avg_diff,
@@ -299,7 +344,7 @@ namespace pd80_blackandwhite
             h             = permute(h);
         }
         const float dither_bit  = 8.0f;
-        float grid_position     = frac(dot(texcoord, (ReShade::ScreenSize * float2(1.0 / 16.0, 10.0 / 36.0)) + 0.25));
+        float grid_position     = frac(dot(texcoord, (float2( BUFFER_WIDTH, BUFFER_HEIGHT ) * float2(1.0 / 16.0, 10.0 / 36.0)) + 0.25));
         float dither_shift      = 0.25 * (1.0 / (pow(2, dither_bit) - 1.0));
         float3 dither_shift_RGB = float3(dither_shift, -dither_shift, dither_shift);
         dither_shift_RGB        = lerp(2.0 * dither_shift_RGB, -2.0 * dither_shift_RGB, grid_position); //shift acording to grid position.
@@ -308,169 +353,58 @@ namespace pd80_blackandwhite
         return float4( color.xyz, 1.0f ); // Writes to texBlurDeband
     }
 
+    #endif
+
     float4 PS_BlendImgBlur(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
-        float4 color      = tex2D( samplerColorNew, texcoord );
-        float4 blur       = tex2D( samplerBlurDeband, texcoord );
+        float4 bwcolor    = tex2D( samplerColorNew, texcoord );
+        float4 bwblur     = tex2D( samplerBlur, texcoord );
+        #if( ENABLE_DEBAND == 1 )
+        bwblur.xyz        = tex2D( samplerBlurDeband, texcoord ).xyz;
+        #endif
         float4 orig       = tex2D( samplerColor, texcoord );
-        float3 blend      = 0.0f;
-        // Blending options (blur)
-        if( BlendModeB == 0 ) {
-            blend.xyz     = blur.xyz;
+        float3 base;
+        float3 blend;
+        float3 ret;
+        float3 color;
+        /*
+            Color or Targets
+            0 = Original Color
+            1 = B&W Image
+            2 = B&W Gaussian Blur
+        */
+        switch( basecolor_1 )
+        {
+            case 0:
+                base.xyz  = orig.xyz;
+                break;
+            case 1:
+                base.xyz  = bwcolor.xyz;
+                break;
+            case 2:
+                base.xyz  = bwblur.xyz;
+                break;
+            default:
+                base.xyz  = bwcolor.xyz;
+                break;
         }
-        if( BlendModeB == 1 ) {
-            blend.xyz     = darken( color.xyz, blur.xyz);
+        switch( blendcolor_1 )
+        {
+            case 0:
+                blend.xyz = orig.xyz;
+                break;
+            case 1:
+                blend.xyz = bwcolor.xyz;
+                break;
+            case 2:
+                blend.xyz = bwblur.xyz;
+                break;
+            default:
+                base.xyz  = bwblur.xyz;
+                break;
         }
-        if( BlendModeB == 2 ) {
-            blend.xyz     = multiply( color.xyz, blur.xyz);
-        }
-        if( BlendModeB == 3 ) {
-            blend.xyz     = linearburn( color.xyz, blur.xyz);
-        }
-        if( BlendModeB == 4 ) {
-            blend.xyz     = colorburn( color.xyz, blur.xyz);
-        }
-        if( BlendModeB == 5 ) {
-            blend.xyz     = lighten( color.xyz, blur.xyz);
-        }
-        if( BlendModeB == 6 ) {
-            blend.xyz     = screen( color.xyz, blur.xyz);
-        }
-        if( BlendModeB == 7 ) {
-            blend.xyz     = colordodge( color.xyz, blur.xyz);
-        }
-        if( BlendModeB == 8 ) {
-            blend.xyz     = lineardodge( color.xyz, blur.xyz);
-        }
-        if( BlendModeB == 9 ) {
-            blend.xyz     = overlay( color.xyz, blur.xyz);
-        }
-        if( BlendModeB == 10 ) {
-            blend.xyz     = softlight( color.xyz, blur.xyz);
-        }
-        if( BlendModeB == 11 ) {
-            blend.xyz     = vividlight( color.xyz, blur.xyz);
-        }
-        if( BlendModeB == 12 ) {
-            blend.xyz     = linearlight( color.xyz, blur.xyz);
-        }
-        if( BlendModeB == 13 ) {
-            blend.xyz     = pinlight( color.xyz, blur.xyz);
-        }
-        color.xyz         = lerp( color.xyz, blend.xyz, opacityB );
-        // For color grading options (non blur or gradient)
-        if( use_unblur ) {
-            blur.xyz      = color.xyz;
-        }
-        if( use_gradient ) {
-            float3 darkC  = DarkColor.xyz;
-            float3 lightC = LightColor.xyz;
-            float lum     = dot( color.xyz, 0.333333f ); // Image is greyscale, this is average
-            float adjDark = max( max( darkC.x, darkC.y ), darkC.z );
-            adjDark       = 1.0f / adjDark; // Scalar to always make color adjustment fullt saturated so it can be multiplied
-            darkC.xyz     *= adjDark;
-            float adjLight= max( max( lightC.x, lightC.y ), lightC.z );
-            adjLight      = 1.0f / adjLight; // Same scalar as Dark
-            lightC.xyz    *= adjLight;
-            blur.xyz      = lerp( darkC.xyz, lightC.xyz, lum ); // Create colored gradient
-        }
-        // Blending options
-        //float2 check      = float2( use_unblur, use_gradient );
-        if( use_unblur || use_gradient ) {
-            if( BlendMode == 0 ) {
-                blend.xyz     = blur.xyz;
-            }
-            if( BlendMode == 1 ) {
-                blend.xyz = darken( color.xyz, blur.xyz);
-            }
-            if( BlendMode == 2 ) {
-                blend.xyz = multiply( color.xyz, blur.xyz);
-            }
-            if( BlendMode == 3 ) {
-                blend.xyz = linearburn( color.xyz, blur.xyz);
-            }
-            if( BlendMode == 4 ) {
-                blend.xyz = colorburn( color.xyz, blur.xyz);
-            }
-            if( BlendMode == 5 ) {
-                blend.xyz = lighten( color.xyz, blur.xyz);
-            }
-            if( BlendMode == 6 ) {
-                blend.xyz = screen( color.xyz, blur.xyz);
-            }
-            if( BlendMode == 7 ) {
-                blend.xyz = colordodge( color.xyz, blur.xyz);
-            }
-            if( BlendMode == 8 ) {
-                blend.xyz = lineardodge( color.xyz, blur.xyz);
-            }
-            if( BlendMode == 9 ) {
-                blend.xyz = overlay( color.xyz, blur.xyz);
-            }
-            if( BlendMode == 10 ) {
-                blend.xyz = softlight( color.xyz, blur.xyz);
-            }
-            if( BlendMode == 11 ) {
-                blend.xyz = vividlight( color.xyz, blur.xyz);
-            }
-            if( BlendMode == 12 ) {
-                blend.xyz = linearlight( color.xyz, blur.xyz);
-            }
-            if( BlendMode == 13 ) {
-                blend.xyz = pinlight( color.xyz, blur.xyz);
-            }
-            color.xyz     = lerp( color.xyz, blend.xyz, opacity );
-        }
-        if( blendOrig ) {
-            blur.xyz      = orig.xyz;
-            if( flipColorBlend ) {
-                blur.xyz  = color.xyz;
-                color.xyz = orig.xyz;
-            }
-            if( BlendModeO == 0 ) {
-                blend.xyz     = blur.xyz;
-            }
-            if( BlendModeO == 1 ) {
-                blend.xyz = darken( color.xyz, blur.xyz);
-            }
-            if( BlendModeO == 2 ) {
-                blend.xyz = multiply( color.xyz, blur.xyz);
-            }
-            if( BlendModeO == 3 ) {
-                blend.xyz = linearburn( color.xyz, blur.xyz);
-            }
-            if( BlendModeO == 4 ) {
-                blend.xyz = colorburn( color.xyz, blur.xyz);
-            }
-            if( BlendModeO == 5 ) {
-                blend.xyz = lighten( color.xyz, blur.xyz);
-            }
-            if( BlendModeO == 6 ) {
-                blend.xyz = screen( color.xyz, blur.xyz);
-            }
-            if( BlendModeO == 7 ) {
-                blend.xyz = colordodge( color.xyz, blur.xyz);
-            }
-            if( BlendModeO == 8 ) {
-                blend.xyz = lineardodge( color.xyz, blur.xyz);
-            }
-            if( BlendModeO == 9 ) {
-                blend.xyz = overlay( color.xyz, blur.xyz);
-            }
-            if( BlendModeO == 10 ) {
-                blend.xyz = softlight( color.xyz, blur.xyz);
-            }
-            if( BlendModeO == 11 ) {
-                blend.xyz = vividlight( color.xyz, blur.xyz);
-            }
-            if( BlendModeO == 12 ) {
-                blend.xyz = linearlight( color.xyz, blur.xyz);
-            }
-            if( BlendModeO == 13 ) {
-                blend.xyz = pinlight( color.xyz, blur.xyz);
-            }
-            color.xyz     = lerp( color.xyz, blend.xyz, opacityO );
-        }
+        ret.xyz           = createBlend( base.xyz, blend.xyz, blendmode_1 );
+        color.xyz         = lerp( base.xyz, ret.xyz, opacity_1 );
         return float4( color.xyz, 1.0f ); // Final output
     }
 
@@ -484,6 +418,12 @@ namespace pd80_blackandwhite
             PixelShader   = PS_BlackandWhite;
             RenderTarget  = texColorNew;
         }
+        pass prod80_Downscale
+        {
+            VertexShader  = PostProcessVS;
+            PixelShader   = PS_DownscaleImg;
+            RenderTarget  = texBlurIn;
+        }
         pass prod80_BlurH
         {
             VertexShader  = PostProcessVS;
@@ -496,12 +436,14 @@ namespace pd80_blackandwhite
             PixelShader   = PS_GaussianV;
             RenderTarget  = texBlur;
         }
+        #if( ENABLE_DEBAND == 1 )
         pass prod80_BlurDeband
         {
             VertexShader  = PostProcessVS;
             PixelShader   = PS_BloomDeband;
             RenderTarget  = texBlurDeband;
         }
+        #endif
         pass prod80_Blend
         {
             VertexShader  = PostProcessVS;

@@ -36,13 +36,14 @@
 namespace pd80_hqbloom
 {
     //// PREPROCESSOR DEFINITIONS ///////////////////////////////////////////////////
+    #ifndef ENABLE_DEBAND
+        #define ENABLE_DEBAND       0  // Default is OFF ( 0 ) due to performance impact
+    #endif
 
     // Min: 0, Max: 3 | Bloom Quality, 0 is best quality (full screen) and values higher than that will progessively use lower resolution texture. Value 3 will use 1/4th screen resolution texture size
     // 0 = Fullscreen   - Ultra
     // 1 = 1/2th size   - High
     // 2 = 1/4th size   - Medium
-    // 3 = 1/9th size   - Low
-    // 4 = 1/16th size  - Very Low
     #ifndef BLOOM_QUALITY
         #define BLOOM_QUALITY		2  // Default = Medium quality (2) as difference is nearly impossible to tell during gameplay, and performance 60% faster than Ultra (0)
     #endif
@@ -103,10 +104,7 @@ namespace pd80_hqbloom
         ui_min = 1000;
         ui_max = 40000;
         > = 6500;
-    uniform bool enableBDeband <
-        ui_label  = "Enable Bloom Deband";
-        ui_category = "Bloom Deband";
-        > = true;
+    #if( ENABLE_DEBAND == 1 )
     uniform int threshold_preset < __UNIFORM_COMBO_INT1
         ui_label = "Debanding strength";
         ui_category = "Bloom Deband";
@@ -155,6 +153,7 @@ namespace pd80_hqbloom
         ui_tooltip = "Threshold for the difference between the average of diagonal reference pixel values and the original pixel value. Higher numbers increase the debanding strength but progressively diminish image details. In pixel shaders a 8-bit color step equals to 1.0/255.0";
         ui_category = "Advanced";
         > = 2.0;
+    #endif
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
     texture texBLuma { Width = 256; Height = 256; Format = R16F; MipLevels = 8; };
@@ -181,20 +180,6 @@ namespace pd80_hqbloom
         texture texBloomH { Width = SWIDTH; Height = SHEIGHT; };
         texture texBloom { Width = SWIDTH; Height = SHEIGHT; };
     #endif
-    #if( BLOOM_QUALITY == 3 )
-        #define SWIDTH   ( BUFFER_WIDTH / 3 )
-        #define SHEIGHT  ( BUFFER_HEIGHT / 3 )
-        texture texBloomIn { Width = SWIDTH; Height = SHEIGHT; }; 
-        texture texBloomH { Width = SWIDTH; Height = SHEIGHT; };
-        texture texBloom { Width = SWIDTH; Height = SHEIGHT; };
-    #endif
-    #if( BLOOM_QUALITY == 4 )
-        #define SWIDTH   ( BUFFER_WIDTH / 4 )
-        #define SHEIGHT  ( BUFFER_HEIGHT / 4 )
-        texture texBloomIn { Width = SWIDTH; Height = SHEIGHT; }; 
-        texture texBloomH { Width = SWIDTH; Height = SHEIGHT; };
-        texture texBloom { Width = SWIDTH; Height = SHEIGHT; };
-    #endif
 
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerColor { Texture = texColorBuffer; };
@@ -212,6 +197,7 @@ namespace pd80_hqbloom
     #define PI 3.141592f
     #define LOOPCOUNT 150f
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
+    #if( ENABLE_DEBAND == 1 )
     float rand( in float x )
     {
         return frac(x / 41.0f);
@@ -257,7 +243,7 @@ namespace pd80_hqbloom
         ref_avg          *= 0.25f; // Normalize avg
         ref_avg_diff     = abs( ori - ref_avg );
     }
-
+    #endif
     float3 KelvinToRGB( in float k )
     {
         float3 ret;
@@ -418,12 +404,6 @@ namespace pd80_hqbloom
         #if( BLOOM_QUALITY == 2 )
             float bSigma = BlurSigma * 0.5f;
         #endif
-        #if( BLOOM_QUALITY == 3 )
-            float bSigma = BlurSigma * 0.333f;
-        #endif
-        #if( BLOOM_QUALITY == 4 )
-            float bSigma = BlurSigma * 0.25f;
-        #endif
         //Gaussian Math
         float3 Sigma;
         Sigma.x          = 1.0f / ( sqrt( 2.0f * PI ) * bSigma );
@@ -471,12 +451,6 @@ namespace pd80_hqbloom
         #if( BLOOM_QUALITY == 2 )
             float bSigma = BlurSigma * 0.5f;
         #endif
-        #if( BLOOM_QUALITY == 3 )
-            float bSigma = BlurSigma * 0.333f;
-        #endif
-        #if( BLOOM_QUALITY == 4 )
-            float bSigma = BlurSigma * 0.25f;
-        #endif
         //Gaussian Math
         float3 Sigma;
         Sigma.x          = 1.0f / ( sqrt( 2.0f * PI ) * bSigma );
@@ -512,8 +486,8 @@ namespace pd80_hqbloom
         float4 bloom     = tex2D( samplerBloom, texcoord );
         float4 color     = tex2D( samplerColor, texcoord );
 
-        if( enableBDeband == TRUE )
-        {
+        #if( ENABLE_DEBAND == 1 )
+
             float avgdiff;
             float maxdiff;
             float middiff;
@@ -611,7 +585,7 @@ namespace pd80_hqbloom
             res += dither_shift_RGB;
 
             bloom.xyz = res.xyz;
-        }
+        #endif
 
         if( enableBKelvin == TRUE )
         {
