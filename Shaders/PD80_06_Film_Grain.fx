@@ -53,7 +53,7 @@ namespace pd80_filmgrain
         ui_label = "Grain Size";
         ui_category = "Film Grain (simplex)";
         ui_min = 1;
-        ui_max = 8;
+        ui_max = 100;
         > = 1;
     uniform float grainColor <
         ui_type = "slider";
@@ -97,7 +97,35 @@ namespace pd80_filmgrain
         ui_min = 0.0f;
         ui_max = 1.0f;
         > = 1.0;
-        
+    uniform bool enable_depth <
+        ui_label = "Enable depth based adjustments.\nMake sure you have setup your depth buffer correctly.";
+        ui_category = "Film Grain (simplex): Depth";
+        > = false;
+    uniform bool display_depth <
+        ui_label = "Show depth texture";
+        ui_category = "Film Grain (simplex): Depth";
+        > = false;
+    uniform float depthStart <
+        ui_type = "slider";
+        ui_label = "Change Depth Start Plane";
+        ui_category = "Film Grain (simplex): Depth";
+        ui_min = 0.0f;
+        ui_max = 1.0f;
+        > = 0.0;
+    uniform float depthEnd <
+        ui_type = "slider";
+        ui_label = "Change Depth End Plane";
+        ui_category = "Film Grain (simplex): Depth";
+        ui_min = 0.0f;
+        ui_max = 1.0f;
+        > = 0.1;
+    uniform float depthCurve <
+        ui_label = "Depth Curve Adjustment";
+        ui_category = "Film Grain (simplex): Depth";
+        ui_type = "slider";
+        ui_min = 0.05;
+        ui_max = 8.0;
+        > = 1.0;
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
     texture texPerm < source = "permtexture.png"; > { Width = 256; Height = 256; Format = RGBA8; };
@@ -177,6 +205,12 @@ namespace pd80_filmgrain
     float4 PS_FilmGrain(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color      = tex2D( samplerColor, texcoord );
+        float depth      = ReShade::GetLinearizedDepth( texcoord ).x;
+        depth            = smoothstep( depthStart, depthEnd, depth );
+        depth            = pow( depth, depthCurve );
+        float d          = 1.0f;
+        if( enable_depth )
+            d            = depth;
         float timer       = 1.0f;
         if( grainMotion )
             timer         = Timer % 1000.0f;
@@ -198,7 +232,9 @@ namespace pd80_filmgrain
         // Mixing options
         float lum         = dot( color.xyz, 0.333333f ); // Just using average here
         noise.xyz         = lerp( noise.xyz * grainIntLow, noise.xyz * grainIntHigh, fade( lum )); // Noise adjustments based on average intensity
-        color.xyz         = lerp( color.xyz, color.xyz + noise.xyz, grainAmount );
+        color.xyz         = lerp( color.xyz, color.xyz + ( noise.xyz * d ), grainAmount );
+        if( display_depth )
+            color.xyz     = d.xxx;
         return float4( color.xyz, 1.0f );
     }
 
