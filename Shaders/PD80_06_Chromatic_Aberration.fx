@@ -118,14 +118,47 @@ namespace pd80_ca
         ui_min = 0.2f;
         ui_max = 6.0f;
         > = 1.0;
+    uniform bool enable_depth_int <
+        ui_label = "Intensity: Enable depth based adjustments.\nMake sure you have setup your depth buffer correctly.";
+        ui_category = "Final Adjustments: Depth";
+        > = false;
+    uniform bool enable_depth_width <
+        ui_label = "Width: Enable depth based adjustments.\nMake sure you have setup your depth buffer correctly.";
+        ui_category = "Final Adjustments: Depth";
+        > = false;
+    uniform bool display_depth <
+        ui_label = "Show depth texture";
+        ui_category = "Final Adjustments: Depth";
+        > = false;
+    uniform float depthStart <
+        ui_type = "slider";
+        ui_label = "Change Depth Start Plane";
+        ui_category = "Final Adjustments: Depth";
+        ui_min = 0.0f;
+        ui_max = 1.0f;
+        > = 0.0;
+    uniform float depthEnd <
+        ui_type = "slider";
+        ui_label = "Change Depth End Plane";
+        ui_category = "Final Adjustments: Depth";
+        ui_min = 0.0f;
+        ui_max = 1.0f;
+        > = 0.1;
+    uniform float depthCurve <
+        ui_label = "Depth Curve Adjustment";
+        ui_category = "Final Adjustments: Depth";
+        ui_type = "slider";
+        ui_min = 0.05;
+        ui_max = 8.0;
+        > = 1.0;
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerColor { Texture = texColorBuffer; };
     //// DEFINES ////////////////////////////////////////////////////////////////////
-    #define px          1.0f / BUFFER_WIDTH
-    #define py          1.0f / BUFFER_HEIGHT
-    #define aspect      ( float( BUFFER_WIDTH ) / float( BUFFER_HEIGHT ))
+    #define px          BUFFER_RCP_WIDTH
+    #define py          BUFFER_RCP_HEIGHT
+    #define aspect      float( BUFFER_WIDTH * BUFFER_RCP_HEIGHT )
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
     float3 HUEToRGB( in float H )
     {
@@ -140,12 +173,18 @@ namespace pd80_ca
     {
         float4 color      = 0.0f;
         float3 orig       = tex2D( samplerColor, texcoord ).xyz;
+        float depth       = ReShade::GetLinearizedDepth( texcoord ).x;
+        depth             = smoothstep( depthStart, depthEnd, depth );
+        depth             = pow( depth, depthCurve );
+        float CA_width_n  = CA_width;
+        if( enable_depth_width )
+            CA_width_n    *= depth;
 
         //float2 coords     = clamp( texcoord.xy * 2.0f - float2( oX + 1.0f, oY + 1.0f ), -1.0f, 1.0f );
         float2 coords     = texcoord.xy * 2.0f - float2( oX + 1.0f, oY + 1.0f ); // Let it ripp, and not clamp!
         float2 uv         = coords.xy;
         coords.xy         /= float2( CA_shapeX / aspect, CA_shapeY );
-        float2 caintensity= length( coords.xy ) * CA_width;
+        float2 caintensity= length( coords.xy ) * CA_width_n;
         caintensity.y     = caintensity.x * caintensity.x + 1.0f;
         caintensity.x     = 1.0f - ( 1.0f / ( caintensity.y * caintensity.y ));
         caintensity.x     = pow( caintensity.x, CA_curve );
@@ -153,38 +192,49 @@ namespace pd80_ca
         int degreesY      = degrees;
         float c           = 0.0f;
         float s           = 0.0f;
-        // Radial: Y + 90 w/ multiplying with uv.xy
-        if( CA_type == 0 )
+        switch( CA_type )
         {
-            degreesY      = degrees + 90;
-            if ( degrees + 90 > 360 )
-                degreesY  = degrees + 90 - 360;
-            c             = cos( radians( degrees )) * uv.x;
-            s             = sin( radians( degreesY )) * uv.y;
+            // Radial: Y + 90 w/ multiplying with uv.xy
+            case 0:
+            {
+                degreesY      = degrees + 90;
+                if ( degrees + 90 > 360 )
+                    degreesY  = degrees + 90 - 360;
+                c             = cos( radians( degrees )) * uv.x;
+                s             = sin( radians( degreesY )) * uv.y;
+            }
+            break;
+            // Longitudinal: X = Y w/o multiplying with uv.xy
+            case 1:
+            {
+                c             = cos( radians( degrees ));
+                s             = sin( radians( degreesY ));
+            }
+            break;
+            // Full screen Radial
+            case 2:
+            {
+                degreesY      = degrees + 90;
+                if ( degrees + 90 > 360 )
+                    degreesY  = degrees + 90 - 360;
+                caintensity.x = 1.0f;
+                c             = cos( radians( degrees )) * uv.x;
+                s             = sin( radians( degreesY )) * uv.y;
+            }
+            break;
+            // Full screen Longitudinal
+            case 3:
+            {
+                caintensity.x = 1.0f;
+                c             = cos( radians( degrees ));
+                s             = sin( radians( degreesY ));
+            }
+            break;
         }
-        // Longitudinal: X = Y w/o multiplying with uv.xy
-        if( CA_type == 1 )
-        {
-            c             = cos( radians( degrees ));
-            s             = sin( radians( degreesY ));
-        }
-        // Full screen Radial
-        if( CA_type == 2 )
-        {
-            degreesY      = degrees + 90;
-            if ( degrees + 90 > 360 )
-                degreesY  = degrees + 90 - 360;
-            caintensity.x = 1.0f;
-            c             = cos( radians( degrees )) * uv.x;
-            s             = sin( radians( degreesY )) * uv.y;
-        }
-        // Full screen Longitudinal
-        if( CA_type == 3 )
-        {
-            caintensity.x = 1.0f;
-            c             = cos( radians( degrees ));
-            s             = sin( radians( degreesY ));
-        }
+        
+        //Apply based on scene depth
+        if( enable_depth_int )
+            caintensity.x *= depth;
 
         float3 huecolor   = 0.0f;
         float3 temp       = 0.0f;
@@ -211,7 +261,8 @@ namespace pd80_ca
         color.xyz           = lerp( orig.xyz, color.xyz, CA_strength );
         if( show_CA )
             color.xyz       = vignetteColor.xyz * caintensity.x + ( 1.0f - caintensity.x ) * color.xyz;
-
+        if( display_depth )
+            color.xyz       = depth.xxx;
         return float4( color.xyz, 1.0f );
     }
 
