@@ -36,16 +36,16 @@
 namespace pd80_blackandwhite
 {
     //// PREPROCESSOR DEFINITIONS ///////////////////////////////////////////////////
-    #ifndef ENABLE_DEBAND
-        #define ENABLE_DEBAND       0  // Default is OFF ( 0 ) as only makes sense on wide blur ranges which is generally not needed in this effect
+    #ifndef BW_ENABLE_DEBAND
+        #define BW_ENABLE_DEBAND       0  // Default is OFF ( 0 ) as only makes sense on wide blur ranges which is generally not needed in this effect
     #endif
     
     // Min: 0, Max: 3 | Blur Quality, 0 is best quality (full screen) and values higher than that will progessively use lower resolution texture. Value 3 will use 1/4th screen resolution texture size
     // 0 = Fullscreen   - Ultra
     // 1 = 1/2th size   - High
     // 2 = 1/4th size   - Medium
-    #ifndef GAUSSIAN_QUALITY
-        #define GAUSSIAN_QUALITY	1  // Default = High quality (1) which strikes a balance between performance and image quality
+    #ifndef BW_GAUSSIAN_QUALITY
+        #define BW_GAUSSIAN_QUALITY	    1  // Default = High quality (1) which strikes a balance between performance and image quality
     #endif
 
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
@@ -87,21 +87,21 @@ namespace pd80_blackandwhite
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
     texture texColorNew { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
-    #if( GAUSSIAN_QUALITY == 0 )
+    #if( BW_GAUSSIAN_QUALITY == 0 )
         #define SWIDTH   BUFFER_WIDTH
         #define SHEIGHT  BUFFER_HEIGHT
         texture texBlurIn { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; }; 
         texture texBlurH { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
         texture texBlur { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
     #endif
-    #if( GAUSSIAN_QUALITY == 1 )
+    #if( BW_GAUSSIAN_QUALITY == 1 )
         #define SWIDTH   ( BUFFER_WIDTH / 4 * 3 )
         #define SHEIGHT  ( BUFFER_HEIGHT / 4 * 3 )
         texture texBlurIn { Width = SWIDTH; Height = SHEIGHT; }; 
         texture texBlurH { Width = SWIDTH; Height = SHEIGHT; };
         texture texBlur { Width = SWIDTH; Height = SHEIGHT; };
     #endif
-    #if( GAUSSIAN_QUALITY == 2 )
+    #if( BW_GAUSSIAN_QUALITY == 2 )
         #define SWIDTH   ( BUFFER_WIDTH / 2 )
         #define SHEIGHT  ( BUFFER_HEIGHT / 2 )
         texture texBlurIn { Width = SWIDTH; Height = SHEIGHT; }; 
@@ -123,7 +123,7 @@ namespace pd80_blackandwhite
     #define px          rcp( SWIDTH )
     #define py          rcp( SHEIGHT )
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
-    #if( ENABLE_DEBAND == 1 )
+    #if( BW_ENABLE_DEBAND == 1 )
     uniform int drandom < source = "random"; min = 0; max = 32767; >;
 
     void analyze_pixels(float3 ori, sampler2D tex, float2 texcoord, float2 _range, float2 dir, out float3 ref_avg, out float3 ref_avg_diff, out float3 ref_max_diff, out float3 ref_mid_diff1, out float3 ref_mid_diff2)
@@ -233,13 +233,13 @@ namespace pd80_blackandwhite
         float2 buffSigma  = 0.0f;
         float3 Sigma;
         float bSigma;
-        #if( GAUSSIAN_QUALITY == 0 )
+        #if( BW_GAUSSIAN_QUALITY == 0 )
             bSigma        = BlurSigma;
         #endif
-        #if( GAUSSIAN_QUALITY == 1 )
+        #if( BW_GAUSSIAN_QUALITY == 1 )
             bSigma        = BlurSigma * 0.75f;
         #endif
-        #if( GAUSSIAN_QUALITY == 2 )
+        #if( BW_GAUSSIAN_QUALITY == 2 )
             bSigma        = BlurSigma * 0.5f;
         #endif
         bSigma            = bSigma * ( float( BUFFER_WIDTH ) / 1920.0 );
@@ -273,13 +273,13 @@ namespace pd80_blackandwhite
         float2 buffSigma  = 0.0f;
         float3 Sigma;
         float bSigma;
-        #if( GAUSSIAN_QUALITY == 0 )
+        #if( BW_GAUSSIAN_QUALITY == 0 )
             bSigma        = BlurSigma;
         #endif
-        #if( GAUSSIAN_QUALITY == 1 )
+        #if( BW_GAUSSIAN_QUALITY == 1 )
             bSigma        = BlurSigma * 0.75f;
         #endif
-        #if( GAUSSIAN_QUALITY == 2 )
+        #if( BW_GAUSSIAN_QUALITY == 2 )
             bSigma        = BlurSigma * 0.5f;
         #endif
         bSigma            = bSigma * ( float( BUFFER_WIDTH ) / 1920.0 );
@@ -304,7 +304,7 @@ namespace pd80_blackandwhite
         return float4( color.xyz, 1.0f ); // Writes to texBlur
     }
 
-    #if( ENABLE_DEBAND == 1 )
+    #if( BW_ENABLE_DEBAND == 1 )
 
     float4 PS_BloomDeband(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
@@ -322,7 +322,7 @@ namespace pd80_blackandwhite
         float3 res;
         float dir         = rand( permute( h )) * 6.2831853f;
         float2 o          = float2( cos( dir ), sin( dir ));
-        float range       = 6.0f / ( GAUSSIAN_QUALITY + 1 );
+        float range       = 6.0f / ( BW_GAUSSIAN_QUALITY + 1 );
         for ( int i = 1; i <= 4; ++i )
         {
             float dist    = rand(h) * range * i;
@@ -359,7 +359,7 @@ namespace pd80_blackandwhite
     {
         float4 bwcolor    = tex2D( samplerColorNew, texcoord );
         float4 bwblur     = tex2D( samplerBlur, texcoord );
-        #if( ENABLE_DEBAND == 1 )
+        #if( BW_ENABLE_DEBAND == 1 )
         bwblur.xyz        = tex2D( samplerBlurDeband, texcoord ).xyz;
         #endif
         float4 orig       = tex2D( samplerColor, texcoord );
@@ -436,7 +436,7 @@ namespace pd80_blackandwhite
             PixelShader   = PS_GaussianV;
             RenderTarget  = texBlur;
         }
-        #if( ENABLE_DEBAND == 1 )
+        #if( BW_ENABLE_DEBAND == 1 )
         pass prod80_BlurDeband
         {
             VertexShader  = PostProcessVS;

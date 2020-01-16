@@ -36,8 +36,8 @@
 namespace pd80_hqbloom
 {
     //// PREPROCESSOR DEFINITIONS ///////////////////////////////////////////////////
-    #ifndef ENABLE_DEBAND
-        #define ENABLE_DEBAND       0  // Default is OFF ( 0 ) due to performance impact
+    #ifndef BLOOM_ENABLE_DEBAND
+        #define BLOOM_ENABLE_DEBAND 0  // Default is OFF ( 0 ) due to performance impact
     #endif
 
     // Min: 0, Max: 3 | Bloom Quality, 0 is best quality (full screen) and values higher than that will progessively use lower resolution texture. Value 3 will use 1/4th screen resolution texture size
@@ -104,7 +104,7 @@ namespace pd80_hqbloom
         ui_min = 1000;
         ui_max = 40000;
         > = 6500;
-    #if( ENABLE_DEBAND == 1 )
+    #if( BLOOM_ENABLE_DEBAND == 1 )
     uniform int threshold_preset < __UNIFORM_COMBO_INT1
         ui_label = "Debanding strength";
         ui_category = "Bloom Deband";
@@ -197,7 +197,7 @@ namespace pd80_hqbloom
     #define PI 3.141592f
     #define LOOPCOUNT 150f
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
-    #if( ENABLE_DEBAND == 1 )
+    #if( BLOOM_ENABLE_DEBAND == 1 )
     float rand( in float x )
     {
         return frac(x / 41.0f);
@@ -486,7 +486,7 @@ namespace pd80_hqbloom
         float4 bloom     = tex2D( samplerBloom, texcoord );
         float4 color     = tex2D( samplerColor, texcoord );
 
-        #if( ENABLE_DEBAND == 1 )
+        #if( BLOOM_ENABLE_DEBAND == 1 )
 
             float avgdiff;
             float maxdiff;
