@@ -132,26 +132,27 @@ namespace pd80_conbrisat
         return dot( x, LumCoeff );
     }
 
-    float3 lineardodge(float3 c, float3 b) 	{ return min(c+b, 1.0f);}
-    float3 softlight(float3 c, float3 b) 	{ return b<0.5f ? (2.0f*c*b+c*c*(1.0f-2.0f*b)):(sqrt(c)*(2.0f*b-1.0f)+2.0f*c*(1.0f-b));}
+    float3 softlight( float3 c, float3 b )
+    { 
+        return b < 0.5f ? ( 2.0f * c * b + c * c * ( 1.0f - 2.0f * b )) :
+                          ( sqrt( c ) * ( 2.0f * b - 1.0f ) + 2.0f * c * ( 1.0f - b ));
+    }
 
     float3 con( float3 res, float x )
     {
         //softlight
         float3 c = softlight( res.xyz, res.xyz );
-        float c1 = 0.0f;
-        if( x < 0.0f ) c1 = x * 0.5f;
-        else           c1 = x;
-        return lerp( res.xyz, c.xyz, c1 );
+        float b = 0.0f;
+        b = x < 0.0f ? b = x * 0.5f : b = x;
+        return lerp( res.xyz, c.xyz, b );
     }
 
     float3 bri( float3 res, float x )
     {
         //lineardodge
-        float3 c = lineardodge( res.xyz, res.xyz );
+        float3 c = min( res.xyz + res.xyz , 1.0f );
         float b = 0.0f;
-        if( x < 0.0f ) b = x * 0.5f;
-        else           b = x;
+        b = x < 0.0f ? b = x * 0.5f : b = x;
         return lerp( res.xyz, c.xyz, b );   
     }
 
@@ -184,17 +185,16 @@ namespace pd80_conbrisat
         color.xyz        = sat( color.xyz, saturation );
         color.xyz        = vib( color.xyz, vibrance   );
 
-        if( enable_depth )
-        {
-            dcolor.xyz   = con( dcolor.xyz, contrastD   );
-            dcolor.xyz   = bri( dcolor.xyz, brightnessD );
-            dcolor.xyz   = sat( dcolor.xyz, saturationD );
-            dcolor.xyz   = vib( dcolor.xyz, vibranceD   );
-            color.xyz    = lerp( color.xyz, dcolor.xyz, depth );
-        }
+        dcolor.xyz       = con( dcolor.xyz, contrastD   );
+        dcolor.xyz       = bri( dcolor.xyz, brightnessD );
+        dcolor.xyz       = sat( dcolor.xyz, saturationD );
+        dcolor.xyz       = vib( dcolor.xyz, vibranceD   );
+        
+        color.xyz        = lerp( color.xyz, dcolor.xyz, enable_depth * depth ); // apply based on depth
+
         color.xyz        = saturate( color.xyz ); // shouldn't be needed, but just to ensure no oddities are there
-        if( display_depth )
-            color.xyz    = depth.xxx;
+        color.xyz        = lerp( color.xyz, depth.xxx, display_depth ); // show depth
+
         return float4( color.xyz, 1.0f );
     }
 

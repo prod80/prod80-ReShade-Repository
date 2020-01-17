@@ -203,8 +203,7 @@ namespace pd80_lumasharpen
         edges            = max(( saturate( Sharpening * edges.xyz )) - ( saturate( Sharpening * invOGauss.xyz )), 0.0f );
         float3 blend     = saturate( orig.xyz + min( edges.xyz, limiter ));
         float3 color     = BlendLuma( orig.xyz, blend.xyz ); 
-        if( enableShowEdges == TRUE )
-            color.xyz    = min( edges.xyz, limiter );
+        color.xyz        = lerp( color.xyz, min( edges.xyz, limiter ), enableShowEdges );
         return float4( color.xyz, 1.0f );
     }
 

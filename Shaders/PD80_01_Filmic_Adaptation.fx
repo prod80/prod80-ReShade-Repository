@@ -111,8 +111,7 @@ namespace pd80_filmicadaptation
         //softlight
         float3 c = softlight( res.xyz, res.xyz );
         float c1 = 0.0f;
-        if( x < 0.0f ) c1 = x * 0.5f;
-        else           c1 = x;
+        c1 = x < 0.0f ? c1 = x * 0.5f : c1 = x;
         return lerp( res.xyz, c.xyz, c1 );
     }
 
@@ -128,9 +127,9 @@ namespace pd80_filmicadaptation
     float PS_WriteLuma(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color     = tex2D( samplerColor, texcoord );
-        color.xyz        = SRGBToLinear( color.xyz );
+        color.xyz        = SRGBToLinear( color.xyz ); // Convert to linear to do avg scene luminosity
         float luma       = getLuminance( color.xyz );
-        luma             = max( luma, 0.06f ); //hackjob until better solution
+        luma             = max( luma, 0.06f ); // give it a min value so that too dark scenes don't count too much against average
         return log2( luma );
     }
 
@@ -154,12 +153,12 @@ namespace pd80_filmicadaptation
     	float D          = 0.55f  * adj_toe;
     	float E          = 0.05f;
     	float F          = 0.57f;
-    	float W          = 1.0f;
+    	float W          = 1.0f; // working in LDR space, white should be 1.0
         float4 color     = tex2D( samplerColor, texcoord );
         float luma       = tex2D( samplerAvgLuma, float2( 0.5f, 0.5f )).x;
         color.xyz        = SRGBToLinear( color.xyz );
-        float exp        = lerp( 1.0f, 8.0f, luma ); // Increase Toe when brightness goes up
-        float toe        = max( D * exp, D );
+        float exp        = lerp( 1.0f, 8.0f, luma ); // Increase Toe when brightness goes up (increase contrast)
+        float toe        = max( D * exp, D ); // Increase toe, effect is mild even though there's a potential 8x increase here
         color.xyz        = Filmic( color.xyz, A, B, C, toe, E, F, W );
 
         return float4( color.xyz, 1.0f );

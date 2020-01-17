@@ -597,8 +597,7 @@ namespace pd80_hqbloom
         }
         float3 bcolor    = screen( color.xyz, bloom.xyz );
         color.xyz        = lerp( color.xyz, bcolor.xyz, BloomMix );
-        if( debugBloom == TRUE )
-            color.xyz    = bloom.xyz; //to render only bloom on screen
+        color.xyz        = lerp( color.xyz, bloom.xyz, debugBloom ); // render only bloom to screen
         return float4( color.xyz, 1.0f );
     }
 

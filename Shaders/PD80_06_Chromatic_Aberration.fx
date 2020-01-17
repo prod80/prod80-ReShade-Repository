@@ -197,9 +197,7 @@ namespace pd80_ca
             // Radial: Y + 90 w/ multiplying with uv.xy
             case 0:
             {
-                degreesY      = degrees + 90;
-                if ( degrees + 90 > 360 )
-                    degreesY  = degrees + 90 - 360;
+                degreesY      = degrees + 90 > 360 ? degreesY = degrees + 90 - 360 : degrees + 90;
                 c             = cos( radians( degrees )) * uv.x;
                 s             = sin( radians( degreesY )) * uv.y;
             }
@@ -214,9 +212,7 @@ namespace pd80_ca
             // Full screen Radial
             case 2:
             {
-                degreesY      = degrees + 90;
-                if ( degrees + 90 > 360 )
-                    degreesY  = degrees + 90 - 360;
+                degreesY      = degrees + 90 > 360 ? degreesY = degrees + 90 - 360 : degrees + 90;
                 caintensity.x = 1.0f;
                 c             = cos( radians( degrees )) * uv.x;
                 s             = sin( radians( degreesY )) * uv.y;
@@ -259,10 +255,8 @@ namespace pd80_ca
         //color.xyz         /= ( sampleSTEPS / 3.0f * 2.0f ); // Too crude and doesn't work with low sampleSTEPS ( too dim )
         color.xyz           /= dot( d.xyz, 0.333333f ); // seems so-so OK
         color.xyz           = lerp( orig.xyz, color.xyz, CA_strength );
-        if( show_CA )
-            color.xyz       = vignetteColor.xyz * caintensity.x + ( 1.0f - caintensity.x ) * color.xyz;
-        if( display_depth )
-            color.xyz       = depth.xxx;
+        color.xyz           = lerp( color.xyz, vignetteColor.xyz * caintensity.x + ( 1.0f - caintensity.x ) * color.xyz, show_CA );
+        color.xyz           = lerp( color.xyz, depth.xxx, display_depth );
         return float4( color.xyz, 1.0f );
     }
 

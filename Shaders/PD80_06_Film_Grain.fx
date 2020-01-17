@@ -233,8 +233,7 @@ namespace pd80_filmgrain
         float lum         = dot( color.xyz, 0.333333f ); // Just using average here
         noise.xyz         = lerp( noise.xyz * grainIntLow, noise.xyz * grainIntHigh, fade( lum )); // Noise adjustments based on average intensity
         color.xyz         = lerp( color.xyz, color.xyz + ( noise.xyz * d ), grainAmount );
-        if( display_depth )
-            color.xyz     = d.xxx;
+        color.xyz         = lerp( color.xyz, depth.xxx, display_depth );
         return float4( color.xyz, 1.0f );
     }
 

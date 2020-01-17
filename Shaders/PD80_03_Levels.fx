@@ -39,38 +39,30 @@ namespace pd80_levels
         that using depth buffer can be odd on something like Levels
         Uncomment ( remove "//" ) the line below to enable this feature
     */
-
-    //#define USE_DEPTH 
+    #ifndef LEVELS_USE_DEPTH
+        #define LEVELS_USE_DEPTH    0 //0 = disable, 1 = enable
+    #endif
 
 
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
-    uniform bool lumalevels <
-        ui_label = "Allow average scene luminosity to influence Black OUT.\nWhen NOT selected Black OUT minimum is ignored.";
-        ui_category = "Levels";
-        > = false;
     uniform float3 ib <
         ui_type = "color";
-        ui_label = "Black IN";
+        ui_label = "Black IN Level";
         ui_category = "Levels";
         > = float3(0.0, 0.0, 0.0);
     uniform float3 iw <
         ui_type = "color";
-        ui_label = "White IN";
+        ui_label = "White IN Level";
         ui_category = "Levels";
         > = float3(1.0, 1.0, 1.0);
-    uniform float3 obmin <
+    uniform float3 ob <
         ui_type = "color";
-        ui_label = "Black OUT minimum";
+        ui_label = "Black OUT Level";
         ui_category = "Levels";
-        > = float3(0.016, 0.016, 0.016);
-    uniform float3 obmax <
-        ui_type = "color";
-        ui_label = "Black OUT maximum";
-        ui_category = "Levels";
-        > = float3(0.036, 0.036, 0.036);
+        > = float3(0.0, 0.0, 0.0);
     uniform float3 ow <
         ui_type = "color";
-        ui_label = "White OUT";
+        ui_label = "White OUT Level";
         ui_category = "Levels";
         > = float3(1.0, 1.0, 1.0);
     uniform float ig <
@@ -80,13 +72,9 @@ namespace pd80_levels
         ui_min = 0.05;
         ui_max = 10.0;
         > = 1.0;
-    #ifdef USE_DEPTH
-    uniform bool use_depth <
-        ui_label = "Enable depth based adjustments.\nMake sure you have setup your depth buffer correctly.";
-        ui_category = "Levels: Depth";
-        > = false;
+    #if( LEVELS_USE_DEPTH == 1 )
     uniform bool display_depth <
-        ui_label = "Show depth texture.\nThe below adjustments only apply to white areas.";
+        ui_label = "Show depth texture.\nThe below adjustments only apply to white areas.\0Make sure you have your depth texture setup correctly.";
         ui_category = "Levels: Depth";
         > = false;
     uniform float depthStart <
@@ -112,27 +100,22 @@ namespace pd80_levels
         > = 1.0;
     uniform float3 ibd <
         ui_type = "color";
-        ui_label = "Black IN Far";
+        ui_label = "Black IN Level Far";
         ui_category = "Levels: Far";
         > = float3(0.0, 0.0, 0.0);
     uniform float3 iwd <
         ui_type = "color";
-        ui_label = "White IN Far";
+        ui_label = "White IN Level Far";
         ui_category = "Levels: Far";
         > = float3(1.0, 1.0, 1.0);
-    uniform float3 obmind <
+    uniform float3 obd <
         ui_type = "color";
-        ui_label = "Black OUT minimum Far";
+        ui_label = "Black OUT Level Far";
         ui_category = "Levels: Far";
-        > = float3(0.016, 0.016, 0.016);
-    uniform float3 obmaxd <
-        ui_type = "color";
-        ui_label = "Black OUT maximum Far";
-        ui_category = "Levels: Far";
-        > = float3(0.036, 0.036, 0.036);
+        > = float3(0.0, 0.0, 0.0);
     uniform float3 owd <
         ui_type = "color";
-        ui_label = "White OUT Far";
+        ui_label = "White OUT Level Far";
         ui_category = "Levels: Far";
         > = float3(1.0, 1.0, 1.0);
     uniform float igd <
@@ -145,87 +128,26 @@ namespace pd80_levels
     #endif
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
-    texture texCLuma { Width = 256; Height = 256; Format = R16F; MipLevels = 8; };
-    texture texCAvgLuma { Format = R16F; };
-    texture texCPrevAvgLuma { Format = R16F; };
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerColor { Texture = texColorBuffer; };
-    sampler samplerCLuma { Texture = texCLuma; };
-    sampler samplerCAvgLuma { Texture = texCAvgLuma; };
-    sampler samplerCPrevAvgLuma { Texture = texCPrevAvgLuma; };
     //// DEFINES ////////////////////////////////////////////////////////////////////
-    #define LumCoeff float3(0.212656, 0.715158, 0.072186)
-    uniform float Frametime < source = "frametime"; >;
+
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
-    float getLuminance( in float3 x )
-    {
-        return dot( x, LumCoeff );
-    }
-
-    float3 LinearTosRGB( in float3 color )
-    {
-        float3 x         = color * 12.92f;
-        float3 y         = 1.055f * pow( saturate( color ), 1.0f / 2.4f ) - 0.055f;
-        float3 clr       = color;
-        clr.r            = color.r < 0.0031308f ? x.r : y.r;
-        clr.g            = color.g < 0.0031308f ? x.g : y.g;
-        clr.b            = color.b < 0.0031308f ? x.b : y.b;
-        return clr;
-    }
-
-    float3 SRGBToLinear( in float3 color )
-    {
-        float3 x         = color / 12.92f;
-        float3 y         = pow( max(( color + 0.055f ) / 1.055f, 0.0f ), 2.4f );
-        float3 clr       = color;
-        clr.r            = color.r <= 0.04045f ? x.r : y.r;
-        clr.g            = color.g <= 0.04045f ? x.g : y.g;
-        clr.b            = color.b <= 0.04045f ? x.b : y.b;
-        return clr;
-    }
-    
-    float fade( float t )
-    {
-        return t * t * t * ( t * ( t * 6.0 - 15.0 ) + 10.0 );
-    }
-    
-    float3 levels( float3 color, float3 blackin, float3 whitein, float gamma, float3 outblackmin, float3 outblackmax, float3 outwhite, float luma, bool enableluma )
+    float3 levels( float3 color, float3 blackin, float3 whitein, float gamma, float3 outblack, float3 outwhite )
     {
         float3 ret       = max( color.xyz - blackin.xyz, 0.0f )/max( whitein.xyz - blackin.xyz, 0.000001f );
         ret.xyz          = pow( ret.xyz, gamma );
-        float3 outBlack  = outblackmax.xyz;
-        if( enableluma ) 
-            outBlack.xyz = lerp( outblackmin.xyz, outblackmax.xyz, fade( min( luma * 3.0f, 1.0f )));
-        ret.xyz          = ret.xyz * max( outwhite.xyz - outBlack.xyz, 0.000001f ) + outBlack.xyz;
+        ret.xyz          = ret.xyz * max( outwhite.xyz - outblack.xyz, 0.000001f ) + outblack.xyz;
         return ret;
     }
 
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
-    float PS_WriteCLuma(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
-    {
-        float4 color     = tex2D( samplerColor, texcoord );
-        color.xyz        = SRGBToLinear( color.xyz );
-        float luma       = getLuminance( color.xyz );
-        return log2( luma );
-    }
-
-    float PS_AvgCLuma(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
-    {
-        float luma       = tex2Dlod( samplerCLuma, float4(0.5f, 0.5f, 0, 8 )).x;
-        float prevluma   = tex2D( samplerCPrevAvgLuma, float2( 0.5f, 0.5f )).x;
-        luma             = exp2( luma );
-        float fps        = 1000.0f / Frametime;
-        fps              *= 0.5f; //approx. 1 second delay to change luma between bright and dark
-        float avgLuma    = lerp( prevluma, luma, 1.0f / fps ); 
-        return avgLuma;
-    }
 
     float4 PS_Levels(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color     = tex2D( samplerColor, texcoord );
-        float avgluma    = tex2D( samplerCAvgLuma, float2( 0.5f, 0.5f )).x;
         
-        #ifdef USE_DEPTH
+        #if( LEVELS_USE_DEPTH == 1 )
         float depth      = ReShade::GetLinearizedDepth( texcoord ).x;
         depth            = smoothstep( depthStart, depthEnd, depth );
         depth            = pow( depth, depthCurve );
@@ -233,58 +155,24 @@ namespace pd80_levels
 
         color.xyz        = saturate( color.xyz );
         float3 dcolor    = color.xyz;
-
-        color.xyz        = levels( color.xyz, ib.xyz, iw.xyz, ig, obmin.xyz, obmax.xyz, ow.xyz, avgluma, lumalevels );
+        color.xyz        = levels( color.xyz, ib.xyz, iw.xyz, ig, ob.xyz, ow.xyz );
         
-        #ifdef USE_DEPTH
-        if( use_depth )
-        {
-            color.xyz    = lerp( color.xyz,
-                                 levels( dcolor.xyz, ibd.xyz, iwd.xyz, igd, obmind.xyz, obmaxd.xyz, owd.xyz, avgluma, lumalevels ),   depth );
-        }
-        #endif
-        
-        color.xyz        = saturate( color.xyz );
-        
-        #ifdef USE_DEPTH
-        if( display_depth )
-            color.xyz    = depth.xxx;
+        #if( LEVELS_USE_DEPTH == 1 )
+        dcolor.xyz       = levels( dcolor.xyz, ibd.xyz, iwd.xyz, igd, obd.xyz, owd.xyz );
+        color.xyz        = lerp( color.xyz, dcolor.xyz, depth );
+        color.xyz        = lerp( color.xyz, depth.xxx, display_depth );
         #endif
         
         return float4( color.xyz, 1.0f );
     }
 
-    float PS_PrevAvgCLuma(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
-    {
-        float avgLuma    = tex2D( samplerCAvgLuma, float2( 0.5f, 0.5f )).x;
-        return avgLuma;
-    }
-
     //// TECHNIQUES /////////////////////////////////////////////////////////////////
     technique prod80_03_Levels
     {
-        pass CLuma
-        {
-            VertexShader   = PostProcessVS;
-            PixelShader    = PS_WriteCLuma;
-            RenderTarget   = texCLuma;
-        }
-        pass AvgCLuma
-        {
-            VertexShader   = PostProcessVS;
-            PixelShader    = PS_AvgCLuma;
-            RenderTarget   = texCAvgLuma;
-        }
         pass DoLevels
         {
             VertexShader   = PostProcessVS;
             PixelShader    = PS_Levels;
-        }
-        pass PreviousCLuma
-        {
-            VertexShader   = PostProcessVS;
-            PixelShader    = PS_PrevAvgCLuma;
-            RenderTarget   = texCPrevAvgLuma;
         }
     }
 }
