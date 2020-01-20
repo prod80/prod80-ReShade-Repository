@@ -361,9 +361,21 @@ namespace pd80_curvedlevels
     float4 PS_CurvedLevels(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color      = tex2D( samplerColor, texcoord );
-        float2 coords     = float2( texcoord.x, 1.0f - texcoord.y ); // For vizualization
+        float2 coords     = float2(( texcoord.x - 0.75f ) * 4.0f, ( 1.0f - texcoord.y ) * 4.0f ); // For vizualization
         color.xyz         = saturate( color.xyz );
         color.xyz         = pow( color.xyz, 1.0f / 2.2f ); // Don't work in sRGB space
+
+        #if( CURVEDCONTRASTS_VISUALIZE == 1 )
+        int def_bi        = 0;
+        int def_wi        = 255;
+        float def_toe0    = 0.25f;
+        float def_toe1    = 0.25f;
+        float def_sho0    = 0.75f;
+        float def_sho1    = 0.75f;
+        int def_bo        = 0;
+        int def_wo        = 255;
+        float3 showcurve  = 0.0f;
+        #endif
 
         TonemapParams tc;
         // Grey apply black/white points and curves
@@ -374,10 +386,19 @@ namespace pd80_curvedlevels
         color.xyz         = blackwhiteOUT( color.xyz, black_out_grey/255.0f, white_out_grey/255.0f );
         // Visual
         #if( CURVEDCONTRASTS_VISUALIZE == 1 )
-        float showcurve_g = blackwhiteIN( coords.xxx, black_in_grey/255.0f, white_in_grey/255.0f ).x;
-        showcurve_g       = Tonemap( tc, showcurve_g.xxx ).x;
-        showcurve_g       = blackwhiteOUT( showcurve_g.xxx, black_out_grey/255.0f, white_out_grey/255.0f ).x;
-        color.xyz         = lerp( float3( 0.0f, 0.0f, 1.0f ), color.xyz, smoothstep( 0.0f, 20.0f * BUFFER_RCP_HEIGHT, abs( coords.y - showcurve_g )));
+            if( texcoord.x > 0.747 && texcoord.x < 0.75 && 1.0f - texcoord.y < 0.25 )
+                color.xyz         = float3( 0.7f, 0.7f, 0.7f );
+            if( 1.0f - texcoord.y > 0.25 && 1.0f - texcoord.y < 0.255 && texcoord.x > 0.747 )
+                color.xyz         = float3( 0.7f, 0.7f, 0.7f );
+            if( texcoord.x > 0.75 && texcoord.y > 0.75 )
+            {
+                color.xyz         *= 0.5f;
+                color.xyz         = lerp( float3( 0.7f, 0.7f, 0.7f ), color.xyz, smoothstep( 0.0f, 10.0f * BUFFER_RCP_HEIGHT, abs( coords.y - coords.x )));
+                showcurve.xyz     = blackwhiteIN( coords.xxx, black_in_grey/255.0f, white_in_grey/255.0f );
+                showcurve.xyz     = Tonemap( tc, showcurve.xyz );
+                showcurve.xyz     = blackwhiteOUT( showcurve.xyz, black_out_grey/255.0f, white_out_grey/255.0f );
+                color.xyz         = lerp( float3( 1.0f, 1.0f, 1.0f ), color.xyz, smoothstep( 0.0f, 20.0f * BUFFER_RCP_HEIGHT, abs( coords.y - showcurve.x )));
+            }     
         #endif
         // Red
         float4 red        = setBoundaries( pos0_toe_red, pos1_toe_red, pos0_shoulder_red, pos1_shoulder_red );
@@ -385,18 +406,57 @@ namespace pd80_curvedlevels
         color.x           = blackwhiteIN( color.x, black_in_red/255.0f, white_in_red/255.0f );
         color.x           = Tonemap( tc, color.xxx ).x;
         color.x           = blackwhiteOUT( color.x, black_out_red/255.0f, white_out_red/255.0f );
+        #if( CURVEDCONTRASTS_VISUALIZE == 1 )
+        if( any( float4( def_toe0 - pos0_toe_red, def_toe1 - pos1_toe_red, def_sho0 - pos0_shoulder_red, def_sho1 - pos1_shoulder_red )) ||
+            any( int4(   def_bi - black_in_red, def_wi - white_in_red, def_bo - black_out_red, def_wo - white_out_red )))
+        {
+            if( texcoord.x > 0.75 && texcoord.y > 0.75 )
+            {
+                showcurve.x       = blackwhiteIN( showcurve.xxx, black_in_red/255.0f, white_in_red/255.0f ).x;
+                showcurve.x       = Tonemap( tc, showcurve.xxx ).x;
+                showcurve.x       = blackwhiteOUT( showcurve.xxx, black_out_red/255.0f, white_out_red/255.0f ).x;
+                color.xyz         = lerp( float3( 1.0f, 0.0f, 0.0f ), color.xyz, smoothstep( 0.0f, 20.0f * BUFFER_RCP_HEIGHT, abs( coords.y - showcurve.x )));
+            }
+        }
+        #endif
         // Green
         float4 green      = setBoundaries( pos0_toe_green, pos1_toe_green, pos0_shoulder_green, pos1_shoulder_green );
         PrepareTonemapParams( green.xy, green.zw, float2( 1.0f, 1.0f ), tc );
         color.y           = blackwhiteIN( color.y, black_in_green/255.0f, white_in_green/255.0f );
         color.y           = Tonemap( tc, color.yyy ).y;
         color.y           = blackwhiteOUT( color.y, black_out_green/255.0f, white_out_green/255.0f );
+        #if( CURVEDCONTRASTS_VISUALIZE == 1 )
+        if( any( float4( def_toe0 - pos0_toe_green, def_toe1 - pos1_toe_green, def_sho0 - pos0_shoulder_green, def_sho1 - pos1_shoulder_green )) ||
+            any( int4(   def_bi - black_in_green, def_wi - white_in_green, def_bo - black_out_green, def_wo - white_out_green )))
+        {
+            if( texcoord.x > 0.75 && texcoord.y > 0.75 )
+            {
+                showcurve.y       = blackwhiteIN( showcurve.yyy, black_in_green/255.0f, white_in_green/255.0f ).y;
+                showcurve.y       = Tonemap( tc, showcurve.yyy ).y;
+                showcurve.y       = blackwhiteOUT( showcurve.yyy, black_out_green/255.0f, white_out_green/255.0f ).y;
+                color.xyz         = lerp( float3( 0.0f, 1.0f, 0.0f ), color.xyz, smoothstep( 0.0f, 20.0f * BUFFER_RCP_HEIGHT, abs( coords.y - showcurve.y )));
+            }
+        }
+        #endif
         // Blue
         float4 blue       = setBoundaries( pos0_toe_blue, pos1_toe_blue, pos0_shoulder_blue, pos1_shoulder_blue );
         PrepareTonemapParams( blue.xy, blue.zw, float2( 1.0f, 1.0f ), tc );
         color.z           = blackwhiteIN( color.z, black_in_blue/255.0f, white_in_blue/255.0f );
         color.z           = Tonemap( tc, color.zzz ).z;
         color.z           = blackwhiteOUT( color.z, black_out_blue/255.0f, white_out_blue/255.0f );
+        #if( CURVEDCONTRASTS_VISUALIZE == 1 )
+        if( any( float4( def_toe0 - pos0_toe_blue, def_toe1 - pos1_toe_blue, def_sho0 - pos0_shoulder_blue, def_sho1 - pos1_shoulder_blue )) ||
+            any( int4(   def_bi - black_in_blue, def_wi - white_in_blue, def_bo - black_out_blue, def_wo - white_out_blue )))
+        {
+            if( texcoord.x > 0.75 && texcoord.y > 0.75 )
+            {
+                showcurve.z       = blackwhiteIN( showcurve.zzz, black_in_blue/255.0f, white_in_blue/255.0f ).z;
+                showcurve.z       = Tonemap( tc, showcurve.zzz ).z;
+                showcurve.z       = blackwhiteOUT( showcurve.zzz, black_out_blue/255.0f, white_out_blue/255.0f ).z;
+                color.xyz         = lerp( float3( 0.0f, 0.0f, 1.0f ), color.xyz, smoothstep( 0.0f, 20.0f * BUFFER_RCP_HEIGHT, abs( coords.y - showcurve.z )));
+            }
+        }
+        #endif
         
         color.xyz         = pow( color.xyz, 2.2f );
         return float4( color.xyz, 1.0f );
