@@ -386,12 +386,18 @@ namespace pd80_curvedlevels
         color.xyz         = blackwhiteOUT( color.xyz, black_out_grey/255.0f, white_out_grey/255.0f );
         // Visual
         #if( CURVEDCONTRASTS_VISUALIZE == 1 )
-            float2 bandwidth      = 0.002f;
-            bandwidth.y           = bandwidth.x * ( BUFFER_WIDTH * BUFFER_RCP_HEIGHT );
+            // Draw abunch of lines
+            float4 bandwidth      = float4( 0.002f, 0.002f, 0.0002f, 0.0002f );
+            bandwidth.y           *= ( BUFFER_WIDTH * BUFFER_RCP_HEIGHT );
+            bandwidth.w           *= ( BUFFER_WIDTH * BUFFER_RCP_HEIGHT );
             if( texcoord.x > 0.75 - bandwidth.x && texcoord.x < 0.75 && 1.0f - texcoord.y < 0.25 )
                 color.xyz         = float3( 0.7f, 0.7f, 0.7f );
             if( 1.0f - texcoord.y > 0.25 && 1.0f - texcoord.y < 0.25 + bandwidth.y && texcoord.x > 0.75 - bandwidth.x )
                 color.xyz         = float3( 0.7f, 0.7f, 0.7f );
+            if( texcoord.x > 0.875 - bandwidth.z && texcoord.x < 0.875 + bandwidth.z && 1.0f - texcoord.y < 0.25 )
+                color.xyz         = float3( 1.4f, 1.4f, 1.4f );
+            if( 1.0f - texcoord.y > 0.125f - bandwidth.w && 1.0f - texcoord.y < 0.125 + bandwidth.w && texcoord.x > 0.75 )
+                color.xyz         = float3( 1.4f, 1.4f, 1.4f );
             if( texcoord.x > 0.75 && texcoord.y > 0.75 )
             {
                 color.xyz         *= 0.5f;
