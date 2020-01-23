@@ -7,9 +7,9 @@ Categorized by suggested load order, but use as you see fit.
 
 02: Prepass effects: DoF, Flares, Bloom, etc
 
-03: Level adjustments: Black/White points, Gamma
+03: Level adjustments: Black/White points, Gamma, Curves
 
-04: Color adjustments: B&W, Color Gradients, Selective Color, etc
+04: Color adjustments: B&W, Color Gradients, Selective Color, Color Balance, etc
 
 05: Sharpening
 
