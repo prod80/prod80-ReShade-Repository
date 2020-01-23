@@ -34,6 +34,27 @@ namespace pd80_colorbalance
     //// PREPROCESSOR DEFINITIONS ///////////////////////////////////////////////////
 
     //// UI ELEMENS /////////////////////////////////////////////////////////////////
+    uniform float shadowcurve <
+        ui_label = "Shadow Distribution Curve.\nHigher is less influence";
+        ui_category = "Color Balance";
+        ui_type = "slider";
+        ui_min = 1.0;
+        ui_max = 4.0;
+        > = 1.0;
+    uniform float midcurve <
+        ui_label = "Midtones Distribution Curve.\nHigher is more influence";
+        ui_category = "Color Balance";
+        ui_type = "slider";
+        ui_min = 1.0;
+        ui_max = 4.0;
+        > = 1.0;
+    uniform float highlightcurve <
+        ui_label = "Highlight Distribution Curve.\nHigher is less influence";
+        ui_category = "Color Balance";
+        ui_type = "slider";
+        ui_min = 1.0;
+        ui_max = 4.0;
+        > = 1.0;
     uniform float s_RedShift <
         ui_label = "Cyan <--> Red";
         ui_category = "Shadows: Color Balance";
@@ -112,25 +133,29 @@ namespace pd80_colorbalance
         // For highlights
         float luma   = dot( c.xyz, 0.333f );
         
+        // Determine the distribution curves between shadows, midtones, and highlights
+        float3 dist_s= pow( 1.0f - c.xyz, shadowcurve + midcurve );
+        float3 dist_h= pow( c.xyz, highlightcurve + midcurve );
+
         // Consider color as luma for rest
         // Red Channel
         float low_r  = 1.0f - c.x;
-        low_r        = low_r * low_r;
-        float high_r = c.x * c.x;
+        low_r        = dist_s.x;
+        float high_r = dist_h.x;
         float mid_r  = saturate( 1.0f - low_r - high_r );
         float hl_r   = high_r * ( highlights.x * ( 1.0f - luma ));
         float new_r  = c.x * ( low_r * shadows.x + mid_r * midtones.x ) * ( 1.0f - c.x ) + hl_r;
         // Green Channel
         float low_g  = 1.0f - c.y;
-        low_g        = low_g * low_g;
-        float high_g = c.y * c.y;
+        low_g        = dist_s.y;
+        float high_g = dist_h.y;
         float mid_g  = saturate( 1.0f - low_g - high_g );
         float hl_g   = high_g * ( highlights.y * ( 1.0f - luma ));
         float new_g  = c.y * ( low_g * shadows.y + mid_g * midtones.y ) * ( 1.0f - c.y ) + hl_g;
         // Blue Channel
         float low_b  = 1.0f - c.z;
-        low_b        = low_b * low_b;
-        float high_b = c.z * c.z;
+        low_b        = dist_s.z;
+        float high_b = dist_h.z;
         float mid_b  = saturate( 1.0f - low_b - high_b );
         float hl_b   = high_b * ( highlights.z * ( 1.0f - luma ));
         float new_b  = c.z * ( low_b * shadows.z + mid_b * midtones.z ) * ( 1.0f - c.z ) + hl_b;
