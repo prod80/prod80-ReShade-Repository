@@ -36,42 +36,84 @@
 namespace pd80_blackandwhite
 {
     //// PREPROCESSOR DEFINITIONS ///////////////////////////////////////////////////
-    #ifndef BW_ENABLE_DEBAND
-        #define BW_ENABLE_DEBAND       0  // Default is OFF ( 0 ) as only makes sense on wide blur ranges which is generally not needed in this effect
-    #endif
-    
-    // Min: 0, Max: 3 | Blur Quality, 0 is best quality (full screen) and values higher than that will progessively use lower resolution texture. Value 3 will use 1/4th screen resolution texture size
-    // 0 = Fullscreen   - Ultra
-    // 1 = 1/2th size   - High
-    // 2 = 1/4th size   - Medium
-    #ifndef BW_GAUSSIAN_QUALITY
-        #define BW_GAUSSIAN_QUALITY	    1  // Default = High quality (1) which strikes a balance between performance and image quality
-    #endif
 
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
-    uniform float3 luminosity <
-        ui_type = "color";
-        ui_label = "Select Color to Convert B&W";
+    uniform int bw_mode < __UNIFORM_COMBO_INT1
+        ui_label = "Black & White Conversion";
         ui_category = "Black & White Techniques";
-        > = float3(0.6, 1.0, 0.4);
-    // Gaussian Blur
-    uniform float BlurSigma <
+        ui_items = "Default\0Blue Filter\0Darker\0Green Filter\0High Contrast Blue Filter\0High Contrast Red Filter\0Infrared\0Lighter\0Maximum Black\0Maximum White\0Neutral Density\0Red Filter\0Yellow Filter\0Custom\0";
+        > = 13;
+    uniform float redchannel <
         ui_type = "slider";
-        ui_label = "Blur Width";
-        ui_category = "Black & White Blend Mode";
-        ui_min = 2.0f;
-        ui_max = 10.0f;
-        > = 6.0;
+        ui_label = "Custom: Red Weight";
+        ui_category = "Black & White Techniques";
+        ui_min = -2.0f;
+        ui_max = 3.0f;
+        > = 0.2f;
+    uniform float yellowchannel <
+        ui_type = "slider";
+        ui_label = "Custom: Yellow Weight";
+        ui_category = "Black & White Techniques";
+        ui_min = -2.0f;
+        ui_max = 3.0f;
+        > = 0.4f;
+    uniform float greenchannel <
+        ui_type = "slider";
+        ui_label = "Custom: Green Weight";
+        ui_category = "Black & White Techniques";
+        ui_min = -2.0f;
+        ui_max = 3.0f;
+        > = 0.6f;
+    uniform float cyanchannel <
+        ui_type = "slider";
+        ui_label = "Custom: Cyan Weight";
+        ui_category = "Black & White Techniques";
+        ui_min = -2.0f;
+        ui_max = 3.0f;
+        > = 0.0f;
+    uniform float bluechannel <
+        ui_type = "slider";
+        ui_label = "Custom: Blue Weight";
+        ui_category = "Black & White Techniques";
+        ui_min = -2.0f;
+        ui_max = 3.0f;
+        > = -0.6f;
+    uniform float magentachannel <
+        ui_type = "slider";
+        ui_label = "Custom: Magenta Weight";
+        ui_category = "Black & White Techniques";
+        ui_min = -2.0f;
+        ui_max = 3.0f;
+        > = -0.2f;
+    uniform bool use_tint <
+        ui_label = "Enable Tinting";
+        ui_category = "Tint";
+        > = false;
+    uniform float tinthue <
+        ui_type = "slider";
+        ui_label = "Tint Hue";
+        ui_category = "Tint";
+        ui_min = 0.0f;
+        ui_max = 1.0f;
+        > = 0.083f;
+    uniform float tintsat <
+        ui_type = "slider";
+        ui_label = "Tint Saturation";
+        ui_category = "Tint";
+        ui_min = 0.0f;
+        ui_max = 1.0f;
+        > = 0.3f;
+    /*
     uniform int basecolor_1 < __UNIFORM_COMBO_INT1
         ui_label = "Base Image";
         ui_category = "Black & White Blend Mode";
-        ui_items = "Original Color\0Black & White\0Black & White Gaussian\0";
+        ui_items = "Original Color\0Black & White\0";
         > = 1;
     uniform int blendcolor_1 < __UNIFORM_COMBO_INT1
         ui_label = "Blend Image";
         ui_category = "Black & White Blend Mode";
-        ui_items = "Original Color\0Black & White\0Black & White Gaussian\0";
-        > = 2;
+        ui_items = "Original Color\0Black & White\0";
+        > = 1;
     uniform int blendmode_1 < __UNIFORM_COMBO_INT1
         ui_label = "Blend Mode";
         ui_category = "Black & White Blend Mode";
@@ -84,90 +126,49 @@ namespace pd80_blackandwhite
         ui_min = 0.0f;
         ui_max = 1.0f;
         > = 0.333;
+    */
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
-    texture texColorNew { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
-    #if( BW_GAUSSIAN_QUALITY == 0 )
-        #define SWIDTH   BUFFER_WIDTH
-        #define SHEIGHT  BUFFER_HEIGHT
-        texture texBlurIn { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; }; 
-        texture texBlurH { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
-        texture texBlur { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
-    #endif
-    #if( BW_GAUSSIAN_QUALITY == 1 )
-        #define SWIDTH   ( BUFFER_WIDTH / 4 * 3 )
-        #define SHEIGHT  ( BUFFER_HEIGHT / 4 * 3 )
-        texture texBlurIn { Width = SWIDTH; Height = SHEIGHT; }; 
-        texture texBlurH { Width = SWIDTH; Height = SHEIGHT; };
-        texture texBlur { Width = SWIDTH; Height = SHEIGHT; };
-    #endif
-    #if( BW_GAUSSIAN_QUALITY == 2 )
-        #define SWIDTH   ( BUFFER_WIDTH / 2 )
-        #define SHEIGHT  ( BUFFER_HEIGHT / 2 )
-        texture texBlurIn { Width = SWIDTH; Height = SHEIGHT; }; 
-        texture texBlurH { Width = SWIDTH; Height = SHEIGHT; };
-        texture texBlur { Width = SWIDTH; Height = SHEIGHT; };
-    #endif
-    texture texBlurDeband { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerColor { Texture = texColorBuffer; };
-    sampler samplerColorNew { Texture = texColorNew; };
-    sampler samplerBlurIn { Texture = texBlurIn; };
-    sampler samplerBlurH { Texture = texBlurH; };
-    sampler samplerBlur { Texture = texBlur; };
-    sampler samplerBlurDeband { Texture = texBlurDeband; };
     //// DEFINES ////////////////////////////////////////////////////////////////////
-    #define Pi          3.141592f
-    #define Loops       30 * ( float( BUFFER_WIDTH ) / 1920.0f )
-    #define Quality     0.985f
-    #define px          rcp( SWIDTH )
-    #define py          rcp( SHEIGHT )
+
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
-    #if( BW_ENABLE_DEBAND == 1 )
-    uniform int drandom < source = "random"; min = 0; max = 32767; >;
-
-    void analyze_pixels(float3 ori, sampler2D tex, float2 texcoord, float2 _range, float2 dir, out float3 ref_avg, out float3 ref_avg_diff, out float3 ref_max_diff, out float3 ref_mid_diff1, out float3 ref_mid_diff2)
+    float3 HUEToRGB( float H )
     {
-        // South-east
-        float3 ref        = tex2Dlod( tex, float4( texcoord + _range * dir, 0.0f, 0.0f )).rgb;
-        float3 diff       = abs( ori - ref );
-        ref_max_diff      = diff;
-        ref_avg           = ref;
-        ref_mid_diff1     = ref;
-        // North-west
-        ref               = tex2Dlod( tex, float4( texcoord + _range * -dir, 0.0f, 0.0f )).rgb;
-        diff              = abs( ori - ref );
-        ref_max_diff      = max( ref_max_diff, diff );
-        ref_avg           += ref;
-        ref_mid_diff1     = abs((( ref_mid_diff1 + ref ) * 0.5f ) - ori );
-        // North-east
-        ref               = tex2Dlod( tex, float4( texcoord + _range * float2( -dir.y, dir.x ), 0.0f, 0.0f )).rgb;
-        diff              = abs( ori - ref );
-        ref_max_diff      = max( ref_max_diff, diff );
-        ref_avg           += ref;
-        ref_mid_diff2     = ref;
-        // South-west
-        ref               = tex2Dlod( tex, float4( texcoord + _range * float2( dir.y, -dir.x ), 0.0f, 0.0f )).rgb;
-        diff              = abs( ori - ref );
-        ref_max_diff      = max( ref_max_diff, diff );
-        ref_avg           += ref;
-        ref_mid_diff2     = abs((( ref_mid_diff2 + ref ) * 0.5f ) - ori );
-        // Normalize avg
-        ref_avg           *= 0.25f;
-        ref_avg_diff      = abs( ori - ref_avg );
+        float R          = abs(H * 6.0f - 3.0f) - 1.0f;
+        float G          = 2.0f - abs(H * 6.0f - 2.0f);
+        float B          = 2.0f - abs(H * 6.0f - 4.0f);
+        return saturate( float3( R,G,B ));
     }
 
-    float permute( in float x )
+    float3 RGBToHCV( float3 RGB )
     {
-        return ((34.0f * x + 1.0f) * x) % 289.0f;
+        // Based on work by Sam Hocevar and Emil Persson
+        float4 P         = ( RGB.g < RGB.b ) ? float4( RGB.bg, -1.0f, 2.0f/3.0f ) : float4( RGB.gb, 0.0f, -1.0f/3.0f );
+        float4 Q1        = ( RGB.r < P.x ) ? float4( P.xyw, RGB.r ) : float4( RGB.r, P.yzx );
+        float C          = Q1.x - min( Q1.w, Q1.y );
+        float H          = abs(( Q1.w - Q1.y ) / ( 6 * C + 0.000001f ) + Q1.z );
+        return float3( H, C, Q1.x );
     }
 
-    float rand( in float x )
+    float3 RGBToHSL( float3 RGB )
     {
-        return frac(x / 41.0f);
+        RGB.xyz          = max( RGB.xyz, 0.000001f );
+        float3 HCV       = RGBToHCV(RGB);
+        float L          = HCV.z - HCV.y * 0.5f;
+        float S          = HCV.y / ( 1.0f - abs( L * 2.0f - 1.0f ) + 0.000001f);
+        return float3( HCV.x, S, L );
     }
-    #endif
 
+    float3 HSLToRGB( float3 HSL )
+    {
+        float3 RGB       = HUEToRGB(HSL.x);
+        float C          = (1.0f - abs(2.0f * HSL.z - 1)) * HSL.y;
+        return ( RGB - 0.5f ) * C + HSL.z;
+    }
+
+    /*
     float3 darken(float3 c, float3 b) 		{ return min(b, c);}
     float3 multiply(float3 c, float3 b) 	{ return c*b;}
     float3 linearburn(float3 c, float3 b) 	{ return max(c+b-1.0f, 0.0f);}
@@ -203,189 +204,219 @@ namespace pd80_blackandwhite
         default: return b.xyz;
         }
     }
+    */
+
+    float3 ProcessBW( float3 col, float r, float y, float g, float c, float b, float m )
+    {
+        //float lum          = dot( col.xyz, float3(0.212656, 0.715158, 0.072186));
+        float3 hsl         = RGBToHSL( col.xyz );
+        float lum          = hsl.z;
+        //lum                = abs( lum * 2.0f - 1.0f );
+        //lum                = lum * lum;
+        lum                = 1.0f - lum;
+
+        float weight_r     = max( 1.0f - abs(  hsl.x               * 6.0f ), 0.0f ) +
+                             max( 1.0f - abs(( hsl.x - 1.0f      ) * 6.0f ), 0.0f );
+        float weight_y     = max( 1.0f - abs(( hsl.x - 0.166667f ) * 6.0f ), 0.0f );
+        float weight_g     = max( 1.0f - abs(( hsl.x - 0.333333f ) * 6.0f ), 0.0f );
+        float weight_c     = max( 1.0f - abs(( hsl.x - 0.5f      ) * 6.0f ), 0.0f );
+        float weight_b     = max( 1.0f - abs(( hsl.x - 0.666667f ) * 6.0f ), 0.0f );
+        float weight_m     = max( 1.0f - abs(( hsl.x - 0.833333f ) * 6.0f ), 0.0f );
+
+        float sat          = hsl.y * ( 1.0f - hsl.y ) + hsl.y;
+        //float sat          = 1.0f;
+        float ret          = hsl.z;
+        ret                += ( ret * ( weight_r * r ) * sat * lum );
+        ret                += ( ret * ( weight_y * y ) * sat * lum );
+        ret                += ( ret * ( weight_g * g ) * sat * lum );
+        ret                += ( ret * ( weight_c * c ) * sat * lum );
+        ret                += ( ret * ( weight_b * b ) * sat * lum );
+        ret                += ( ret * ( weight_m * m ) * sat * lum );
+
+        return saturate ( ret );
+    }
+
 
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float4 PS_BlackandWhite(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color      = tex2D( samplerColor, texcoord );
-        // B & W conversion options
-        // Technique 1: Selection of any RGB to create the B&W image
-        float gsMult      = dot( luminosity.xyz, 1.0f );
-        float3 greyscale  = luminosity.xyz / gsMult;
-        color.xyz         = dot( color.xyz, greyscale.xyz );
-        // Technique 2: Use multiplification of R G B or Luma channel to create B&W image
-        // TODO
-        return float4( color.xyz, 1.0f ); // Writes to texColorNew
-    }
-
-    float4 PS_DownscaleImg(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
-    {
-        float4 color      = tex2D( samplerColorNew, texcoord );
-        return float4( color.xyz, 1.0f ); // Writes to texColorNew
-    }
-    
-    float4 PS_GaussianH(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
-    {
-        float4 color      = tex2D( samplerBlurIn, texcoord );
-        float SigmaSum    = 0.0f;
-        float pxlOffset   = 1.5f;
-        float calcOffset  = 0.0f;
-        float2 buffSigma  = 0.0f;
-        float3 Sigma;
-        float bSigma;
-        #if( BW_GAUSSIAN_QUALITY == 0 )
-            bSigma        = BlurSigma;
-        #endif
-        #if( BW_GAUSSIAN_QUALITY == 1 )
-            bSigma        = BlurSigma * 0.75f;
-        #endif
-        #if( BW_GAUSSIAN_QUALITY == 2 )
-            bSigma        = BlurSigma * 0.5f;
-        #endif
-        bSigma            = bSigma * ( float( BUFFER_WIDTH ) / 1920.0 );
-        Sigma.x           = 1.0f / ( sqrt( 2.0f * Pi ) * bSigma );
-        Sigma.y           = exp( -0.5f / ( bSigma * bSigma ));
-        Sigma.z           = Sigma.y * Sigma.y;
-        color.xyz         *= Sigma.x;
-        SigmaSum          += Sigma.x;
-        Sigma.xy          *= Sigma.yz;
-        for( int i = 0; i < Loops && SigmaSum <= Quality; ++i )
+        float3 orig       = color.xyz;
+        
+        float red;  float yellow; float green;
+        float cyan; float blue;   float magenta;
+        
+        switch( bw_mode )
         {
-            buffSigma.x   = Sigma.x * Sigma.y;
-            buffSigma.y   = Sigma.x + buffSigma.x;
-            color         += tex2D( samplerBlurIn, texcoord.xy + float2( pxlOffset*px, 0.0f )) * buffSigma.y;
-            color         += tex2D( samplerBlurIn, texcoord.xy - float2( pxlOffset*px, 0.0f )) * buffSigma.y;
-            SigmaSum      += ( 2.0f * Sigma.x + 2.0f * buffSigma.x );
-            pxlOffset     += 2.0f;
-            Sigma.xy      *= Sigma.yz;
-            Sigma.xy      *= Sigma.yz;
+            case 0: // Default
+            {
+                red      = 0.4f;
+                yellow   = 0.6f;
+                green    = 0.4f;
+                cyan     = 0.6f;
+                blue     = 0.2f;
+                magenta  = 0.8f;
+            }
+            break;
+            case 1: // Blue Filter
+            {
+                red      = 0.0f;
+                yellow   = 0.0f;
+                green    = 0.0f;
+                cyan     = 1.1f;
+                blue     = 1.1f;
+                magenta  = 1.1f;
+            }
+            break;
+            case 2: // Darker
+            {
+                red      = 0.3f;
+                yellow   = 0.5f;
+                green    = 0.3f;
+                cyan     = 0.5f;
+                blue     = 0.1f;
+                magenta  = 0.7f;
+            }
+            break;
+            case 3: // Green Filter
+            {
+                red      = 0.1f;
+                yellow   = 1.0f;
+                green    = 0.9f;
+                cyan     = 0.0f;
+                blue     = -0.9f;
+                magenta  = 0.0f;
+            }
+            break;
+            case 4: // High Contrast Blue Filter
+            {
+                red      = -1.5f;
+                yellow   = -1.0f;
+                green    = -0.5f;
+                cyan     = 1.5f;
+                blue     = 1.5f;
+                magenta  = 1.5f;
+            }
+            break;
+            case 5: // High Contrast Red Filter
+            {
+                red      = 1.2f;
+                yellow   = 1.2f;
+                green    = -0.6f;
+                cyan     = -1.5f;
+                blue     = -2.0f;
+                magenta  = 1.2f;
+            }
+            break;
+            case 6: // Infrared
+            {
+                red      = -1.35f;
+                yellow   = 2.35f;
+                green    = 1.35f;
+                cyan     = -1.35f;
+                blue     = -1.6f;
+                magenta  = -1.07f;
+            }
+            break;
+            case 7: // Lighter
+            {
+                red      = 0.5f;
+                yellow   = 0.7f;
+                green    = 0.5f;
+                cyan     = 0.7f;
+                blue     = 0.3f;
+                magenta  = 0.9f;
+            }
+            break;
+            case 8: // Maximum Black
+            {
+                red      = -1.0f;
+                yellow   = -1.0f;
+                green    = -1.0f;
+                cyan     = -1.0f;
+                blue     = -1.0f;
+                magenta  = -1.0f;
+            }
+            break;
+            case 9: // Maximum White
+            {
+                red      = 1.0f;
+                yellow   = 1.0f;
+                green    = 1.0f;
+                cyan     = 1.0f;
+                blue     = 1.0f;
+                magenta  = 1.0f;
+            }
+            break;
+            case 10: // Neutral Density
+            {
+                red      = 1.28f;
+                yellow   = 1.28f;
+                green    = 1.0f;
+                cyan     = 1.0f;
+                blue     = 1.28f;
+                magenta  = 1.0f;
+            }
+            break;
+            case 11: // Red Filter
+            {
+                red      = 1.2f;
+                yellow   = 1.1f;
+                green    = -0.4f;
+                cyan     = -0.9f;
+                blue     = -1.5f;
+                magenta  = 1.2f;
+            }
+            break;
+            case 12: // Yellow Filter
+            {
+                red      = 1.2f;
+                yellow   = 1.1f;
+                green    = 0.4f;
+                cyan     = -0.6f;
+                blue     = -1.0f;
+                magenta  = 0.7f;
+            }
+            break;
+            case 13: // Custom Filter
+            {
+                red      = redchannel;
+                yellow   = yellowchannel;
+                green    = greenchannel;
+                cyan     = cyanchannel;
+                blue     = bluechannel;
+                magenta  = magentachannel;
+            }
+            break;
+            default:
+            {
+                red      = redchannel;
+                yellow   = yellowchannel;
+                green    = greenchannel;
+                cyan     = cyanchannel;
+                blue     = bluechannel;
+                magenta  = magentachannel;
+            }
+            break;
         }
-        color.xyz         /= SigmaSum;
-        return float4( color.xyz, 1.0f ); // Writes to texBlurH
-    }
-    
-    float4 PS_GaussianV(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
-    {
-        float4 color      = tex2D( samplerBlurH, texcoord );
-        float SigmaSum    = 0.0f;
-        float pxlOffset   = 1.5f;
-        float calcOffset  = 0.0f;
-        float2 buffSigma  = 0.0f;
-        float3 Sigma;
-        float bSigma;
-        #if( BW_GAUSSIAN_QUALITY == 0 )
-            bSigma        = BlurSigma;
-        #endif
-        #if( BW_GAUSSIAN_QUALITY == 1 )
-            bSigma        = BlurSigma * 0.75f;
-        #endif
-        #if( BW_GAUSSIAN_QUALITY == 2 )
-            bSigma        = BlurSigma * 0.5f;
-        #endif
-        bSigma            = bSigma * ( float( BUFFER_WIDTH ) / 1920.0 );
-        Sigma.x           = 1.0f / ( sqrt( 2.0f * Pi ) * bSigma );
-        Sigma.y           = exp( -0.5f / ( bSigma * bSigma ));
-        Sigma.z           = Sigma.y * Sigma.y;
-        color.xyz         *= Sigma.x;
-        SigmaSum          += Sigma.x;
-        Sigma.xy          *= Sigma.yz;
-        for( int i = 0; i < Loops && SigmaSum < Quality; ++i )
-        {
-            buffSigma.x   = Sigma.x * Sigma.y;
-            buffSigma.y   = Sigma.x + buffSigma.x;
-            color         += tex2D( samplerBlurH, texcoord.xy + float2( 0.0f, pxlOffset*py )) * buffSigma.y;
-            color         += tex2D( samplerBlurH, texcoord.xy - float2( 0.0f, pxlOffset*py )) * buffSigma.y;
-            SigmaSum      += ( 2.0f * Sigma.x + 2.0f * buffSigma.x );
-            pxlOffset     += 2.0f;
-            Sigma.xy      *= Sigma.yz;
-            Sigma.xy      *= Sigma.yz;
-        }
-        color.xyz         /= SigmaSum;
-        return float4( color.xyz, 1.0f ); // Writes to texBlur
-    }
-
-    #if( BW_ENABLE_DEBAND == 1 )
-
-    float4 PS_BloomDeband(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
-    {
-        float4 color      = tex2D( samplerBlur, texcoord );
-        float avgdiff     = 3.4f / 255.0f;
-        float maxdiff     = 6.8f / 255.0f;
-        float middiff     = 3.3f / 255.0f;
-        float h           = permute( permute( permute( texcoord.x ) + texcoord.y ) + drandom / 32767.0f );
-        float3 ref_avg;
-        float3 ref_avg_diff;
-        float3 ref_max_diff;
-        float3 ref_mid_diff1;
-        float3 ref_mid_diff2;
-        float3 ori        = color.xyz;
-        float3 res;
-        float dir         = rand( permute( h )) * 6.2831853f;
-        float2 o          = float2( cos( dir ), sin( dir ));
-        float range       = 6.0f / ( BW_GAUSSIAN_QUALITY + 1 );
-        for ( int i = 1; i <= 4; ++i )
-        {
-            float dist    = rand(h) * range * i;
-            float2 pt     = dist * float2( px, py );
-            analyze_pixels(ori, samplerBlur, texcoord, pt, o,
-                            ref_avg,
-                            ref_avg_diff,
-                            ref_max_diff,
-                            ref_mid_diff1,
-                            ref_mid_diff2);
-            float3 ref_avg_diff_threshold = avgdiff * i;
-            float3 ref_max_diff_threshold = maxdiff * i;
-            float3 ref_mid_diff_threshold = middiff * i;
-            float3 factor = pow(saturate(3.0 * (1.0 - ref_avg_diff  / ref_avg_diff_threshold)) *
-                            saturate(3.0 * (1.0 - ref_max_diff  / ref_max_diff_threshold)) *
-                            saturate(3.0 * (1.0 - ref_mid_diff1 / ref_mid_diff_threshold)) *
-                            saturate(3.0 * (1.0 - ref_mid_diff2 / ref_mid_diff_threshold)), 0.1);
-            res           = lerp(ori, ref_avg, factor);
-            h             = permute(h);
-        }
-        const float dither_bit  = 8.0f;
-        float grid_position     = frac(dot(texcoord, (float2( BUFFER_WIDTH, BUFFER_HEIGHT ) * float2(1.0 / 16.0, 10.0 / 36.0)) + 0.25));
-        float dither_shift      = 0.25 * (1.0 / (pow(2, dither_bit) - 1.0));
-        float3 dither_shift_RGB = float3(dither_shift, -dither_shift, dither_shift);
-        dither_shift_RGB        = lerp(2.0 * dither_shift_RGB, -2.0 * dither_shift_RGB, grid_position); //shift acording to grid position.
-        res                     += dither_shift_RGB;
-        color.xyz               = res.xyz;
-        return float4( color.xyz, 1.0f ); // Writes to texBlurDeband
-    }
-
-    #endif
-
-    float4 PS_BlendImgBlur(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
-    {
-        float4 bwcolor    = tex2D( samplerColorNew, texcoord );
-        float4 bwblur     = tex2D( samplerBlur, texcoord );
-        #if( BW_ENABLE_DEBAND == 1 )
-        bwblur.xyz        = tex2D( samplerBlurDeband, texcoord ).xyz;
-        #endif
-        float4 orig       = tex2D( samplerColor, texcoord );
-        float3 base;
-        float3 blend;
-        float3 ret;
-        float3 color;
+        // Do the Black & White
+        color.xyz         = ProcessBW( color.xyz, red, yellow, green, cyan, blue, magenta );
+        // Do the tinting
+        color.xyz         = lerp( color.xyz, HSLToRGB( float3( tinthue, tintsat, color.x )), use_tint );
+        
         /*
-            Color or Targets
-            0 = Original Color
-            1 = B&W Image
-            2 = B&W Gaussian Blur
-        */
+        // Do the blending
+        float3 base; float3 blend; float3 ret;
         switch( basecolor_1 )
         {
             case 0:
                 base.xyz  = orig.xyz;
                 break;
             case 1:
-                base.xyz  = bwcolor.xyz;
-                break;
-            case 2:
-                base.xyz  = bwblur.xyz;
+                base.xyz  = color.xyz;
                 break;
             default:
-                base.xyz  = bwcolor.xyz;
+                base.xyz  = color.xyz;
                 break;
         }
         switch( blendcolor_1 )
@@ -394,20 +425,18 @@ namespace pd80_blackandwhite
                 blend.xyz = orig.xyz;
                 break;
             case 1:
-                blend.xyz = bwcolor.xyz;
-                break;
-            case 2:
-                blend.xyz = bwblur.xyz;
+                blend.xyz = color.xyz;
                 break;
             default:
-                base.xyz  = bwblur.xyz;
+                base.xyz  = color.xyz;
                 break;
         }
         ret.xyz           = createBlend( base.xyz, blend.xyz, blendmode_1 );
         color.xyz         = lerp( base.xyz, ret.xyz, opacity_1 );
-        return float4( color.xyz, 1.0f ); // Final output
-    }
+        */
 
+        return float4( color.xyz, 1.0f ); // Writes to texColorNew
+    }
 
     //// TECHNIQUES /////////////////////////////////////////////////////////////////
     technique prod80_04_Black_and_White
@@ -416,38 +445,6 @@ namespace pd80_blackandwhite
         {
             VertexShader  = PostProcessVS;
             PixelShader   = PS_BlackandWhite;
-            RenderTarget  = texColorNew;
-        }
-        pass prod80_Downscale
-        {
-            VertexShader  = PostProcessVS;
-            PixelShader   = PS_DownscaleImg;
-            RenderTarget  = texBlurIn;
-        }
-        pass prod80_BlurH
-        {
-            VertexShader  = PostProcessVS;
-            PixelShader   = PS_GaussianH;
-            RenderTarget  = texBlurH;
-        }
-        pass prod80_Blur
-        {
-            VertexShader  = PostProcessVS;
-            PixelShader   = PS_GaussianV;
-            RenderTarget  = texBlur;
-        }
-        #if( BW_ENABLE_DEBAND == 1 )
-        pass prod80_BlurDeband
-        {
-            VertexShader  = PostProcessVS;
-            PixelShader   = PS_BloomDeband;
-            RenderTarget  = texBlurDeband;
-        }
-        #endif
-        pass prod80_Blend
-        {
-            VertexShader  = PostProcessVS;
-            PixelShader   = PS_BlendImgBlur;
         }
     }
 }
