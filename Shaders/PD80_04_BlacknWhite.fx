@@ -3,10 +3,6 @@
     Author      : prod80 (Bas Veth)
     License     : MIT, Copyright (c) 2020 prod80
 
-    Additional credits
-    - Deband effect by haasn, optimized for Reshade by JPulowski
-      License: MIT, Copyright (c) 2015 Niklas Haas
-
 
     MIT License
 
@@ -103,30 +99,6 @@ namespace pd80_blackandwhite
         ui_min = 0.0f;
         ui_max = 1.0f;
         > = 0.3f;
-    /*
-    uniform int basecolor_1 < __UNIFORM_COMBO_INT1
-        ui_label = "Base Image";
-        ui_category = "Black & White Blend Mode";
-        ui_items = "Original Color\0Black & White\0";
-        > = 1;
-    uniform int blendcolor_1 < __UNIFORM_COMBO_INT1
-        ui_label = "Blend Image";
-        ui_category = "Black & White Blend Mode";
-        ui_items = "Original Color\0Black & White\0";
-        > = 1;
-    uniform int blendmode_1 < __UNIFORM_COMBO_INT1
-        ui_label = "Blend Mode";
-        ui_category = "Black & White Blend Mode";
-        ui_items = "Normal\0Darken\0Multiply\0Linearburn\0Colorburn\0Lighten\0Screen\0Colordodge\0Lineardodge\0Overlay\0Softlight\0Vividlight\0Linearlight\0Pinlight\0";
-        > = 10;
-    uniform float opacity_1 <
-        ui_type = "slider";
-        ui_label = "Opacity";
-        ui_category = "Black & White Blend Mode";
-        ui_min = 0.0f;
-        ui_max = 1.0f;
-        > = 0.333;
-    */
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
@@ -168,52 +140,10 @@ namespace pd80_blackandwhite
         return ( RGB - 0.5f ) * C + HSL.z;
     }
 
-    /*
-    float3 darken(float3 c, float3 b) 		{ return min(b, c);}
-    float3 multiply(float3 c, float3 b) 	{ return c*b;}
-    float3 linearburn(float3 c, float3 b) 	{ return max(c+b-1.0f, 0.0f);}
-    float3 colorburn(float3 c, float3 b) 	{ return b==0.0f ? b:max((1.0f-((1.0f-c)/b)), 0.0f);}
-    float3 lighten(float3 c, float3 b) 		{ return max(b, c);}
-    float3 screen(float3 c, float3 b) 		{ return 1.0f-(1.0f-c)*(1.0f-b);}
-    float3 colordodge(float3 c, float3 b) 	{ return b==1.0f ? b:min(c/(1.0f-b), 1.0f);}
-    float3 lineardodge(float3 c, float3 b) 	{ return min(c+b, 1.0f);}
-    float3 overlay(float3 c, float3 b) 		{ return c<0.5f ? 2.0f*c*b:(1.0f-2.0f*(1.0f-c)*(1.0f-b));}
-    float3 softlight(float3 c, float3 b) 	{ return b<0.5f ? (2.0f*c*b+c*c*(1.0f-2.0f*b)):(sqrt(c)*(2.0f*b-1.0f)+2.0f*c*(1.0f-b));}
-    float3 vividlight(float3 c, float3 b) 	{ return b<0.5f ? colorburn(c, (2.0f*b)):colordodge(c, (2.0f*(b-0.5f)));}
-    float3 linearlight(float3 c, float3 b) 	{ return b<0.5f ? linearburn(c, (2.0f*b)):lineardodge(c, (2.0f*(b-0.5f)));}
-    float3 pinlight(float3 c, float3 b) 	{ return b<0.5f ? darken(c, (2.0f*b)):lighten(c, (2.0f*(b-0.5f)));}
-
-    float3 createBlend( float3 c, float3 b, int mode )
-    {
-    switch( mode )
-        {
-        case 0:  return b.xyz;
-        case 1:  return darken( c.xyz, b.xyz);
-        case 2:  return multiply( c.xyz, b.xyz);
-        case 3:  return linearburn( c.xyz, b.xyz);
-        case 4:  return colorburn( c.xyz, b.xyz);
-        case 5:  return lighten( c.xyz, b.xyz);
-        case 6:  return screen( c.xyz, b.xyz);
-        case 7:  return colordodge( c.xyz, b.xyz);
-        case 8:  return lineardodge( c.xyz, b.xyz);
-        case 9:  return overlay( c.xyz, b.xyz);
-        case 10: return softlight( c.xyz, b.xyz);
-        case 11: return vividlight( c.xyz, b.xyz);
-        case 12: return linearlight( c.xyz, b.xyz);
-        case 13: return pinlight( c.xyz, b.xyz);
-        default: return b.xyz;
-        }
-    }
-    */
-
     float3 ProcessBW( float3 col, float r, float y, float g, float c, float b, float m )
     {
-        //float lum          = dot( col.xyz, float3(0.212656, 0.715158, 0.072186));
         float3 hsl         = RGBToHSL( col.xyz );
-        float lum          = hsl.z;
-        //lum                = abs( lum * 2.0f - 1.0f );
-        //lum                = lum * lum;
-        lum                = 1.0f - lum;
+        float lum          = 1.0f - hsl.z;
 
         float weight_r     = max( 1.0f - abs(  hsl.x               * 6.0f ), 0.0f ) +
                              max( 1.0f - abs(( hsl.x - 1.0f      ) * 6.0f ), 0.0f );
@@ -224,7 +154,6 @@ namespace pd80_blackandwhite
         float weight_m     = max( 1.0f - abs(( hsl.x - 0.833333f ) * 6.0f ), 0.0f );
 
         float sat          = hsl.y * ( 1.0f - hsl.y ) + hsl.y;
-        //float sat          = 1.0f;
         float ret          = hsl.z;
         ret                += ( ret * ( weight_r * r ) * sat * lum );
         ret                += ( ret * ( weight_y * y ) * sat * lum );
@@ -403,39 +332,8 @@ namespace pd80_blackandwhite
         color.xyz         = ProcessBW( color.xyz, red, yellow, green, cyan, blue, magenta );
         // Do the tinting
         color.xyz         = lerp( color.xyz, HSLToRGB( float3( tinthue, tintsat, color.x )), use_tint );
-        
-        /*
-        // Do the blending
-        float3 base; float3 blend; float3 ret;
-        switch( basecolor_1 )
-        {
-            case 0:
-                base.xyz  = orig.xyz;
-                break;
-            case 1:
-                base.xyz  = color.xyz;
-                break;
-            default:
-                base.xyz  = color.xyz;
-                break;
-        }
-        switch( blendcolor_1 )
-        {
-            case 0:
-                blend.xyz = orig.xyz;
-                break;
-            case 1:
-                blend.xyz = color.xyz;
-                break;
-            default:
-                base.xyz  = color.xyz;
-                break;
-        }
-        ret.xyz           = createBlend( base.xyz, blend.xyz, blendmode_1 );
-        color.xyz         = lerp( base.xyz, ret.xyz, opacity_1 );
-        */
 
-        return float4( color.xyz, 1.0f ); // Writes to texColorNew
+        return float4( color.xyz, 1.0f );
     }
 
     //// TECHNIQUES /////////////////////////////////////////////////////////////////
@@ -448,5 +346,3 @@ namespace pd80_blackandwhite
         }
     }
 }
-
-
