@@ -37,7 +37,7 @@ namespace pd80_blackandwhite
     uniform int bw_mode < __UNIFORM_COMBO_INT1
         ui_label = "Black & White Conversion";
         ui_category = "Black & White Techniques";
-        ui_items = "Default\0Blue Filter\0Darker\0Green Filter\0High Contrast Blue Filter\0High Contrast Red Filter\0Infrared\0Lighter\0Maximum Black\0Maximum White\0Neutral Density\0Red Filter\0Yellow Filter\0Custom\0";
+        ui_items = "Red Filter\0Green Filter\0Blue Higher\0High Contrast Red Filter\0High Contrast Green Filter\0High Contrast Blue Filter\0Infrared\0Maximum Black\0Maximum White\0Neutral Density\0Neutral Green Filter\0Maintain Contrasts\0High Contrast\0Custom\0";
         > = 13;
     uniform float redchannel <
         ui_type = "slider";
@@ -140,19 +140,28 @@ namespace pd80_blackandwhite
         return ( RGB - 0.5f ) * C + HSL.z;
     }
 
+    float curve( float x )
+    {
+        return x * x * ( 3.0 - 2.0 * x );
+    }
+
     float3 ProcessBW( float3 col, float r, float y, float g, float c, float b, float m )
     {
         float3 hsl         = RGBToHSL( col.xyz );
+        // Inverse of luma channel to no apply boosts to intensity on already intense brightness (and blow out easily)
         float lum          = 1.0f - hsl.z;
 
-        float weight_r     = max( 1.0f - abs(  hsl.x               * 6.0f ), 0.0f ) +
-                             max( 1.0f - abs(( hsl.x - 1.0f      ) * 6.0f ), 0.0f );
-        float weight_y     = max( 1.0f - abs(( hsl.x - 0.166667f ) * 6.0f ), 0.0f );
-        float weight_g     = max( 1.0f - abs(( hsl.x - 0.333333f ) * 6.0f ), 0.0f );
-        float weight_c     = max( 1.0f - abs(( hsl.x - 0.5f      ) * 6.0f ), 0.0f );
-        float weight_b     = max( 1.0f - abs(( hsl.x - 0.666667f ) * 6.0f ), 0.0f );
-        float weight_m     = max( 1.0f - abs(( hsl.x - 0.833333f ) * 6.0f ), 0.0f );
+        // Calculate the individual weights per color component in RGB and CMY
+        // Sum of all the weights for a given hue is 1.0
+        float weight_r     = curve( max( 1.0f - abs(  hsl.x               * 6.0f ), 0.0f )) +
+                             curve( max( 1.0f - abs(( hsl.x - 1.0f      ) * 6.0f ), 0.0f ));
+        float weight_y     = curve( max( 1.0f - abs(( hsl.x - 0.166667f ) * 6.0f ), 0.0f ));
+        float weight_g     = curve( max( 1.0f - abs(( hsl.x - 0.333333f ) * 6.0f ), 0.0f ));
+        float weight_c     = curve( max( 1.0f - abs(( hsl.x - 0.5f      ) * 6.0f ), 0.0f ));
+        float weight_b     = curve( max( 1.0f - abs(( hsl.x - 0.666667f ) * 6.0f ), 0.0f ));
+        float weight_m     = curve( max( 1.0f - abs(( hsl.x - 0.833333f ) * 6.0f ), 0.0f ));
 
+        // No saturation (greyscale) should not influence B&W image
         float sat          = hsl.y * ( 1.0f - hsl.y ) + hsl.y;
         float ret          = hsl.z;
         ret                += ( ret * ( weight_r * r ) * sat * lum );
@@ -177,64 +186,64 @@ namespace pd80_blackandwhite
         
         switch( bw_mode )
         {
-            case 0: // Default
+            case 0: // Red Filter
             {
-                red      = 0.4f;
-                yellow   = 0.6f;
-                green    = 0.4f;
-                cyan     = 0.6f;
-                blue     = 0.2f;
-                magenta  = 0.8f;
+                red      = 1.0f;
+                yellow   = 1.0f;
+                green    = -0.9f;
+                cyan     = -1.0f;
+                blue     = -1.2f;
+                magenta  = 1.0f;
             }
             break;
-            case 1: // Blue Filter
+            case 1: // Green Filter
             {
                 red      = 0.0f;
-                yellow   = 0.0f;
-                green    = 0.0f;
-                cyan     = 1.1f;
-                blue     = 1.1f;
-                magenta  = 1.1f;
-            }
-            break;
-            case 2: // Darker
-            {
-                red      = 0.3f;
-                yellow   = 0.5f;
-                green    = 0.3f;
-                cyan     = 0.5f;
-                blue     = 0.1f;
-                magenta  = 0.7f;
-            }
-            break;
-            case 3: // Green Filter
-            {
-                red      = 0.1f;
-                yellow   = 1.0f;
-                green    = 0.9f;
-                cyan     = 0.0f;
+                yellow   = 1.3f;
+                green    = 0.8f;
+                cyan     = 0.3f;
                 blue     = -0.9f;
-                magenta  = 0.0f;
+                magenta  = -0.2f;
             }
             break;
-            case 4: // High Contrast Blue Filter
+            case 2: // Blue Filter
             {
-                red      = -1.5f;
-                yellow   = -1.0f;
-                green    = -0.5f;
-                cyan     = 1.5f;
-                blue     = 1.5f;
-                magenta  = 1.5f;
-            }
-            break;
-            case 5: // High Contrast Red Filter
-            {
-                red      = 1.2f;
-                yellow   = 1.2f;
+                red      = -0.9f;
+                yellow   = -0.8f;
                 green    = -0.6f;
-                cyan     = -1.5f;
-                blue     = -2.0f;
+                cyan     = 1.2f;
+                blue     = 1.2f;
                 magenta  = 1.2f;
+            }
+            break;
+            case 3: // High Contrast Red Filter
+            {
+                red      = 1.5f;
+                yellow   = 2.2f;
+                green    = -0.6f;
+                cyan     = -1.2f;
+                blue     = -2.0f;
+                magenta  = 1.0f;
+            }
+            break;
+            case 4: // High Contrast Green Filter
+            {
+                red      = -0.6f;
+                yellow   = 1.5f;
+                green    = 2.2f;
+                cyan     = 0.0f;
+                blue     = -1.5f;
+                magenta  = -1.0f;
+            }
+            break;
+            case 5: // High Contrast Blue Filter
+            {
+                red      = -2.0f;
+                yellow   = -1.5f;
+                green    = -0.6f;
+                cyan     = 1.5f;
+                blue     = 2.0f;
+                magenta  = 1.0f;
             }
             break;
             case 6: // Infrared
@@ -247,17 +256,7 @@ namespace pd80_blackandwhite
                 magenta  = -1.07f;
             }
             break;
-            case 7: // Lighter
-            {
-                red      = 0.5f;
-                yellow   = 0.7f;
-                green    = 0.5f;
-                cyan     = 0.7f;
-                blue     = 0.3f;
-                magenta  = 0.9f;
-            }
-            break;
-            case 8: // Maximum Black
+            case 7: // Maximum Black
             {
                 red      = -1.0f;
                 yellow   = -1.0f;
@@ -267,7 +266,7 @@ namespace pd80_blackandwhite
                 magenta  = -1.0f;
             }
             break;
-            case 9: // Maximum White
+            case 8: // Maximum White
             {
                 red      = 1.0f;
                 yellow   = 1.0f;
@@ -277,7 +276,7 @@ namespace pd80_blackandwhite
                 magenta  = 1.0f;
             }
             break;
-            case 10: // Neutral Density
+            case 9: // Neutral Density
             {
                 red      = 1.28f;
                 yellow   = 1.28f;
@@ -287,24 +286,34 @@ namespace pd80_blackandwhite
                 magenta  = 1.0f;
             }
             break;
-            case 11: // Red Filter
+            case 10: // Neutral Green Filter
             {
-                red      = 1.2f;
-                yellow   = 1.1f;
-                green    = -0.4f;
-                cyan     = -0.9f;
-                blue     = -1.5f;
-                magenta  = 1.2f;
+                red      = 0.2f;
+                yellow   = 0.4f;
+                green    = 0.6f;
+                cyan     = 0.0f;
+                blue     = -0.6f;
+                magenta  = -0.2f;
             }
             break;
-            case 12: // Yellow Filter
+            case 11: // Maintain Contrasts
             {
-                red      = 1.2f;
-                yellow   = 1.1f;
-                green    = 0.4f;
+                red      = -0.3f;
+                yellow   = 1.0f;
+                green    = -0.3f;
                 cyan     = -0.6f;
                 blue     = -1.0f;
-                magenta  = 0.7f;
+                magenta  = -0.6f;
+            }
+            break;
+            case 12: // High Contrast
+            {
+                red      = -0.3f;
+                yellow   = 2.6f;
+                green    = -0.3f;
+                cyan     = -1.2f;
+                blue     = -0.6f;
+                magenta  = -0.4f;
             }
             break;
             case 13: // Custom Filter
