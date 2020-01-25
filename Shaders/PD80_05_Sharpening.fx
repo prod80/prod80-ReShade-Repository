@@ -111,7 +111,7 @@ namespace pd80_lumasharpen
     float3 HSLToRGB( in float3 HSL )
     {
         float3 RGB       = HUEToRGB(HSL.x);
-        float C          = (1.0f - abs(2.0f * HSL.z - 1)) * HSL.y;
+        float C          = ( 1.0f - abs( 2.0f * HSL.z - 1.0f )) * HSL.y;
         return ( RGB - 0.5f ) * C + HSL.z;
     }
 

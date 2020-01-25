@@ -62,42 +62,42 @@ namespace pd80_conbrisat
         > = 0.0;
     uniform float sat_r <
         ui_label = "Red Saturation";
-        ui_category = "Color Sat Adjustments";
+        ui_category = "Color Saturation Adjustments";
         ui_type = "slider";
         ui_min = -2.0;
         ui_max = 2.0;
         > = 0.0;
     uniform float sat_y <
         ui_label = "Yellow Saturation";
-        ui_category = "Color Sat Adjustments";
+        ui_category = "Color Saturation Adjustments";
         ui_type = "slider";
         ui_min = -2.0;
         ui_max = 2.0;
         > = 0.0;
     uniform float sat_g <
         ui_label = "Green Saturation";
-        ui_category = "Color Sat Adjustments";
+        ui_category = "Color Saturation Adjustments";
         ui_type = "slider";
         ui_min = -2.0;
         ui_max = 2.0;
         > = 0.0;
     uniform float sat_c <
         ui_label = "Cyan Saturation";
-        ui_category = "Color Sat Adjustments";
+        ui_category = "Color Saturation Adjustments";
         ui_type = "slider";
         ui_min = -2.0;
         ui_max = 2.0;
         > = 0.0;
     uniform float sat_b <
         ui_label = "Blue Saturation";
-        ui_category = "Color Sat Adjustments";
+        ui_category = "Color Saturation Adjustments";
         ui_type = "slider";
         ui_min = -2.0;
         ui_max = 2.0;
         > = 0.0;
     uniform float sat_m <
         ui_label = "Magenta Saturation";
-        ui_category = "Color Sat Adjustments";
+        ui_category = "Color Saturation Adjustments";
         ui_type = "slider";
         ui_min = -2.0;
         ui_max = 2.0;
@@ -188,7 +188,7 @@ namespace pd80_conbrisat
         float4 P         = ( RGB.g < RGB.b ) ? float4( RGB.bg, -1.0f, 2.0f/3.0f ) : float4( RGB.gb, 0.0f, -1.0f/3.0f );
         float4 Q1        = ( RGB.r < P.x ) ? float4( P.xyw, RGB.r ) : float4( RGB.r, P.yzx );
         float C          = Q1.x - min( Q1.w, Q1.y );
-        float H          = abs(( Q1.w - Q1.y ) / ( 6 * C + 0.000001f ) + Q1.z );
+        float H          = abs(( Q1.w - Q1.y ) / ( 6.0f * C + 0.000001f ) + Q1.z );
         return float3( H, C, Q1.x );
     }
 
@@ -204,7 +204,7 @@ namespace pd80_conbrisat
     float3 HSLToRGB( float3 HSL )
     {
         float3 RGB       = HUEToRGB(HSL.x);
-        float C          = (1.0f - abs(2.0f * HSL.z - 1)) * HSL.y;
+        float C          = ( 1.0f - abs( 2.0f * HSL.z - 1.0f )) * HSL.y;
         return ( RGB - 0.5f ) * C + HSL.z;
     }
 

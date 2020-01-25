@@ -37,7 +37,7 @@ namespace pd80_blackandwhite
     uniform int bw_mode < __UNIFORM_COMBO_INT1
         ui_label = "Black & White Conversion";
         ui_category = "Black & White Techniques";
-        ui_items = "Red Filter\0Green Filter\0Blue Filter\0High Contrast Red Filter\0High Contrast Green Filter\0High Contrast Blue Filter\0Infrared\0Maximum Black\0Maximum White\0Neutral Density\0Neutral Green Filter\0Maintain Contrasts\0High Contrast\0Custom\0";
+        ui_items = "Red Filter\0Green Filter\0Blue Filter\0High Contrast Red Filter\0High Contrast Green Filter\0High Contrast Blue Filter\0Infrared\0Maximum Black\0Maximum White\0Preserve Luminosity\0Neutral Green Filter\0Maintain Contrasts\0High Contrast\0Custom\0";
         > = 13;
     uniform float redchannel <
         ui_type = "slider";
@@ -127,7 +127,7 @@ namespace pd80_blackandwhite
         float4 P         = ( RGB.g < RGB.b ) ? float4( RGB.bg, -1.0f, 2.0f/3.0f ) : float4( RGB.gb, 0.0f, -1.0f/3.0f );
         float4 Q1        = ( RGB.r < P.x ) ? float4( P.xyw, RGB.r ) : float4( RGB.r, P.yzx );
         float C          = Q1.x - min( Q1.w, Q1.y );
-        float H          = abs(( Q1.w - Q1.y ) / ( 6 * C + 0.000001f ) + Q1.z );
+        float H          = abs(( Q1.w - Q1.y ) / ( 6.0f * C + 0.000001f ) + Q1.z );
         return float3( H, C, Q1.x );
     }
 
@@ -143,7 +143,7 @@ namespace pd80_blackandwhite
     float3 HSLToRGB( float3 HSL )
     {
         float3 RGB       = HUEToRGB(HSL.x);
-        float C          = (1.0f - abs(2.0f * HSL.z - 1)) * HSL.y;
+        float C          = ( 1.0f - abs( 2.0f * HSL.z - 1.0f )) * HSL.y;
         return ( RGB - 0.5f ) * C + HSL.z;
     }
 
@@ -196,7 +196,7 @@ namespace pd80_blackandwhite
         ret                += ( ret * ( weight_b * b ) * sat * lum );
         ret                += ( ret * ( weight_m * m ) * sat * lum );
 
-        return saturate ( ret );
+        return saturate( ret );
     }
 
 
@@ -204,7 +204,7 @@ namespace pd80_blackandwhite
     float4 PS_BlackandWhite(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color      = tex2D( samplerColor, texcoord );
-        float3 orig       = color.xyz;
+        color.xyz         = saturate( color.xyz );
         
         float red;  float yellow; float green;
         float cyan; float blue;   float magenta;
@@ -301,14 +301,14 @@ namespace pd80_blackandwhite
                 magenta  = 1.0f;
             }
             break;
-            case 9: // Neutral Density
+            case 9: // Preserve Luminosity
             {
-                red      = 1.28f;
-                yellow   = 1.28f;
-                green    = 1.0f;
-                cyan     = 1.0f;
-                blue     = 1.28f;
-                magenta  = 1.0f;
+                red      = -0.7f;
+                yellow   = 0.9f;
+                green    = 0.6f;
+                cyan     = 0.1f;
+                blue     = -0.4f;
+                magenta  = -0.4f;
             }
             break;
             case 10: // Neutral Green Filter

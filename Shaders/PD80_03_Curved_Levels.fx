@@ -386,7 +386,7 @@ namespace pd80_curvedlevels
         color.xyz         = blackwhiteOUT( color.xyz, black_out_grey/255.0f, white_out_grey/255.0f );
         // Visual
         #if( CURVEDCONTRASTS_VISUALIZE == 1 )
-            // Draw abunch of lines
+            // Draw a bunch of lines
             float4 bandwidth      = float4( 0.002f, 0.002f, 0.0002f, 0.0002f );
             bandwidth.y           *= ( BUFFER_WIDTH * BUFFER_RCP_HEIGHT );
             bandwidth.w           *= ( BUFFER_WIDTH * BUFFER_RCP_HEIGHT );
