@@ -37,7 +37,7 @@ namespace pd80_blackandwhite
     uniform int bw_mode < __UNIFORM_COMBO_INT1
         ui_label = "Black & White Conversion";
         ui_category = "Black & White Techniques";
-        ui_items = "Red Filter\0Green Filter\0Blue Higher\0High Contrast Red Filter\0High Contrast Green Filter\0High Contrast Blue Filter\0Infrared\0Maximum Black\0Maximum White\0Neutral Density\0Neutral Green Filter\0Maintain Contrasts\0High Contrast\0Custom\0";
+        ui_items = "Red Filter\0Green Filter\0Blue Filter\0High Contrast Red Filter\0High Contrast Green Filter\0High Contrast Blue Filter\0Infrared\0Maximum Black\0Maximum White\0Neutral Density\0Neutral Green Filter\0Maintain Contrasts\0High Contrast\0Custom\0";
         > = 13;
     uniform float redchannel <
         ui_type = "slider";
@@ -98,7 +98,14 @@ namespace pd80_blackandwhite
         ui_category = "Tint";
         ui_min = 0.0f;
         ui_max = 1.0f;
-        > = 0.3f;
+        > = 0.12f;
+    uniform float curve_str <
+        ui_type = "slider";
+        ui_label = "Contrast Smoothness";
+        ui_category = "Smoothness";
+        ui_min = 1.0f;
+        ui_max = 4.0f;
+        > = 1.5f;
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
@@ -140,9 +147,27 @@ namespace pd80_blackandwhite
         return ( RGB - 0.5f ) * C + HSL.z;
     }
 
+    /*
+    float curve( float x )
+    {
+        return x * x * x * ( x * ( x * 6.0 - 15.0 ) + 10.0 );
+    }
+    */
+    
+    /*
     float curve( float x )
     {
         return x * x * ( 3.0 - 2.0 * x );
+    }
+    */
+
+    // Credit to user 'iq' from shadertoy
+    // See https://www.shadertoy.com/view/MdBfR1
+    float curve( float x, float k )
+    {
+        float s = sign( x - 0.5f );
+        float o = ( 1.0f + s ) / 2.0f;
+        return o - 0.5f * s * pow( 2.0f * ( o - s * x ), k );
     }
 
     float3 ProcessBW( float3 col, float r, float y, float g, float c, float b, float m )
@@ -153,13 +178,13 @@ namespace pd80_blackandwhite
 
         // Calculate the individual weights per color component in RGB and CMY
         // Sum of all the weights for a given hue is 1.0
-        float weight_r     = curve( max( 1.0f - abs(  hsl.x               * 6.0f ), 0.0f )) +
-                             curve( max( 1.0f - abs(( hsl.x - 1.0f      ) * 6.0f ), 0.0f ));
-        float weight_y     = curve( max( 1.0f - abs(( hsl.x - 0.166667f ) * 6.0f ), 0.0f ));
-        float weight_g     = curve( max( 1.0f - abs(( hsl.x - 0.333333f ) * 6.0f ), 0.0f ));
-        float weight_c     = curve( max( 1.0f - abs(( hsl.x - 0.5f      ) * 6.0f ), 0.0f ));
-        float weight_b     = curve( max( 1.0f - abs(( hsl.x - 0.666667f ) * 6.0f ), 0.0f ));
-        float weight_m     = curve( max( 1.0f - abs(( hsl.x - 0.833333f ) * 6.0f ), 0.0f ));
+        float weight_r     = curve( max( 1.0f - abs(  hsl.x               * 6.0f ), 0.0f ), curve_str ) +
+                             curve( max( 1.0f - abs(( hsl.x - 1.0f      ) * 6.0f ), 0.0f ), curve_str );
+        float weight_y     = curve( max( 1.0f - abs(( hsl.x - 0.166667f ) * 6.0f ), 0.0f ), curve_str );
+        float weight_g     = curve( max( 1.0f - abs(( hsl.x - 0.333333f ) * 6.0f ), 0.0f ), curve_str );
+        float weight_c     = curve( max( 1.0f - abs(( hsl.x - 0.5f      ) * 6.0f ), 0.0f ), curve_str );
+        float weight_b     = curve( max( 1.0f - abs(( hsl.x - 0.666667f ) * 6.0f ), 0.0f ), curve_str );
+        float weight_m     = curve( max( 1.0f - abs(( hsl.x - 0.833333f ) * 6.0f ), 0.0f ), curve_str );
 
         // No saturation (greyscale) should not influence B&W image
         float sat          = hsl.y * ( 1.0f - hsl.y ) + hsl.y;
