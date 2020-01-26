@@ -40,6 +40,10 @@ namespace pd80_hqbloom
         #define BLOOM_ENABLE_DEBAND 0  // Default is OFF ( 0 ) due to performance impact
     #endif
 
+    #ifndef BLOOM_ENABLE_CA
+        #define BLOOM_ENABLE_CA     0  // Funky stuff
+    #endif
+
     // Min: 0, Max: 3 | Bloom Quality, 0 is best quality (full screen) and values higher than that will progessively use lower resolution texture. Value 3 will use 1/4th screen resolution texture size
     // 0 = Fullscreen   - Ultra
     // 1 = 1/2th size   - High
@@ -60,7 +64,7 @@ namespace pd80_hqbloom
         ui_type = "slider";
         ui_min = 0.0;
         ui_max = 1.0;
-        > = 0.4;
+        > = 1.0;
     uniform float BloomLimit <
         ui_label = "Bloom Threshold";
         ui_tooltip = "The maximum level of Bloom";
@@ -68,7 +72,7 @@ namespace pd80_hqbloom
         ui_type = "slider";
         ui_min = 0.0;
         ui_max = 1.0;
-        > = 0.25;
+        > = 0.28;
     uniform float GreyValue <
         ui_label = "Bloom Exposure 50% Greyvalue";
         ui_tooltip = "Bloom Exposure Compensation";
@@ -76,7 +80,7 @@ namespace pd80_hqbloom
         ui_type = "slider";
         ui_min = 0.0;
         ui_max = 1.0;
-        > = 0.333;
+        > = 0.5;
     uniform float bExposure <
         ui_label = "Bloom Exposure";
         ui_tooltip = "Bloom Exposure Compensation";
@@ -84,7 +88,7 @@ namespace pd80_hqbloom
         ui_type = "slider";
         ui_min = -1.0;
         ui_max = 1.0;
-        > = 0.0;
+        > = 0.25;
     uniform float BlurSigma <
         ui_label = "Bloom Width";
         ui_tooltip = "...";
@@ -93,17 +97,35 @@ namespace pd80_hqbloom
         ui_min = 0.0;
         ui_max = 80.0;
         > = 30.0;
-    uniform bool enableBKelvin <
-        ui_label  = "Enable Bloom Color Temp (K)";
-        ui_category = "Bloom Color Temperature";
-        > = false;
-    uniform uint BKelvin <
+    #if( BLOOM_ENABLE_CA == 1 )
+    uniform int CA_type < __UNIFORM_COMBO_INT1
+        ui_label = "Chromatic Aberration Type";
+        ui_category = "Chromatic Aberration";
+        ui_items = "Center Weighted Radial\0Center Weighted Longitudinal\0Full screen Radial\0Full screen Longitudinal\0";
+        > = 0;
+    uniform int degrees <
         ui_type = "slider";
-        ui_label = "Bloom Color Temp (K)";
-        ui_category = "Bloom Color Temperature";
-        ui_min = 1000;
-        ui_max = 40000;
-        > = 6500;
+        ui_label = "CA Rotation Offset";
+        ui_category = "Chromatic Aberration";
+        ui_min = 0;
+        ui_max = 360;
+        ui_step = 1;
+        > = 135;
+    uniform float CA <
+        ui_type = "slider";
+        ui_label = "CA Global Width";
+        ui_category = "Chromatic Aberration";
+        ui_min = -150.0f;
+        ui_max = 150.0f;
+        > = 60.0;
+    uniform float CA_strength <
+        ui_type = "slider";
+        ui_label = "CA Effect Strength";
+        ui_category = "Chromatic Aberration";
+        ui_min = 0.0f;
+        ui_max = 1.0f;
+        > = 0.5;
+    #endif
     #if( BLOOM_ENABLE_DEBAND == 1 )
     uniform int threshold_preset < __UNIFORM_COMBO_INT1
         ui_label = "Debanding strength";
@@ -159,6 +181,7 @@ namespace pd80_hqbloom
     texture texBLuma { Width = 256; Height = 256; Format = R16F; MipLevels = 8; };
     texture texBAvgLuma { Format = R16F; };
     texture texBPrevAvgLuma { Format = R16F; };
+    texture texCABloom { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
     #if( BLOOM_QUALITY == 0 )
         texture texBloomIn { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; }; 
         texture texBloomH { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
@@ -188,6 +211,7 @@ namespace pd80_hqbloom
     sampler samplerBPrevAvgLuma { Texture = texBPrevAvgLuma; };
     sampler samplerBloomIn { Texture = texBloomIn; };
     sampler samplerBloomH { Texture = texBloomH; };
+    sampler samplerCABloom { Texture = texCABloom; };
     sampler samplerBloom { Texture = texBloom; };
     //// DEFINES ////////////////////////////////////////////////////////////////////
     uniform float Frametime < source = "frametime"; >;
@@ -196,6 +220,7 @@ namespace pd80_hqbloom
     #define Q 0.985f
     #define PI 3.141592f
     #define LOOPCOUNT 150f
+    #define aspect float( BUFFER_WIDTH * BUFFER_RCP_HEIGHT )
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
     #if( BLOOM_ENABLE_DEBAND == 1 )
     float rand( in float x )
@@ -481,9 +506,94 @@ namespace pd80_hqbloom
         return float4( color.xyz, 1.0f );
     }
 
+    #if( BLOOM_ENABLE_CA == 1 )
+    float4 PS_CA(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
+    {
+        float4 color      = 0.0f;
+        float3 orig       = tex2D( samplerBloom, texcoord ).xyz;
+        float px          = BUFFER_RCP_WIDTH;
+        float py          = BUFFER_RCP_HEIGHT;
+
+        float2 coords     = texcoord.xy * 2.0f - 1.0f;
+        float2 uv         = coords.xy;
+        coords.xy         /= float2( 1.0f / aspect, 1.0f );
+        float2 caintensity= length( coords.xy ); // * 2.0f for higher weight in center
+        caintensity.y     = caintensity.x * caintensity.x + 1.0f;
+        caintensity.x     = 1.0f - ( 1.0f / ( caintensity.y * caintensity.y ));
+
+        int degreesY      = degrees;
+        float c           = 0.0f;
+        float s           = 0.0f;
+        switch( CA_type )
+        {
+            // Radial: Y + 90 w/ multiplying with uv.xy
+            case 0:
+            {
+                degreesY      = degrees + 90 > 360 ? degreesY = degrees + 90 - 360 : degrees + 90;
+                c             = cos( radians( degrees )) * uv.x;
+                s             = sin( radians( degreesY )) * uv.y;
+            }
+            break;
+            // Longitudinal: X = Y w/o multiplying with uv.xy
+            case 1:
+            {
+                c             = cos( radians( degrees ));
+                s             = sin( radians( degreesY ));
+            }
+            break;
+            // Full screen Radial
+            case 2:
+            {
+                degreesY      = degrees + 90 > 360 ? degreesY = degrees + 90 - 360 : degrees + 90;
+                caintensity.x = 1.0f;
+                c             = cos( radians( degrees )) * uv.x;
+                s             = sin( radians( degreesY )) * uv.y;
+            }
+            break;
+            // Full screen Longitudinal
+            case 3:
+            {
+                caintensity.x = 1.0f;
+                c             = cos( radians( degrees ));
+                s             = sin( radians( degreesY ));
+            }
+            break;
+        }
+
+        float3 huecolor   = 0.0f;
+        float3 temp       = 0.0f;
+        float o1          = 7.0f;
+        float o2          = 0.0f;
+        float3 d          = 0.0f;
+
+        // Scale CA (hackjob!)
+        float caWidth     = CA * ( max( BUFFER_WIDTH, BUFFER_HEIGHT ) / 1920.0f ); // Scaled for 1920, raising resolution in X or Y should raise scale
+
+        float offsetX     = px * c * caintensity.x;
+        float offsetY     = py * s * caintensity.x;
+
+        for( float i = 0; i < 8.0f; i++ )
+        {
+            huecolor.xyz  = HUEToRGB( i / 8.0f );
+            o2            = lerp( -caWidth, caWidth, i / o1 );
+            temp.xyz      = tex2D( samplerBloom, texcoord.xy + float2( o2 * offsetX, o2 * offsetY )).xyz;
+            color.xyz     += temp.xyz * huecolor.xyz;
+            d.xyz         += huecolor.xyz;
+        }
+        color.xyz           /= dot( d.xyz, 0.333333f ); // seems so-so OK
+        color.xyz           = lerp( orig.xyz, color.xyz, CA_strength );
+        return float4( color.xyz, 1.0f );
+    }
+    #endif
+
     float4 PS_Gaussian(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
+        #if( BLOOM_ENABLE_CA == 0 )
         float4 bloom     = tex2D( samplerBloom, texcoord );
+        #endif
+        #if( BLOOM_ENABLE_CA == 1 )
+        float4 bloom     = tex2D( samplerCABloom, texcoord );
+        #endif
         float4 color     = tex2D( samplerColor, texcoord );
 
         #if( BLOOM_ENABLE_DEBAND == 1 )
@@ -543,12 +653,22 @@ namespace pd80_hqbloom
                 float dist   = rand(h) * range * i;
                 float2 pt    = dist * ReShade::PixelSize;
 
+                #if( BLOOM_ENABLE_CA == 0 )
                 analyze_pixels(ori, samplerBloom, texcoord, pt, o,
                 ref_avg,
                 ref_avg_diff,
                 ref_max_diff,
                 ref_mid_diff1,
                 ref_mid_diff2);
+                #endif
+                #if( BLOOM_ENABLE_CA == 1 )
+                analyze_pixels(ori, samplerCABloom, texcoord, pt, o,
+                ref_avg,
+                ref_avg_diff,
+                ref_max_diff,
+                ref_mid_diff1,
+                ref_mid_diff2);
+                #endif
 
                 float3 ref_avg_diff_threshold = avgdiff * i;
                 float3 ref_max_diff_threshold = maxdiff * i;
@@ -587,14 +707,6 @@ namespace pd80_hqbloom
             bloom.xyz = res.xyz;
         #endif
 
-        if( enableBKelvin == TRUE )
-        {
-            float3 K       = KelvinToRGB( BKelvin );
-            float3 bLum    = RGBToHCV( bloom.xyz );
-            bLum.x         = saturate( bLum.z - bLum.y * 0.5f );
-            float3 retHSL  = RGBToHSL( bloom.xyz * K.xyz );
-            bloom.xyz      = HSLToRGB( float3( retHSL.xy, bLum.x ));
-        }
         float3 bcolor    = screen( color.xyz, bloom.xyz );
         color.xyz        = lerp( color.xyz, bcolor.xyz, BloomMix );
         color.xyz        = lerp( color.xyz, bloom.xyz, debugBloom ); // render only bloom to screen
@@ -640,11 +752,26 @@ namespace pd80_hqbloom
             PixelShader    = PS_GaussianV;
             RenderTarget   = texBloom;
         }
+        #if( BLOOM_ENABLE_CA == 0 )
         pass GaussianBlur
         {
             VertexShader   = PostProcessVS;
             PixelShader    = PS_Gaussian;
         }
+        #endif
+        #if( BLOOM_ENABLE_CA == 1 )
+        pass AddCA
+        {
+            VertexShader   = PostProcessVS;
+            PixelShader    = PS_CA;
+            RenderTarget   = texCABloom;
+        }
+        pass GaussianBlur
+        {
+            VertexShader   = PostProcessVS;
+            PixelShader    = PS_Gaussian;
+        }
+        #endif
         pass PreviousBLuma
         {
             VertexShader   = PostProcessVS;
