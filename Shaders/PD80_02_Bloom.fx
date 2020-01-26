@@ -181,7 +181,9 @@ namespace pd80_hqbloom
     texture texBLuma { Width = 256; Height = 256; Format = R16F; MipLevels = 8; };
     texture texBAvgLuma { Format = R16F; };
     texture texBPrevAvgLuma { Format = R16F; };
+    #if( BLOOM_ENABLE_CA == 1 )
     texture texCABloom { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
+    #endif
     #if( BLOOM_QUALITY == 0 )
         texture texBloomIn { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; }; 
         texture texBloomH { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
@@ -211,7 +213,9 @@ namespace pd80_hqbloom
     sampler samplerBPrevAvgLuma { Texture = texBPrevAvgLuma; };
     sampler samplerBloomIn { Texture = texBloomIn; };
     sampler samplerBloomH { Texture = texBloomH; };
+    #if( BLOOM_ENABLE_CA == 1 )
     sampler samplerCABloom { Texture = texCABloom; };
+    #endif
     sampler samplerBloom { Texture = texBloom; };
     //// DEFINES ////////////////////////////////////////////////////////////////////
     uniform float Frametime < source = "frametime"; >;
