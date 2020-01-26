@@ -97,6 +97,19 @@ namespace pd80_hqbloom
         ui_min = 0.0;
         ui_max = 80.0;
         > = 30.0;
+    #if( BLOOM_ENABLE_CA == 0 )
+    uniform bool enableBKelvin <
+        ui_label  = "Enable Bloom Color Temp (K)";
+        ui_category = "Bloom Color Temperature";
+        > = false;
+    uniform uint BKelvin <
+        ui_type = "slider";
+        ui_label = "Bloom Color Temp (K)";
+        ui_category = "Bloom Color Temperature";
+        ui_min = 1000;
+        ui_max = 40000;
+        > = 6500;
+    #endif
     #if( BLOOM_ENABLE_CA == 1 )
     uniform int CA_type < __UNIFORM_COMBO_INT1
         ui_label = "Chromatic Aberration Type";
@@ -710,7 +723,16 @@ namespace pd80_hqbloom
 
             bloom.xyz = res.xyz;
         #endif
-
+        #if( BLOOM_ENABLE_CA == 0 )
+        if( enableBKelvin == TRUE )
+        {
+            float3 K       = KelvinToRGB( BKelvin );
+            float3 bLum    = RGBToHCV( bloom.xyz );
+            bLum.x         = saturate( bLum.z - bLum.y * 0.5f );
+            float3 retHSL  = RGBToHSL( bloom.xyz * K.xyz );
+            bloom.xyz      = HSLToRGB( float3( retHSL.xy, bLum.x ));
+        }
+        #endif
         float3 bcolor    = screen( color.xyz, bloom.xyz );
         color.xyz        = lerp( color.xyz, bcolor.xyz, BloomMix );
         color.xyz        = lerp( color.xyz, bloom.xyz, debugBloom ); // render only bloom to screen
