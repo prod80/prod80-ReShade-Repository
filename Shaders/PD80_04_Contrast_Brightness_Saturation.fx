@@ -195,15 +195,15 @@ namespace pd80_conbrisat
     float3 RGBToHSL( float3 RGB )
     {
         RGB.xyz          = max( RGB.xyz, 0.000001f );
-        float3 HCV       = RGBToHCV(RGB);
+        float3 HCV       = RGBToHCV( RGB.xyz );
         float L          = HCV.z - HCV.y * 0.5f;
-        float S          = HCV.y / ( 1.0f - abs( L * 2.0f - 1.0f ) + 0.000001f);
+        float S          = HCV.y / ( 1.0f - abs( L * 2.0f - 1.0f ) + 0.000001f );
         return float3( HCV.x, S, L );
     }
 
     float3 HSLToRGB( float3 HSL )
     {
-        float3 RGB       = HUEToRGB(HSL.x);
+        float3 RGB       = HUEToRGB( HSL.x );
         float C          = ( 1.0f - abs( 2.0f * HSL.z - 1.0f )) * HSL.y;
         return ( RGB - 0.5f ) * C + HSL.z;
     }

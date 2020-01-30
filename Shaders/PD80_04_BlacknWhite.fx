@@ -106,6 +106,10 @@ namespace pd80_blackandwhite
         ui_min = 1.0f;
         ui_max = 4.0f;
         > = 1.5f;
+    uniform bool show_clip <
+        ui_label = "Show Clipping Mask";
+        ui_category = "Visualize Clipping";
+        > = false;
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
@@ -366,6 +370,13 @@ namespace pd80_blackandwhite
         color.xyz         = ProcessBW( color.xyz, red, yellow, green, cyan, blue, magenta );
         // Do the tinting
         color.xyz         = lerp( color.xyz, HSLToRGB( float3( tinthue, tintsat, color.x )), use_tint );
+        if( show_clip )
+        {
+            float h       = 0.98f;
+            float l       = 0.01f;
+            color.xyz     = min( min( color.x, color.y ), color.z ) >= h ? lerp( color.xyz, float3( 1.0f, 0.0f, 0.0f ), smoothstep( h, 1.0f, min( min( color.x, color.y ), color.z ))) : color.xyz;
+            color.xyz     = max( max( color.x, color.y ), color.z ) <= l ? lerp( float3( 0.0f, 0.0f, 1.0f ), color.xyz, smoothstep( 0.0f, l, max( max( color.x, color.y ), color.z ))) : color.xyz;
+        }
 
         return float4( color.xyz, 1.0f );
     }
