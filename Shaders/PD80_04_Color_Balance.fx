@@ -134,7 +134,7 @@ namespace pd80_colorbalance
     #define ES_CMY   float3( dot( ES_RGB.yz, 0.5 ), dot( ES_RGB.xz, 0.5 ), dot( ES_RGB.xy, 0.5 ))
 
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
-    float3 LinearTosRGB( in float3 color )
+    float3 SRGBToLinear( in float3 color )
     {
         float3 x         = color * 12.92f;
         float3 y         = 1.055f * pow( saturate( color ), 1.0f / 2.4f ) - 0.055f;
@@ -145,7 +145,7 @@ namespace pd80_colorbalance
         return clr;
     }
 
-    float3 SRGBToLinear( in float3 color )
+    float3 LinearTosRGB( in float3 color )
     {
         float3 x         = color / 12.92f;
         float3 y         = pow( max(( color + 0.055f ) / 1.055f, 0.0f ), 2.4f );

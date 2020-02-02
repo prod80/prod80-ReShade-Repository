@@ -340,7 +340,7 @@ namespace pd80_hqbloom
         return dot( x, LumCoeff );
     }
 
-    float3 LinearTosRGB( in float3 color )
+    float3 SRGBToLinear( in float3 color )
     {
         float3 x         = color * 12.92f;
         float3 y         = 1.055f * pow( saturate( color ), 1.0f / 2.4f ) - 0.055f;
@@ -351,7 +351,7 @@ namespace pd80_hqbloom
         return clr;
     }
 
-    float3 SRGBToLinear( in float3 color )
+    float3 LinearTosRGB( in float3 color )
     {
         float3 x         = color / 12.92f;
         float3 y         = pow( max(( color + 0.055f ) / 1.055f, 0.0f ), 2.4f );
@@ -448,6 +448,7 @@ namespace pd80_hqbloom
         float4 color     = tex2D( samplerColor, texcoord );
         float luma       = tex2D( samplerBAvgLuma, float2( 0.5f, 0.5f )).x;
         color.xyz        = max( color.xyz - luma, 0.0f );
+        color.xyz        *= ( 1.0f / ( 1.0f - luma )); // Scale back intensity
         color.xyz        = SRGBToLinear( color.xyz );
         color.xyz        = CalcExposedColor( color.xyz, luma, bExposure, GreyValue );
         color.xyz        = LinearTosRGB( color.xyz );
