@@ -32,41 +32,43 @@
 namespace pd80_removetint
 {
     //// PREPROCESSOR DEFINITIONS ///////////////////////////////////////////////////
-    #ifndef RT_CORRECT_WHITEPOINT
-        #define RT_CORRECT_WHITEPOINT       0
+    #ifndef RT_CORRECT_WHITEPOINT_0_TO_1
+        #define RT_CORRECT_WHITEPOINT_0_TO_1       0
     #endif
 
-    #ifndef RT_WHITEPOINT_RESPECT_LUMA
-        #define RT_WHITEPOINT_RESPECT_LUMA  0
+    #ifndef RT_WHITEPOINT_RESPECT_LUMA_0_TO_1
+        #define RT_WHITEPOINT_RESPECT_LUMA_0_TO_1  0
     #endif
     
-    #ifndef RT_ADJUST_GREYPOINT
-        #define RT_ADJUST_GREYPOINT         0
+    #ifndef RT_ADJUST_GREYPOINT_0_TO_1
+        #define RT_ADJUST_GREYPOINT_0_TO_1         0
     #endif
 
-    #ifndef RT_CORRECT_BLACKPOINT
-        #define RT_CORRECT_BLACKPOINT       1
+    #ifndef RT_CORRECT_BLACKPOINT_0_TO_1
+        #define RT_CORRECT_BLACKPOINT_0_TO_1       1
     #endif
 
-    #ifndef RT_USE_LESS_PRECISION
-        #define RT_USE_LESS_PRECISION       0
+    #ifndef RT_BLACKPOINT_RESPECT_LUMA_0_TO_1
+        #define RT_BLACKPOINT_RESPECT_LUMA_0_TO_1  1
     #endif
 
-    #ifndef RT_BLACKPOINT_RESPECT_LUMA
-        #define RT_BLACKPOINT_RESPECT_LUMA  1
+    #ifndef RT_USE_LESS_PRECISION_0_TO_2
+        #define RT_USE_LESS_PRECISION_0_TO_2       1
     #endif
+
     //// DEFINES ////////////////////////////////////////////////////////////////////
-#if( RT_USE_LESS_PRECISION == 0 )
-    #define RT_MIP      2
+#if( RT_USE_LESS_PRECISION_0_TO_2 == 0 )
     #define RT_RES      2
     #define RT_MIPLVL   1
-#else
-    #define RT_MIP      3
+#elif( RT_USE_LESS_PRECISION_0_TO_2 == 1 )
     #define RT_RES      4
     #define RT_MIPLVL   2
+#else
+    #define RT_RES      10
+    #define RT_MIPLVL   3
 #endif
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
-#if( RT_ADJUST_GREYPOINT == 1 )
+#if( RT_ADJUST_GREYPOINT_0_TO_1 == 1 )
     uniform float midCC_scale <
         ui_type = "slider";
         ui_label = "Mid Tone Correction Scale";
@@ -77,7 +79,7 @@ namespace pd80_removetint
 #endif
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
-    texture texLinearColor { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; MipLevels = RT_MIP; };
+    texture texLinearColor { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; MipLevels = 4; };
     texture texDS_1_Max { Width = BUFFER_WIDTH/32; Height = BUFFER_HEIGHT/32; Format = RGBA16F; };
     texture texDS_1x1_Max { Width = 1; Height = 1; Format = RGBA16F; };
     texture texDS_1_Min { Width = BUFFER_WIDTH/32; Height = BUFFER_HEIGHT/32; Format = RGBA16F; };
@@ -157,12 +159,12 @@ namespace pd80_removetint
             for( int x = uv.x; x < uv.x + Range.x && x < BUFFER_WIDTH/RT_RES; x += 1 )
             {
                 currColor  = tex2Dfetch( samplerLinearColor, int4( x, y, 0, RT_MIPLVL )).xyz;
-#if( RT_CORRECT_BLACKPOINT == 1 )
+#if( RT_CORRECT_BLACKPOINT_0_TO_1 == 1 )
                 minValue.x = lerp( minValue.x, currColor.x, step( currColor.x, minValue.x ));
                 minValue.y = lerp( minValue.y, currColor.y, step( currColor.y, minValue.y ));
                 minValue.z = lerp( minValue.z, currColor.z, step( currColor.z, minValue.z ));
 #endif
-#if( RT_ADJUST_GREYPOINT == 1 )
+#if( RT_ADJUST_GREYPOINT_0_TO_1 == 1 )
                 /*
                 Mid Value
                 If sum of values < Previous sum of values, set new mid color
@@ -171,7 +173,7 @@ namespace pd80_removetint
                 getMid2    = dot( abs( midValue.xyz - 0.5f ), 1.0f );
                 midValue.xyz = lerp( midValue.xyz, currColor.xyz, step( getMid, getMid2 ));
 #endif
-#if( RT_CORRECT_WHITEPOINT == 1 )
+#if( RT_CORRECT_WHITEPOINT_0_TO_1 == 1 )
                 maxValue.x = lerp( maxValue.x, currColor.x, step( maxValue.x, currColor.x ));
                 maxValue.y = lerp( maxValue.y, currColor.y, step( maxValue.y, currColor.y ));
                 maxValue.z = lerp( maxValue.z, currColor.z, step( maxValue.z, currColor.z ));
@@ -199,19 +201,19 @@ namespace pd80_removetint
             for( int x = 0; x < SampleRes.x; x += 1 )
             {   
                 Sigma      += 1.0f;
-#if( RT_CORRECT_BLACKPOINT == 1 )
+#if( RT_CORRECT_BLACKPOINT_0_TO_1 == 1 )
                 minColor   = tex2Dfetch( samplerDS_1_Min, int4( x, y, 0, 0 )).xyz;
                 minValue.x = lerp( minValue.x, minColor.x, step( minColor.x, minValue.x ));
                 minValue.y = lerp( minValue.y, minColor.y, step( minColor.y, minValue.y ));
                 minValue.z = lerp( minValue.z, minColor.z, step( minColor.z, minValue.z ));
 #endif
-#if( RT_ADJUST_GREYPOINT == 1 )
+#if( RT_ADJUST_GREYPOINT_0_TO_1 == 1 )
                 /*
                 Seems making an average of middle values works best, dodgy as this already is
                 */
                 midColor   += tex2Dfetch( samplerDS_1_Mid, int4( x, y, 0, 0 )).xyz;
 #endif
-#if( RT_CORRECT_WHITEPOINT == 1 )
+#if( RT_CORRECT_WHITEPOINT_0_TO_1 == 1 )
                 maxColor   = tex2Dfetch( samplerDS_1_Max, int4( x, y, 0, 0 )).xyz;
                 maxValue.x = lerp( maxValue.x, maxColor.x, step( maxValue.x, maxColor.x ));
                 maxValue.y = lerp( maxValue.y, maxColor.y, step( maxValue.y, maxColor.y ));
@@ -229,7 +231,9 @@ namespace pd80_removetint
         
         minValue           = float4( minValue.xyz, 1.0f );
         maxValue           = float4( maxValue.xyz, 1.0f );
+#if( RT_ADJUST_GREYPOINT_0_TO_1 == 1 )
         midValue           = float4( midColor.xyz / Sigma, 1.0f );
+#endif
     }
 
     float4 PS_RemoveTint(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
@@ -240,26 +244,26 @@ namespace pd80_removetint
         float3 maxValue    = tex2Dfetch( samplerDS_1x1_Max, int4( 0, 0, 0, 0 )).xyz;
         float3 midValue    = tex2Dfetch( samplerDS_1x1_Mid, int4( 0, 0, 0, 0 )).xyz;
         //maxValue.xyz       /= max( max( maxValue.x, maxValue.y ), maxValue.z );
-#if( RT_ADJUST_GREYPOINT == 1 )
+#if( RT_ADJUST_GREYPOINT_0_TO_1 == 1 )
         midValue.xyz       = midValue.xyz - min( min( midValue.x, midValue.y ), midValue.z );
         midValue.xyz       *= midCC_scale;
 #endif
-#if( RT_CORRECT_BLACKPOINT == 0 )
+#if( RT_CORRECT_BLACKPOINT_0_TO_1 == 0 )
         minValue.xyz       = 0.0f;
 #endif
-#if( RT_CORRECT_WHITEPOINT == 0 )
+#if( RT_CORRECT_WHITEPOINT_0_TO_1 == 0 )
         maxValue.xyz       = 1.0f;
 #endif
         color.xyz          = saturate( max( color.xyz - minValue.xyz, 0.0f ) / max( maxValue.xyz - minValue.xyz, 0.0f ));
-#if( RT_CORRECT_WHITEPOINT == 1 ) 
+#if( RT_CORRECT_WHITEPOINT_0_TO_1 == 1 ) 
         float corrLum      = max( dot( color.xyz, 0.333333f ), 0.000001f );
-        color.xyz          = lerp( color.xyz, color.xyz * saturate( corrLumOrig / corrLum ), RT_WHITEPOINT_RESPECT_LUMA );
+        color.xyz          = lerp( color.xyz, color.xyz * saturate( corrLumOrig / corrLum ), RT_WHITEPOINT_RESPECT_LUMA_0_TO_1 );
 #endif
-#if( RT_CORRECT_BLACKPOINT == 1 )
+#if( RT_CORRECT_BLACKPOINT_0_TO_1 == 1 )
         float greyValue    = max( dot( minValue.xyz, float3( 0.299, 0.587, 0.114 )), 0.000001f );
-        color.xyz          = lerp( color.xyz, color.xyz * ( 1.0f - greyValue ) + greyValue, RT_BLACKPOINT_RESPECT_LUMA );
+        color.xyz          = lerp( color.xyz, color.xyz * ( 1.0f - greyValue ) + greyValue, RT_BLACKPOINT_RESPECT_LUMA_0_TO_1 );
 #endif
-#if( RT_ADJUST_GREYPOINT == 1 )
+#if( RT_ADJUST_GREYPOINT_0_TO_1 == 1 )
         float lum          = dot( color.xyz, 0.333333f ); //Just using average
         lum                = lum >= 0.5f ? abs( lum * 2.0f - 2.0f ) : lum * 2.0f;
         color.xyz          = color.xyz - ( midValue.xyz * lum );
@@ -276,6 +280,20 @@ namespace pd80_removetint
 
     //// TECHNIQUES /////////////////////////////////////////////////////////////////
     technique prod80_01_RemoveTint
+    < ui_tooltip = "Remove Tint/Color Cast\n\n"
+			   "Automatically adjust Blackpoint and Whitepoint\n"
+			   "RT_CORRECT_WHITEPOINT_0_TO_1\n"
+               "Enables adjustment to white point. This will adjust the brightest found color to white.\n"
+               "RT_WHITEPOINT_RESPECT_LUMA_0_TO_1\n"
+               "Adjustment to white point may scale brightness. This will help scale it back.\n"
+               "RT_ADJUST_GREYPOINT_0_TO_1\n"
+               "Experimental! Allows to adjust grey value based on the average middle grey value it found in the scene.\n"
+               "RT_CORRECT_BLACKPOINT_0_TO_1\n"
+               "Enables adjustment to backpoint. Sets the lowest found color to black.\n"
+               "RT_BLACKPOINT_RESPECT_LUMA_0_TO_1\n"
+               "Adjustment to black point may increase contrast due to black value changes. This replaces the color removed with grey.\n"
+               "RT_USE_LESS_PRECISION_0_TO_2\n"
+               "Sometimes you want to be more extreme in removal. The higher value here increases how extreme it should remove color.\n"; >
     {
         pass prod80_pass0
         {
