@@ -191,7 +191,7 @@ namespace pd80_removetint
 
         float getMin;    float getMax;
         float getMin2;   float getMax2;
-        uint Sigma         = 0;
+        float Sigma1       = 0.0f;
 
         for( int y = 0; y < SampleRes.y; y += 1 )
         {
@@ -208,7 +208,7 @@ namespace pd80_removetint
                 Seems making an average of middle values works best, dodgy as this already is
                 */
                 midColor   += tex2Dfetch( samplerDS_1_Mid, int4( x, y, 0, 0 )).xyz;
-                Sigma      += 1;
+                Sigma1     += 1.0f;
 #endif
 #if( RT_CORRECT_WHITEPOINT == 1 )
                 maxColor   = tex2Dfetch( samplerDS_1_Max, int4( x, y, 0, 0 )).xyz;
@@ -219,15 +219,16 @@ namespace pd80_removetint
             }
         }
         //Try and avoid some flickering
+        //Not really working, too radical changes in min values
         float3 prevMin     = tex2Dfetch( samplerPrevMin, int4( 0, 0, 0, 0 )).xyz;
         float3 prevMax     = tex2Dfetch( samplerPrevMax, int4( 0, 0, 0, 0 )).xyz;
-        float fade         = saturate( frametime * 0.003f );
+        float fade         = saturate( frametime * 0.001f );
         minValue.xyz       = lerp( prevMin.xyz, minValue.xyz, fade );
         maxValue.xyz       = lerp( prevMax.xyz, maxValue.xyz, fade );
 
         minValue           = float4( minValue.xyz, 1.0f );
         maxValue           = float4( maxValue.xyz, 1.0f );
-        midValue           = float4( midColor.xyz / Sigma, 1.0f );
+        midValue           = float4( midColor.xyz / Sigma1, 1.0f );
     }
 
     float4 PS_RemoveTint(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
