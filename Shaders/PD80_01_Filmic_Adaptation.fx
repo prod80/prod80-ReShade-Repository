@@ -81,7 +81,7 @@ namespace pd80_filmicadaptation
     {
         return dot( x, LumCoeff );
     }
-
+/*
     float3 LinearTosRGB( in float3 color )
     {
         float3 x         = color * 12.92f;
@@ -103,7 +103,7 @@ namespace pd80_filmicadaptation
         clr.b            = color.b <= 0.04045f ? x.b : y.b;
         return clr;
     }
-
+*/
     float3 softlight(float3 c, float3 b) 	{ return b<0.5f ? (2.0f*c*b+c*c*(1.0f-2.0f*b)):(sqrt(c)*(2.0f*b-1.0f)+2.0f*c*(1.0f-b));}
 
     float3 con( float3 res, float x )
@@ -119,7 +119,7 @@ namespace pd80_filmicadaptation
     {
         float3 num       = (( Fc * ( FA * Fc + FC * FB ) + FD * FE ) / ( Fc * ( FA * Fc + FB ) + FD * FF )) - FE / FF;
         float3 denom     = (( FWhite * ( FA * FWhite + FC * FB ) + FD * FE ) / ( FWhite * ( FA * FWhite + FB ) + FD * FF )) - FE / FF;
-        return LinearTosRGB( num / denom );
+        return num / denom;
         //return num / denom;
     }
 
@@ -127,7 +127,7 @@ namespace pd80_filmicadaptation
     float PS_WriteLuma(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color     = tex2D( samplerColor, texcoord );
-        color.xyz        = SRGBToLinear( color.xyz ); // Convert to linear to do avg scene luminosity
+        //color.xyz        = SRGBToLinear( color.xyz ); // Convert to linear to do avg scene luminosity
         float luma       = getLuminance( color.xyz );
         luma             = max( luma, 0.06f ); // give it a min value so that too dark scenes don't count too much against average
         return log2( luma );
@@ -156,7 +156,7 @@ namespace pd80_filmicadaptation
     	float W          = 1.0f; // working in LDR space, white should be 1.0
         float4 color     = tex2D( samplerColor, texcoord );
         float luma       = tex2D( samplerAvgLuma, float2( 0.5f, 0.5f )).x;
-        color.xyz        = SRGBToLinear( color.xyz );
+        //color.xyz        = SRGBToLinear( color.xyz );
         float exp        = lerp( 1.0f, 8.0f, luma ); // Increase Toe when brightness goes up (increase contrast)
         float toe        = max( D * exp, D ); // Increase toe, effect is mild even though there's a potential 8x increase here
         color.xyz        = Filmic( color.xyz, A, B, C, toe, E, F, W );
