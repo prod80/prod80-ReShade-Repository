@@ -37,14 +37,14 @@ namespace pd80_conbrisat
         ui_category = "Final Adjustments";
         ui_type = "slider";
         ui_min = -1.0;
-        ui_max = 1.0;
+        ui_max = 1.5;
         > = 0.0;
     uniform float brightness <
         ui_label = "Brightness";
         ui_category = "Final Adjustments";
         ui_type = "slider";
         ui_min = -1.0;
-        ui_max = 1.0;
+        ui_max = 1.5;
         > = 0.0;
     uniform float saturation <
         ui_label = "Global Saturation";
@@ -136,14 +136,14 @@ namespace pd80_conbrisat
         ui_category = "Final Adjustments: Far";
         ui_type = "slider";
         ui_min = -1.0;
-        ui_max = 1.0;
+        ui_max = 1.5;
         > = 0.0;
     uniform float brightnessD <
         ui_label = "Brightness Far";
         ui_category = "Final Adjustments: Far";
         ui_type = "slider";
         ui_min = -1.0;
-        ui_max = 1.0;
+        ui_max = 1.5;
         > = 0.0;
     uniform float saturationD <
         ui_label = "Saturation Far";
@@ -230,8 +230,8 @@ namespace pd80_conbrisat
 
     float3 bri( float3 res, float x )
     {
-        //lineardodge
-        float3 c = min( res.xyz + res.xyz , 1.0f );
+        //screen
+        float3 c = 1.0f - ( 1.0f - res.xyz ) * ( 1.0f - res.xyz );
         float b = 0.0f;
         b = x < 0.0f ? b = x * 0.5f : b = x;
         return lerp( res.xyz, c.xyz, b );   
