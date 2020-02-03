@@ -161,7 +161,7 @@ namespace pd80_hqbloom
         ui_label = "CA Effect Strength";
         ui_category = "Chromatic Aberration";
         ui_min = 0.0f;
-        ui_max = 1.0f;
+        ui_max = 5.0f;
         > = 0.5;
     #endif
     #if( BLOOM_ENABLE_DEBAND == 1 )
@@ -246,6 +246,7 @@ namespace pd80_hqbloom
 
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerColor { Texture = texColorBuffer; };
+    sampler samplerLinColor { Texture = texColorBuffer; SRGBTexture = true; };
     sampler samplerBLuma { Texture = texBLuma; };
     sampler samplerBAvgLuma { Texture = texBAvgLuma; };
     sampler samplerBPrevAvgLuma { Texture = texBPrevAvgLuma; };
@@ -340,28 +341,6 @@ namespace pd80_hqbloom
         return dot( x, LumCoeff );
     }
 
-/*    float3 LinearTosRGB( in float3 color )
-    {
-        float3 x         = color * 12.92f;
-        float3 y         = 1.055f * pow( saturate( color ), 1.0f / 2.4f ) - 0.055f;
-        float3 clr       = color;
-        clr.r            = color.r < 0.0031308f ? x.r : y.r;
-        clr.g            = color.g < 0.0031308f ? x.g : y.g;
-        clr.b            = color.b < 0.0031308f ? x.b : y.b;
-        return clr;
-    }
-
-    float3 SRGBToLinear( in float3 color )
-    {
-        float3 x         = color / 12.92f;
-        float3 y         = pow( max(( color + 0.055f ) / 1.055f, 0.0f ), 2.4f );
-        float3 clr       = color;
-        clr.r            = color.r <= 0.04045f ? x.r : y.r;
-        clr.g            = color.g <= 0.04045f ? x.g : y.g;
-        clr.b            = color.b <= 0.04045f ? x.b : y.b;
-        return clr;
-    }
-*/
     float3 HUEToRGB( in float H )
     {
         float R          = abs(H * 6.0f - 3.0f) - 1.0f;
@@ -425,10 +404,9 @@ namespace pd80_hqbloom
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float PS_WriteBLuma(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
-        float4 color     = tex2D( samplerColor, texcoord );
-        //color.xyz        = SRGBToLinear( color.xyz );
+        float4 color     = tex2D( samplerLinColor, texcoord );
         float luma       = getLuminance( color.xyz );
-        luma             = max( luma, BloomLimit ); //have to limit or will be very bloomy
+        luma             = max( luma, BloomLimit ); // Bloom threshold
         return log2( luma );
     }
 
@@ -449,9 +427,7 @@ namespace pd80_hqbloom
         float luma       = tex2D( samplerBAvgLuma, float2( 0.5f, 0.5f )).x;
         color.xyz        = max( color.xyz - luma, 0.0f );
         color.xyz        *= ( 1.0f / ( 1.0f - luma )); // Scale back intensity
-        //color.xyz        = SRGBToLinear( color.xyz );
         color.xyz        = CalcExposedColor( color.xyz, luma, bExposure, GreyValue );
-        //color.xyz        = LinearTosRGB( color.xyz );
         return float4( color.xyz, 1.0f ); 
     }
 

@@ -70,6 +70,7 @@ namespace pd80_filmicadaptation
     texture texPrevAvgLuma { Format = R16F; };
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerColor { Texture = texColorBuffer; };
+    sampler samplerLinColor { Texture = texColorBuffer; SRGBTexture = true; };
     sampler samplerLuma { Texture = texLuma; };
     sampler samplerAvgLuma { Texture = texAvgLuma; };
     sampler samplerPrevAvgLuma { Texture = texPrevAvgLuma; };
@@ -81,29 +82,7 @@ namespace pd80_filmicadaptation
     {
         return dot( x, LumCoeff );
     }
-/*
-    float3 LinearTosRGB( in float3 color )
-    {
-        float3 x         = color * 12.92f;
-        float3 y         = 1.055f * pow( saturate( color ), 1.0f / 2.4f ) - 0.055f;
-        float3 clr       = color;
-        clr.r            = color.r < 0.0031308f ? x.r : y.r;
-        clr.g            = color.g < 0.0031308f ? x.g : y.g;
-        clr.b            = color.b < 0.0031308f ? x.b : y.b;
-        return clr;
-    }
 
-    float3 SRGBToLinear( in float3 color )
-    {
-        float3 x         = color / 12.92f;
-        float3 y         = pow( max(( color + 0.055f ) / 1.055f, 0.0f ), 2.4f );
-        float3 clr       = color;
-        clr.r            = color.r <= 0.04045f ? x.r : y.r;
-        clr.g            = color.g <= 0.04045f ? x.g : y.g;
-        clr.b            = color.b <= 0.04045f ? x.b : y.b;
-        return clr;
-    }
-*/
     float3 softlight(float3 c, float3 b) 	{ return b<0.5f ? (2.0f*c*b+c*c*(1.0f-2.0f*b)):(sqrt(c)*(2.0f*b-1.0f)+2.0f*c*(1.0f-b));}
 
     float3 con( float3 res, float x )
@@ -126,11 +105,10 @@ namespace pd80_filmicadaptation
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float PS_WriteLuma(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
-        float4 color     = tex2D( samplerColor, texcoord );
-        //color.xyz        = SRGBToLinear( color.xyz ); // Convert to linear to do avg scene luminosity
+        float4 color     = tex2D( samplerLinColor, texcoord );
         float luma       = getLuminance( color.xyz );
         luma             = max( luma, 0.06f ); // give it a min value so that too dark scenes don't count too much against average
-        return log2( luma );
+        return log2( luma ); //writes to 256x256 texture
     }
 
     float PS_AvgLuma(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
@@ -156,7 +134,6 @@ namespace pd80_filmicadaptation
     	float W          = 1.0f; // working in LDR space, white should be 1.0
         float4 color     = tex2D( samplerColor, texcoord );
         float luma       = tex2D( samplerAvgLuma, float2( 0.5f, 0.5f )).x;
-        //color.xyz        = SRGBToLinear( color.xyz );
         float exp        = lerp( 1.0f, 8.0f, luma ); // Increase Toe when brightness goes up (increase contrast)
         float toe        = max( D * exp, D ); // Increase toe, effect is mild even though there's a potential 8x increase here
         color.xyz        = Filmic( color.xyz, A, B, C, toe, E, F, W );
