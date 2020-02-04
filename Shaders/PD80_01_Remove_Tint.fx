@@ -57,7 +57,7 @@ namespace pd80_removetint
     #endif
 
     #ifndef RT_BLACKPOINT_DETECTION_METHOD_0_TO_1
-        #define RT_BLACKPOINT_DETECTION_METHOD_0_TO_1       1
+        #define RT_BLACKPOINT_DETECTION_METHOD_0_TO_1       0
     #endif
 
     //// DEFINES ////////////////////////////////////////////////////////////////////
