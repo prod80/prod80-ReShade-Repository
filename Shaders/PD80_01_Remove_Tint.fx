@@ -248,7 +248,6 @@ namespace pd80_removetint
         float3 minValue    = tex2Dfetch( samplerDS_1x1_Min, int4( 0, 0, 0, 0 )).xyz;
         float3 maxValue    = tex2Dfetch( samplerDS_1x1_Max, int4( 0, 0, 0, 0 )).xyz;
         float3 midValue    = tex2Dfetch( samplerDS_1x1_Mid, int4( 0, 0, 0, 0 )).xyz;
-        //maxValue.xyz       /= max( max( maxValue.x, maxValue.y ), maxValue.z );
 #if( RT_ADJUST_GREYPOINT_0_TO_1 == 1 )
         midValue.xyz       = midValue.xyz - min( min( midValue.x, midValue.y ), midValue.z );
         midValue.xyz       *= midCC_scale;
@@ -265,11 +264,11 @@ namespace pd80_removetint
         color.xyz          = lerp( color.xyz, color.xyz * saturate( corrLumOrig / corrLum ), RT_WHITEPOINT_RESPECT_LUMA_0_TO_1 );
 #endif
 #if( RT_CORRECT_BLACKPOINT_0_TO_1 == 1 )
-        float greyValue    = max( dot( minValue.xyz, float3( 0.299f, 0.587f, 0.114f )), 0.000001f );
+        float greyValue    = max( dot( minValue.xyz, 0.333333f ), 0.000001f );
         color.xyz          = lerp( color.xyz, color.xyz * ( 1.0f - greyValue ) + greyValue, RT_BLACKPOINT_RESPECT_LUMA_0_TO_1 );
 #endif
 #if( RT_ADJUST_GREYPOINT_0_TO_1 == 1 )
-        float lum          = dot( color.xyz, 0.333333f ); //Just using average
+        float lum          = dot( color.xyz, 0.333333f );
         lum                = lum >= 0.5f ? abs( lum * 2.0f - 2.0f ) : lum * 2.0f;
         color.xyz          = color.xyz - ( midValue.xyz * lum );
 #endif

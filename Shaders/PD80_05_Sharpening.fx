@@ -33,41 +33,70 @@ namespace pd80_lumasharpen
 {
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
     uniform bool enableShowEdges <
-    ui_label = "Show only Sharpening Texture";
-    ui_category = "Sharpening";
-    > = false;
-
+        ui_label = "Show only Sharpening Texture";
+        ui_category = "Sharpening";
+        > = false;
     uniform float BlurSigma <
-    ui_label = "Sharpening Width";
-    ui_category = "Sharpening";
-    ui_type = "slider";
-    ui_min = 0.3;
-    ui_max = 1.2;
-    > = 0.45;
-
+        ui_label = "Sharpening Width";
+        ui_category = "Sharpening";
+        ui_type = "slider";
+        ui_min = 0.3;
+        ui_max = 1.2;
+        > = 0.45;
     uniform float Sharpening <
-    ui_label = "Sharpening Strength";
-    ui_category = "Sharpening";
-    ui_type = "slider";
-    ui_min = 0.0;
-    ui_max = 5.0;
-    > = 1.7;
-
+        ui_label = "Sharpening Strength";
+        ui_category = "Sharpening";
+        ui_type = "slider";
+        ui_min = 0.0;
+        ui_max = 5.0;
+        > = 1.7;
     uniform float Threshold <
-    ui_label = "Sharpening Threshold";
-    ui_category = "Sharpening";
-    ui_type = "slider";
-    ui_min = 0.0;
-    ui_max = 1.0;
-    > = 0.0;
-
+        ui_label = "Sharpening Threshold";
+        ui_category = "Sharpening";
+        ui_type = "slider";
+        ui_min = 0.0;
+        ui_max = 1.0;
+        > = 0.0;
     uniform float limiter <
-    ui_label = "Sharpening Highlight Limiter";
-    ui_category = "Sharpening";
-    ui_type = "slider";
-    ui_min = 0.0;
-    ui_max = 1.0;
-    > = 0.03;
+        ui_label = "Sharpening Highlight Limiter";
+        ui_category = "Sharpening";
+        ui_type = "slider";
+        ui_min = 0.0;
+        ui_max = 1.0;
+        > = 0.03;
+    uniform bool enable_depth <
+        ui_label = "Enable depth based adjustments.\nMake sure you have setup your depth buffer correctly.";
+        ui_category = "Sharpening: Depth";
+        > = false;
+    uniform bool enable_reverse <
+        ui_label = "Reverses the effect (sharpen close, or sharpen far)";
+        ui_category = "Sharpening: Depth";
+        > = false;
+    uniform bool display_depth <
+        ui_label = "Show depth texture";
+        ui_category = "Sharpening: Depth";
+        > = false;
+    uniform float depthStart <
+        ui_type = "slider";
+        ui_label = "Change Depth Start Plane";
+        ui_category = "Sharpening: Depth";
+        ui_min = 0.0f;
+        ui_max = 1.0f;
+        > = 0.0;
+    uniform float depthEnd <
+        ui_type = "slider";
+        ui_label = "Change Depth End Plane";
+        ui_category = "Sharpening: Depth";
+        ui_min = 0.0f;
+        ui_max = 1.0f;
+        > = 0.1;
+    uniform float depthCurve <
+        ui_label = "Depth Curve Adjustment";
+        ui_category = "Sharpening: Depth";
+        ui_type = "slider";
+        ui_min = 0.05;
+        ui_max = 8.0;
+        > = 1.0;
 
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
@@ -196,14 +225,21 @@ namespace pd80_lumasharpen
     {
         float4 orig      = tex2D( samplerColor, texcoord );
         float4 gaussian  = tex2D( samplerGaussian, texcoord );
+        
+        float depth      = ReShade::GetLinearizedDepth( texcoord ).x;
+        depth            = smoothstep( depthStart, depthEnd, depth );
+        depth            = pow( depth, depthCurve );
+        depth            = lerp( depth, 1.0f - depth, enable_reverse );
+        
         float3 edges     = max( saturate( orig.xyz - gaussian.xyz ) - Threshold, 0.0f );
         float3 invGauss  = saturate( 1.0f - gaussian.xyz );
         float3 oInvGauss = saturate( orig.xyz + invGauss.xyz );
         float3 invOGauss = max( saturate( 1.0f - oInvGauss.xyz ) - Threshold, 0.0f );
         edges            = max(( saturate( Sharpening * edges.xyz )) - ( saturate( Sharpening * invOGauss.xyz )), 0.0f );
-        float3 blend     = saturate( orig.xyz + min( edges.xyz, limiter ));
-        float3 color     = BlendLuma( orig.xyz, blend.xyz ); 
-        color.xyz        = lerp( color.xyz, min( edges.xyz, limiter ), enableShowEdges );
+        float3 blend     = saturate( orig.xyz + lerp( min( edges.xyz, limiter ), 0.0, enable_depth * depth ));
+        float3 color     = BlendLuma( orig.xyz, blend.xyz );
+        color.xyz        = lerp( color.xyz, lerp( min( edges.xyz, limiter ), min( edges.xyz, limiter ) * depth, enable_depth ), enableShowEdges );
+        color.xyz        = lerp( color.xyz, depth.xxx, display_depth );
         return float4( color.xyz, 1.0f );
     }
 
