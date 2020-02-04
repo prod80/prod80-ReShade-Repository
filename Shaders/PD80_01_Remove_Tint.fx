@@ -52,20 +52,23 @@ namespace pd80_removetint
         #define RT_BLACKPOINT_RESPECT_LUMA_0_TO_1  1
     #endif
 
-    #ifndef RT_USE_LESS_PRECISION_0_TO_2
-        #define RT_USE_LESS_PRECISION_0_TO_2       1
+    #ifndef RT_USE_LESS_PRECISION_0_TO_3
+        #define RT_USE_LESS_PRECISION_0_TO_3       1
     #endif
 
     //// DEFINES ////////////////////////////////////////////////////////////////////
-#if( RT_USE_LESS_PRECISION_0_TO_2 == 0 )
+#if( RT_USE_LESS_PRECISION_0_TO_3 == 0 )
     #define RT_RES      2
     #define RT_MIPLVL   1
-#elif( RT_USE_LESS_PRECISION_0_TO_2 == 1 )
+#elif( RT_USE_LESS_PRECISION_0_TO_3 == 1 )
     #define RT_RES      4
     #define RT_MIPLVL   2
-#else
-    #define RT_RES      10
+#elif( RT_USE_LESS_PRECISION_0_TO_3 == 2 )
+    #define RT_RES      8
     #define RT_MIPLVL   3
+#else
+    #define RT_RES      16
+    #define RT_MIPLVL   4
 #endif
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
 #if( RT_ADJUST_GREYPOINT_0_TO_1 == 1 )
@@ -79,7 +82,7 @@ namespace pd80_removetint
 #endif
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
-    texture texLinearColor { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; MipLevels = 4; };
+    texture texLinearColor { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; MipLevels = 5; };
     texture texDS_1_Max { Width = BUFFER_WIDTH/32; Height = BUFFER_HEIGHT/32; Format = RGBA16F; };
     texture texDS_1x1_Max { Width = 1; Height = 1; Format = RGBA16F; };
     texture texDS_1_Min { Width = BUFFER_WIDTH/32; Height = BUFFER_HEIGHT/32; Format = RGBA16F; };
@@ -104,7 +107,7 @@ namespace pd80_removetint
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
     uniform float frametime < source = "frametime"; >;
 
-    float3 SRGBToLinear( in float3 color )
+    float3 LinearTosRGB( in float3 color )
     {
         float3 x         = color * 12.92f;
         float3 y         = 1.055f * pow( saturate( color ), 1.0f / 2.4f ) - 0.055f;
@@ -115,7 +118,7 @@ namespace pd80_removetint
         return clr;
     }
 
-    float3 LinearTosRGB( in float3 color )
+    float3 SRGBToLinear( in float3 color )
     {
         float3 x         = color / 12.92f;
         float3 y         = pow( max(( color + 0.055f ) / 1.055f, 0.0f ), 2.4f );
@@ -131,7 +134,9 @@ namespace pd80_removetint
     float4 PS_WriteColor(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color      = tex2D( samplerColorBuffer, texcoord );
-        color.xyz         = SRGBToLinear( color.xyz );
+        //Don't ask me why, but this shader doesn't operate properly in linear or sRGB,
+        //but does when converting sRGB to sRGB and back to 'Linear' (which is again sRGB)... (?)
+        color.xyz         = LinearTosRGB( color.xyz );
         return float4( color.xyz, 1.0f );
     }
 
@@ -147,10 +152,10 @@ namespace pd80_removetint
         float getMid2;
 
         //Downsample
-        int2 Range         = int2( BUFFER_WIDTH, BUFFER_HEIGHT ) / ( 32 * RT_MIPLVL );
+        float2 Range       = float2( BUFFER_WIDTH, BUFFER_HEIGHT ) / ( 32.0f * RT_RES );
 
         //Current block
-        uint2 uv           = texcoord.xy * float2( BUFFER_WIDTH/RT_RES, BUFFER_HEIGHT/RT_RES );  //Current position in int
+        float2 uv          = texcoord.xy * float2( BUFFER_WIDTH/RT_RES, BUFFER_HEIGHT/RT_RES );  //Current position
         uv.xy              = floor( uv.xy / Range );                                             //Block position
         uv.xy              *= Range;                                                             //Block start position
 
@@ -260,7 +265,7 @@ namespace pd80_removetint
         color.xyz          = lerp( color.xyz, color.xyz * saturate( corrLumOrig / corrLum ), RT_WHITEPOINT_RESPECT_LUMA_0_TO_1 );
 #endif
 #if( RT_CORRECT_BLACKPOINT_0_TO_1 == 1 )
-        float greyValue    = max( dot( minValue.xyz, float3( 0.299, 0.587, 0.114 )), 0.000001f );
+        float greyValue    = max( dot( minValue.xyz, float3( 0.299f, 0.587f, 0.114f )), 0.000001f );
         color.xyz          = lerp( color.xyz, color.xyz * ( 1.0f - greyValue ) + greyValue, RT_BLACKPOINT_RESPECT_LUMA_0_TO_1 );
 #endif
 #if( RT_ADJUST_GREYPOINT_0_TO_1 == 1 )
@@ -268,7 +273,7 @@ namespace pd80_removetint
         lum                = lum >= 0.5f ? abs( lum * 2.0f - 2.0f ) : lum * 2.0f;
         color.xyz          = color.xyz - ( midValue.xyz * lum );
 #endif
-        color.xyz          = LinearTosRGB( color.xyz );
+        color.xyz          = SRGBToLinear( color.xyz );
         return float4( color.xyz, 1.0f );
     }
 
@@ -281,19 +286,21 @@ namespace pd80_removetint
     //// TECHNIQUES /////////////////////////////////////////////////////////////////
     technique prod80_01_RemoveTint
     < ui_tooltip = "Remove Tint/Color Cast\n\n"
-			   "Automatically adjust Blackpoint and Whitepoint\n"
+			   "Automatically adjust Blackpoint and Whitepoint.\n"
+               "This shader will not adjust tinting applied in gamma, and this is considered out of scope.\n\n"
 			   "RT_CORRECT_WHITEPOINT_0_TO_1\n"
-               "Enables adjustment to white point. This will adjust the brightest found color to white.\n"
+               "Enables adjustment to white point. This will adjust the brightest found color to white.\n\n"
                "RT_WHITEPOINT_RESPECT_LUMA_0_TO_1\n"
-               "Adjustment to white point may scale brightness. This will help scale it back.\n"
+               "Adjustment to white point may scale brightness. This will help scale it back.\n\n"
                "RT_ADJUST_GREYPOINT_0_TO_1\n"
-               "Experimental! Allows to adjust grey value based on the average middle grey value it found in the scene.\n"
+               "Experimental! Allows to adjust grey value based on the average middle grey value it found in the scene.\n\n"
                "RT_CORRECT_BLACKPOINT_0_TO_1\n"
-               "Enables adjustment to backpoint. Sets the lowest found color to black.\n"
+               "Enables adjustment to backpoint. Sets the lowest found color to black.\n\n"
                "RT_BLACKPOINT_RESPECT_LUMA_0_TO_1\n"
-               "Adjustment to black point may increase contrast due to black value changes. This replaces the color removed with grey.\n"
-               "RT_USE_LESS_PRECISION_0_TO_2\n"
-               "Sometimes you want to be more extreme in removal. The higher value here increases how extreme it should remove color.\n"; >
+               "Adjustment to black point may increase contrast due to black value changes. This replaces the color removed with grey.\n\n"
+               "RT_USE_LESS_PRECISION_0_TO_3\n"
+               "Sometimes you want to be more extreme in removal. The higher value here increases how extreme it should remove color.\n"
+               "Too high values will cause shifts in color when no strong tinting is present or outside the scope of this shader.";>
     {
         pass prod80_pass0
         {
