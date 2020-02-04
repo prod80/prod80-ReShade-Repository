@@ -56,6 +56,10 @@ namespace pd80_removetint
         #define RT_USE_LESS_PRECISION_0_TO_3       1
     #endif
 
+    #ifndef RT_BLACKPOINT_DETECTION_METHOD_0_TO_1
+        #define RT_BLACKPOINT_DETECTION_METHOD_0_TO_1       1
+    #endif
+
     //// DEFINES ////////////////////////////////////////////////////////////////////
 #if( RT_USE_LESS_PRECISION_0_TO_3 == 0 )
     #define RT_RES      2
@@ -150,6 +154,8 @@ namespace pd80_removetint
 
         float getMid;
         float getMid2;
+        float getMin;
+        float getMin2;
 
         //Downsample
         float2 Range       = float2( BUFFER_WIDTH, BUFFER_HEIGHT ) / ( 32.0f * RT_RES );
@@ -165,9 +171,16 @@ namespace pd80_removetint
             {
                 currColor  = tex2Dfetch( samplerLinearColor, int4( x, y, 0, RT_MIPLVL )).xyz;
 #if( RT_CORRECT_BLACKPOINT_0_TO_1 == 1 )
+    #if( RT_BLACKPOINT_DETECTION_METHOD_0_TO_1 == 0 )
                 minValue.x = lerp( minValue.x, currColor.x, step( currColor.x, minValue.x ));
                 minValue.y = lerp( minValue.y, currColor.y, step( currColor.y, minValue.y ));
                 minValue.z = lerp( minValue.z, currColor.z, step( currColor.z, minValue.z ));
+    #endif
+    #if( RT_BLACKPOINT_DETECTION_METHOD_0_TO_1 == 1 )
+                getMin     = max( max( currColor.x, currColor.y ), currColor.z );
+                getMin2    = max( max( minValue.x, minValue.y ), minValue.z );
+                minValue.xyz = lerp( minValue.xyz, currColor.xyz, step( getMin, getMin2 ));
+    #endif
 #endif
 #if( RT_ADJUST_GREYPOINT_0_TO_1 == 1 )
                 /*
@@ -194,6 +207,7 @@ namespace pd80_removetint
     void PS_MinMax_1x1( float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 minValue : SV_Target0, out float4 maxValue : SV_Target1, out float4 midValue : SV_Target2 )
     {
         float3 minColor; float3 maxColor; float3 midColor;
+        float getMin;    float getMin2;
         minValue           = 1.0f;
         maxValue           = 0.0f;
         midValue           = 0.0f;
@@ -207,10 +221,18 @@ namespace pd80_removetint
             {   
                 Sigma      += 1.0f;
 #if( RT_CORRECT_BLACKPOINT_0_TO_1 == 1 )
+    #if( RT_BLACKPOINT_DETECTION_METHOD_0_TO_1 == 0 )
                 minColor   = tex2Dfetch( samplerDS_1_Min, int4( x, y, 0, 0 )).xyz;
                 minValue.x = lerp( minValue.x, minColor.x, step( minColor.x, minValue.x ));
                 minValue.y = lerp( minValue.y, minColor.y, step( minColor.y, minValue.y ));
                 minValue.z = lerp( minValue.z, minColor.z, step( minColor.z, minValue.z ));
+    #endif
+    #if( RT_BLACKPOINT_DETECTION_METHOD_0_TO_1 == 1 )
+                minColor   = tex2Dfetch( samplerDS_1_Min, int4( x, y, 0, 0 )).xyz;
+                getMin     = max( max( minColor.x, minColor.y ), minColor.z );
+                getMin2    = max( max( minValue.x, minValue.y ), minValue.z );
+                minValue.xyz = lerp( minValue.xyz, minColor.xyz, step( getMin, getMin2 ));
+    #endif
 #endif
 #if( RT_ADJUST_GREYPOINT_0_TO_1 == 1 )
                 /*
@@ -297,6 +319,8 @@ namespace pd80_removetint
                "Enables adjustment to backpoint. Sets the lowest found color to black.\n\n"
                "RT_BLACKPOINT_RESPECT_LUMA_0_TO_1\n"
                "Adjustment to black point may increase contrast due to black value changes. This replaces the color removed with grey.\n\n"
+               "RT_BLACKPOINT_DETECTION_METHOD_0_TO_1\n"
+               "Changes the method the shader uses to detect the lowest RGB value in the scene. Different methods may give better results.\n\n"
                "RT_USE_LESS_PRECISION_0_TO_3\n"
                "Sometimes you want to be more extreme in removal. The higher value here increases how extreme it should remove color.\n"
                "Too high values will cause shifts in color when no strong tinting is present or outside the scope of this shader.";>
