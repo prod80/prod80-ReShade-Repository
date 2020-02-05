@@ -61,7 +61,10 @@ namespace pd80_removetint
     #endif
 
     //// DEFINES ////////////////////////////////////////////////////////////////////
-#if( RT_USE_LESS_PRECISION_0_TO_3 == 0 )
+#if( RT_USE_LESS_PRECISION_0_TO_3 == -1 )
+    #define RT_RES      1
+    #define RT_MIPLVL   0
+#elif( RT_USE_LESS_PRECISION_0_TO_3 == 0 )
     #define RT_RES      2
     #define RT_MIPLVL   1
 #elif( RT_USE_LESS_PRECISION_0_TO_3 == 1 )
@@ -75,6 +78,15 @@ namespace pd80_removetint
     #define RT_MIPLVL   4
 #endif
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
+#if( RT_CORRECT_BLACKPOINT_0_TO_1 == 1 )
+    uniform float rt_bp_str <
+        ui_type = "slider";
+        ui_label = "Black Point Correction Strength";
+        ui_category = "Remove Tint";
+        ui_min = 0.0f;
+        ui_max = 1.0f;
+        > = 1.0;
+#endif
 #if( RT_ADJUST_GREYPOINT_0_TO_1 == 1 )
     uniform float midCC_scale <
         ui_type = "slider";
@@ -83,6 +95,15 @@ namespace pd80_removetint
         ui_min = 0.0f;
         ui_max = 5.0f;
         > = 0.5;
+#endif
+#if( RT_CORRECT_WHITEPOINT_0_TO_1 == 1 )
+    uniform float rt_wp_str <
+        ui_type = "slider";
+        ui_label = "White Point Correction Strength";
+        ui_category = "Remove Tint";
+        ui_min = 0.0f;
+        ui_max = 1.0f;
+        > = 1.0;
 #endif
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
@@ -270,6 +291,12 @@ namespace pd80_removetint
         float3 minValue    = tex2Dfetch( samplerDS_1x1_Min, int4( 0, 0, 0, 0 )).xyz;
         float3 maxValue    = tex2Dfetch( samplerDS_1x1_Max, int4( 0, 0, 0, 0 )).xyz;
         float3 midValue    = tex2Dfetch( samplerDS_1x1_Mid, int4( 0, 0, 0, 0 )).xyz;
+#if( RT_CORRECT_BLACKPOINT_0_TO_1 == 1 )
+        minValue.xyz       = lerp( 0.0f, minValue.xyz, rt_bp_str );
+#endif
+#if( RT_CORRECT_WHITEPOINT_0_TO_1 == 1 )
+        maxValue.xyz       = lerp( 1.0f, maxValue.xyz, rt_wp_str );
+#endif
 #if( RT_ADJUST_GREYPOINT_0_TO_1 == 1 )
         midValue.xyz       = midValue.xyz - min( min( midValue.x, midValue.y ), midValue.z );
         midValue.xyz       *= midCC_scale;
