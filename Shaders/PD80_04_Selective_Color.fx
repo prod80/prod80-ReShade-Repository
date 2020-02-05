@@ -455,27 +455,13 @@ namespace pd80_selectivecolor
     // Not supported in ReShade (?)
 
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
+    
     float mid( float3 c )
     {
-        /*
-        Return the middle value, standard comparison math
-        x > y, z > y, z > x, mid=x, else mid=z
-        else 
-        y > z, z > x, mid=z, else mid=x
-        both false, mid=y
-        */
-        if( c.x > c.y ) {
-            if( c.z > c.y ) {
-                if( c.z > c.x ) c.y = c.x;
-                else            c.y = c.z;
-            }
-        } else {
-            if( c.y > c.z ) {
-                if( c.z > c.x ) c.y = c.z;
-                else            c.y = c.x;
-            }
-        }
-        return c.y;
+        float sum = c.x + c.y + c.z;
+        float mn = min( min( c.x, c.y ), c.z );
+        float mx = max( max( c.x, c.y ), c.z );
+        return sum - mn - mx;
     }
 
     float adjustcolor( float scale, float colorvalue, float adjust, float bk, int method )
