@@ -193,12 +193,12 @@ namespace pd80_blackandwhite
         // No saturation (greyscale) should not influence B&W image
         float sat          = hsl.y * ( 1.0f - hsl.y ) + hsl.y;
         float ret          = hsl.z;
-        ret                += ( hsl.z * ( weight_r * r ) * sat * lum );
-        ret                += ( hsl.z * ( weight_y * y ) * sat * lum );
-        ret                += ( hsl.z * ( weight_g * g ) * sat * lum );
-        ret                += ( hsl.z * ( weight_c * c ) * sat * lum );
-        ret                += ( hsl.z * ( weight_b * b ) * sat * lum );
-        ret                += ( hsl.z * ( weight_m * m ) * sat * lum );
+        ret                += ( ret * ( weight_r * r ) * sat * lum );
+        ret                += ( ret * ( weight_y * y ) * sat * lum );
+        ret                += ( ret * ( weight_g * g ) * sat * lum );
+        ret                += ( ret * ( weight_c * c ) * sat * lum );
+        ret                += ( ret * ( weight_b * b ) * sat * lum );
+        ret                += ( ret * ( weight_m * m ) * sat * lum );
 
         return saturate( ret );
     }
