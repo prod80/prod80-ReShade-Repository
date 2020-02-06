@@ -141,6 +141,10 @@ namespace pd80_hqbloom
         ui_category = "Chromatic Aberration";
         ui_items = "Center Weighted Radial\0Center Weighted Longitudinal\0Full screen Radial\0Full screen Longitudinal\0";
         > = 0;
+    uniform bool use_only_ca <
+        ui_label  = "Use only CA";
+        ui_category = "Chromatic Aberration";
+        > = false;
     uniform int degrees <
         ui_type = "slider";
         ui_label = "CA Rotation Offset";
@@ -639,6 +643,7 @@ namespace pd80_hqbloom
         }
         color.xyz           /= dot( d.xyz, 0.333333f ); // seems so-so OK
         color.xyz           = lerp( orig.xyz, color.xyz, CA_strength );
+        color.xyz           = lerp( color.xyz, color.xyz - orig.xyz, use_only_ca );
         return float4( color.xyz, 1.0f );
     }
     #endif
