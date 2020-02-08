@@ -306,7 +306,7 @@ namespace pd80_removetint
         maxValue.xyz       = lerp( 1.0f, maxValue.xyz, rt_wp_str );
         maxValue.xyz       = lerp( 1.0f, maxValue.xyz, RT_CORRECT_WHITEPOINT );
         // Set mid value
-        midValue.xyz       = midValue.xyz - min( min( midValue.x, midValue.y ), midValue.z );
+        midValue.xyz       = midValue.xyz - 0.5f;
         midValue.xyz       *= midCC_scale;
         midValue.xyz       = lerp( 0.0f, midValue.xyz, RT_CORRECT_MIDPOINT );
         // Main color correction
