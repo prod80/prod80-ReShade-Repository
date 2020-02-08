@@ -32,49 +32,21 @@
 namespace pd80_removetint
 {
     //// PREPROCESSOR DEFINITIONS ///////////////////////////////////////////////////
-    #ifndef RT_CORRECT_WHITEPOINT_0_TO_1
-        #define RT_CORRECT_WHITEPOINT_0_TO_1       0
-    #endif
-
-    #ifndef RT_WHITEPOINT_RESPECT_LUMA_0_TO_1
-        #define RT_WHITEPOINT_RESPECT_LUMA_0_TO_1  0
-    #endif
-    
-    #ifndef RT_ADJUST_GREYPOINT_0_TO_1
-        #define RT_ADJUST_GREYPOINT_0_TO_1         0
-    #endif
-
-    #ifndef RT_CORRECT_BLACKPOINT_0_TO_1
-        #define RT_CORRECT_BLACKPOINT_0_TO_1       1
-    #endif
-
-    #ifndef RT_BLACKPOINT_RESPECT_LUMA_0_TO_1
-        #define RT_BLACKPOINT_RESPECT_LUMA_0_TO_1  1
-    #endif
-
-    #ifndef RT_USE_LESS_PRECISION_0_TO_3
-        #define RT_USE_LESS_PRECISION_0_TO_3       1
-    #endif
-
-    #ifndef RT_BLACKPOINT_DETECTION_METHOD_0_TO_1
-        #define RT_BLACKPOINT_DETECTION_METHOD_0_TO_1       1
-    #endif
-
-    #ifndef RT_WHITEPOINT_DETECTION_METHOD_0_TO_1
-        #define RT_WHITEPOINT_DETECTION_METHOD_0_TO_1   	0
+    #ifndef RT_PRECISION_LEVEL_0_TO_4
+        #define RT_PRECISION_LEVEL_0_TO_4       2
     #endif
 
     //// DEFINES ////////////////////////////////////////////////////////////////////
-#if( RT_USE_LESS_PRECISION_0_TO_3 == -1 )
+#if( RT_PRECISION_LEVEL_0_TO_4 == 0 )
     #define RT_RES      1
     #define RT_MIPLVL   0
-#elif( RT_USE_LESS_PRECISION_0_TO_3 == 0 )
+#elif( RT_PRECISION_LEVEL_0_TO_4 == 1 )
     #define RT_RES      2
     #define RT_MIPLVL   1
-#elif( RT_USE_LESS_PRECISION_0_TO_3 == 1 )
+#elif( RT_PRECISION_LEVEL_0_TO_4 == 2 )
     #define RT_RES      4
     #define RT_MIPLVL   2
-#elif( RT_USE_LESS_PRECISION_0_TO_3 == 2 )
+#elif( RT_PRECISION_LEVEL_0_TO_4 == 3 )
     #define RT_RES      8
     #define RT_MIPLVL   3
 #else
@@ -82,33 +54,62 @@ namespace pd80_removetint
     #define RT_MIPLVL   4
 #endif
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
-#if( RT_CORRECT_BLACKPOINT_0_TO_1 == 1 )
-    uniform float rt_bp_str <
-        ui_type = "slider";
-        ui_label = "Black Point Correction Strength";
-        ui_category = "Remove Tint";
-        ui_min = 0.0f;
-        ui_max = 1.0f;
-        > = 1.0;
-#endif
-#if( RT_ADJUST_GREYPOINT_0_TO_1 == 1 )
-    uniform float midCC_scale <
-        ui_type = "slider";
-        ui_label = "Mid Tone Correction Scale";
-        ui_category = "Remove Tint";
-        ui_min = 0.0f;
-        ui_max = 5.0f;
-        > = 0.5;
-#endif
-#if( RT_CORRECT_WHITEPOINT_0_TO_1 == 1 )
+    uniform bool enable_fade <
+        ui_label = "Enable Time Based Fade";
+        ui_category = "Global: Remove Tint";
+        > = true;
+    uniform bool RT_CORRECT_WHITEPOINT <
+        ui_label = "Enable Whitepoint Correction";
+        ui_category = "Whitepoint: Remove Tint";
+        > = false;
+    uniform bool RT_WHITEPOINT_RESPECT_LUMA <
+        ui_label = "Respect Luma";
+        ui_category = "Whitepoint: Remove Tint";
+        > = true;
+    uniform int RT_CORRECT_WHITEPOINT_METHOD < __UNIFORM_COMBO_INT1
+        ui_label = "Color Detection Method";
+        ui_category = "Whitepoint: Remove Tint";
+        ui_items = "By Color Channel\0Find Light Color\0";
+        > = 1;
     uniform float rt_wp_str <
         ui_type = "slider";
         ui_label = "White Point Correction Strength";
-        ui_category = "Remove Tint";
+        ui_category = "Whitepoint: Remove Tint";
         ui_min = 0.0f;
         ui_max = 1.0f;
         > = 1.0;
-#endif
+    uniform bool RT_CORRECT_BLACKPOINT <
+        ui_label = "Enable Blackpoint Correction";
+        ui_category = "Blackpoint: Remove Tint";
+        > = true;
+    uniform bool RT_BLACKPOINT_RESPECT_LUMA <
+        ui_label = "Respect Luma";
+        ui_category = "Blackpoint: Remove Tint";
+        > = true;
+    uniform int RT_CORRECT_BLACKPOINT_METHOD < __UNIFORM_COMBO_INT1
+        ui_label = "Color Detection Method";
+        ui_category = "Blackpoint: Remove Tint";
+        ui_items = "By Color Channel\0Find Dark Color\0";
+        > = 1;
+    uniform float rt_bp_str <
+        ui_type = "slider";
+        ui_label = "Black Point Correction Strength";
+        ui_category = "Blackpoint: Remove Tint";
+        ui_min = 0.0f;
+        ui_max = 1.0f;
+        > = 1.0;
+    uniform bool RT_CORRECT_MIDPOINT <
+        ui_label = "Enable Midtone Correction";
+        ui_category = "Midtone: Remove Tint";
+        > = false;
+    uniform float midCC_scale <
+        ui_type = "slider";
+        ui_label = "Midtone Correction Scale";
+        ui_category = "Midtone: Remove Tint";
+        ui_min = 0.0f;
+        ui_max = 5.0f;
+        > = 0.5;
+
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
     texture texLinearColor { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; MipLevels = 5; };
@@ -173,9 +174,11 @@ namespace pd80_removetint
     void PS_MinMax_1( float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 minValue : SV_Target0, out float4 maxValue : SV_Target1, out float4 midValue : SV_Target2 )
     {
         float3 currColor;
-        minValue           = 1.0f;
-        maxValue           = 0.0f;
-        midValue           = 1.0f;
+        float3 minMethod0  = 1.0f;
+        float3 minMethod1  = 1.0f;
+        float3 maxMethod0  = 0.0f;
+        float3 maxMethod1  = 0.0f;
+        midValue           = 0.0f;
 
         float getMid;   float getMid2;
         float getMin;   float getMin2;
@@ -193,42 +196,35 @@ namespace pd80_removetint
         {
             for( int x = uv.x; x < uv.x + Range.x && x < BUFFER_WIDTH/RT_RES; x += 1 )
             {
-                currColor  = tex2Dfetch( samplerLinearColor, int4( x, y, 0, RT_MIPLVL )).xyz;
-#if( RT_CORRECT_BLACKPOINT_0_TO_1 == 1 )
-    #if( RT_BLACKPOINT_DETECTION_METHOD_0_TO_1 == 0 )
-                minValue.x = lerp( minValue.x, currColor.x, step( currColor.x, minValue.x ));
-                minValue.y = lerp( minValue.y, currColor.y, step( currColor.y, minValue.y ));
-                minValue.z = lerp( minValue.z, currColor.z, step( currColor.z, minValue.z ));
-    #endif
-    #if( RT_BLACKPOINT_DETECTION_METHOD_0_TO_1 == 1 )
-                getMin     = max( max( currColor.x, currColor.y ), currColor.z );
-                getMin2    = max( max( minValue.x, minValue.y ), minValue.z );
-                minValue.xyz = lerp( minValue.xyz, currColor.xyz, step( getMin, getMin2 ));
-    #endif
-#endif
-#if( RT_ADJUST_GREYPOINT_0_TO_1 == 1 )
-                /*
-                Mid Value
-                If sum of values < Previous sum of values, set new mid color
-                */
-                getMid     = dot( abs( currColor.xyz - 0.5f ), 1.0f );
-                getMid2    = dot( abs( midValue.xyz - 0.5f ), 1.0f );
+                currColor    = tex2Dfetch( samplerLinearColor, int4( x, y, 0, RT_MIPLVL )).xyz;
+                // Dark color detection methods
+                // Per channel
+                minMethod0.x = lerp( minMethod0.x, currColor.x, step( currColor.x, minMethod0.x ));
+                minMethod0.y = lerp( minMethod0.y, currColor.y, step( currColor.y, minMethod0.y ));
+                minMethod0.z = lerp( minMethod0.z, currColor.z, step( currColor.z, minMethod0.z ));
+                // By color
+                getMin       = max( max( currColor.x, currColor.y ), currColor.z );
+                getMin2      = max( max( minMethod1.x, minMethod1.y ), minMethod1.z );
+                minMethod1.xyz = lerp( minMethod1.xyz, currColor.xyz, step( getMin, getMin2 ));
+                // Mid point detection
+                getMid       = dot( abs( currColor.xyz - 0.5f ), 1.0f );
+                getMid2      = dot( abs( midValue.xyz - 0.5f ), 1.0f );
                 midValue.xyz = lerp( midValue.xyz, currColor.xyz, step( getMid, getMid2 ));
-#endif
-#if( RT_CORRECT_WHITEPOINT_0_TO_1 == 1 )
-    #if( RT_WHITEPOINT_DETECTION_METHOD_0_TO_1 == 0 )
-                maxValue.x = lerp( maxValue.x, currColor.x, step( maxValue.x, currColor.x ));
-                maxValue.y = lerp( maxValue.y, currColor.y, step( maxValue.y, currColor.y ));
-                maxValue.z = lerp( maxValue.z, currColor.z, step( maxValue.z, currColor.z ));
-    #endif
-    #if( RT_WHITEPOINT_DETECTION_METHOD_0_TO_1 == 1 )
-                getMax     = min( min( currColor.x, currColor.y ), currColor.z );
-                getMax2    = min( min( maxValue.x, maxValue.y ), maxValue.z );
-                maxValue.xyz = lerp( maxValue.xyz, currColor.xyz, step( getMax2, getMax ));
-    #endif
-#endif
+                // Light color detection methods
+                // Per channel
+                maxMethod0.x = lerp( maxMethod0.x, currColor.x, step( maxMethod0.x, currColor.x ));
+                maxMethod0.y = lerp( maxMethod0.y, currColor.y, step( maxMethod0.y, currColor.y ));
+                maxMethod0.z = lerp( maxMethod0.z, currColor.z, step( maxMethod0.z, currColor.z ));
+                // By color
+                getMax       = min( min( currColor.x, currColor.y ), currColor.z );
+                getMax2      = min( min( maxMethod1.x, maxMethod1.y ), maxMethod1.z );
+                maxMethod1.xyz = lerp( maxMethod1.xyz, currColor.xyz, step( getMax2, getMax ));
             }
         }
+
+        minValue.xyz       = lerp( minMethod0.xyz, minMethod1.xyz, RT_CORRECT_BLACKPOINT_METHOD );
+        maxValue.xyz       = lerp( maxMethod0.xyz, maxMethod1.xyz, RT_CORRECT_WHITEPOINT_METHOD );
+        // Return
         minValue           = float4( minValue.xyz, 1.0f );
         maxValue           = float4( maxValue.xyz, 1.0f );
         midValue           = float4( midValue.xyz, 1.0f );
@@ -240,8 +236,10 @@ namespace pd80_removetint
         float3 minColor; float3 maxColor; float3 midColor;
         float getMin;    float getMin2;
         float getMax;    float getMax2;
-        minValue           = 1.0f;
-        maxValue           = 0.0f;
+        float3 minMethod0  = 1.0f;
+        float3 minMethod1  = 1.0f;
+        float3 maxMethod0  = 0.0f;
+        float3 maxMethod1  = 0.0f;
         midValue           = 0.0f;
         //Get texture resolution
         int2 SampleRes     = tex2Dsize( samplerDS_1_Max, 0 );
@@ -251,58 +249,47 @@ namespace pd80_removetint
         {
             for( int x = 0; x < SampleRes.x; x += 1 )
             {   
-                Sigma      += 1.0f;
-#if( RT_CORRECT_BLACKPOINT_0_TO_1 == 1 )
-    #if( RT_BLACKPOINT_DETECTION_METHOD_0_TO_1 == 0 )
-                // Get me lowest value
-                minColor   = tex2Dfetch( samplerDS_1_Min, int4( x, y, 0, 0 )).xyz;
-                minValue.x = lerp( minValue.x, minColor.x, step( minColor.x, minValue.x ));
-                minValue.y = lerp( minValue.y, minColor.y, step( minColor.y, minValue.y ));
-                minValue.z = lerp( minValue.z, minColor.z, step( minColor.z, minValue.z ));
-    #endif
-    #if( RT_BLACKPOINT_DETECTION_METHOD_0_TO_1 == 1 )
-                // Get me darkest color
-                minColor   = tex2Dfetch( samplerDS_1_Min, int4( x, y, 0, 0 )).xyz;
-                getMin     = max( max( minColor.x, minColor.y ), minColor.z );
-                getMin2    = max( max( minValue.x, minValue.y ), minValue.z );
-                minValue.xyz = lerp( minValue.xyz, minColor.xyz, step( getMin, getMin2 ));
-    #endif
-#endif
-#if( RT_ADJUST_GREYPOINT_0_TO_1 == 1 )
-                /*
-                Seems making an average of middle values works best, dodgy as this already is
-                */
-                midColor   += tex2Dfetch( samplerDS_1_Mid, int4( x, y, 0, 0 )).xyz;
-#endif
-#if( RT_CORRECT_WHITEPOINT_0_TO_1 == 1 )
-    #if( RT_WHITEPOINT_DETECTION_METHOD_0_TO_1 == 0 )
-                maxColor   = tex2Dfetch( samplerDS_1_Max, int4( x, y, 0, 0 )).xyz;
-                maxValue.x = lerp( maxValue.x, maxColor.x, step( maxValue.x, maxColor.x ));
-                maxValue.y = lerp( maxValue.y, maxColor.y, step( maxValue.y, maxColor.y ));
-                maxValue.z = lerp( maxValue.z, maxColor.z, step( maxValue.z, maxColor.z ));
-    #endif
-    #if( RT_WHITEPOINT_DETECTION_METHOD_0_TO_1 == 1 )
-                maxColor   = tex2Dfetch( samplerDS_1_Max, int4( x, y, 0, 0 )).xyz;
-                getMax     = min( min( maxColor.x, maxColor.y ), maxColor.z );
-                getMax2    = min( min( maxValue.x, maxValue.y ), maxValue.z );
-                maxValue.xyz = lerp( maxValue.xyz, maxColor.xyz, step( getMax2, getMax ));
-    #endif
-#endif
+                // Dark color detection methods
+                minColor     = tex2Dfetch( samplerDS_1_Min, int4( x, y, 0, 0 )).xyz;
+                // Per channel
+                minMethod0.x = lerp( minMethod0.x, minColor.x, step( minColor.x, minMethod0.x ));
+                minMethod0.y = lerp( minMethod0.y, minColor.y, step( minColor.y, minMethod0.y ));
+                minMethod0.z = lerp( minMethod0.z, minColor.z, step( minColor.z, minMethod0.z ));
+                // By color
+                getMin       = max( max( minColor.x, minColor.y ), minColor.z );
+                getMin2      = max( max( minMethod1.x, minMethod1.y ), minMethod1.z );
+                minMethod1.xyz = lerp( minMethod1.xyz, minColor.xyz, step( getMin, getMin2 ));
+                // Mid point detection
+                midColor     += tex2Dfetch( samplerDS_1_Mid, int4( x, y, 0, 0 )).xyz;
+                Sigma        += 1.0f;
+                // Light color detection methods
+                maxColor     = tex2Dfetch( samplerDS_1_Max, int4( x, y, 0, 0 )).xyz;
+                // Per channel
+                maxMethod0.x = lerp( maxMethod0.x, maxColor.x, step( maxMethod0.x, maxColor.x ));
+                maxMethod0.y = lerp( maxMethod0.y, maxColor.y, step( maxMethod0.y, maxColor.y ));
+                maxMethod0.z = lerp( maxMethod0.z, maxColor.z, step( maxMethod0.z, maxColor.z ));
+                // By color
+                getMax       = min( min( maxColor.x, maxColor.y ), maxColor.z );
+                getMax2      = min( min( maxMethod1.x, maxMethod1.y ), maxMethod1.z );
+                maxMethod1.xyz = lerp( maxMethod1.xyz, maxColor.xyz, step( getMax2, getMax ));
             }
         }
+
+        minValue.xyz       = lerp( minMethod0.xyz, minMethod1.xyz, RT_CORRECT_BLACKPOINT_METHOD );
+        maxValue.xyz       = lerp( maxMethod0.xyz, maxMethod1.xyz, RT_CORRECT_WHITEPOINT_METHOD );
+        midValue.xyz       /= Sigma;
         //Try and avoid some flickering
         //Not really working, too radical changes in min values sometimes
         float3 prevMin     = tex2Dfetch( samplerPrevMin, int4( 0, 0, 0, 0 )).xyz;
         float3 prevMax     = tex2Dfetch( samplerPrevMax, int4( 0, 0, 0, 0 )).xyz;
         float fade         = saturate( frametime * 0.006f );
+        fade               = lerp( 1.0f, fade, enable_fade );
         minValue.xyz       = lerp( prevMin.xyz, minValue.xyz, fade );
         maxValue.xyz       = lerp( prevMax.xyz, maxValue.xyz, fade );
-        
+        // Return
         minValue           = float4( minValue.xyz, 1.0f );
         maxValue           = float4( maxValue.xyz, 1.0f );
-#if( RT_ADJUST_GREYPOINT_0_TO_1 == 1 )
-        midValue           = float4( midColor.xyz / Sigma, 1.0f );
-#endif
+        midValue           = float4( midColor.xyz, 1.0f );
     }
 
     float4 PS_RemoveTint(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
@@ -312,36 +299,27 @@ namespace pd80_removetint
         float3 minValue    = tex2Dfetch( samplerDS_1x1_Min, int4( 0, 0, 0, 0 )).xyz;
         float3 maxValue    = tex2Dfetch( samplerDS_1x1_Max, int4( 0, 0, 0, 0 )).xyz;
         float3 midValue    = tex2Dfetch( samplerDS_1x1_Mid, int4( 0, 0, 0, 0 )).xyz;
-#if( RT_CORRECT_BLACKPOINT_0_TO_1 == 1 )
+        // Set min value
         minValue.xyz       = lerp( 0.0f, minValue.xyz, rt_bp_str );
-#endif
-#if( RT_CORRECT_WHITEPOINT_0_TO_1 == 1 )
+        minValue.xyz       = lerp( 0.0f, minValue.xyz, RT_CORRECT_BLACKPOINT );
+        // Set max value
         maxValue.xyz       = lerp( 1.0f, maxValue.xyz, rt_wp_str );
-#endif
-#if( RT_ADJUST_GREYPOINT_0_TO_1 == 1 )
+        maxValue.xyz       = lerp( 1.0f, maxValue.xyz, RT_CORRECT_WHITEPOINT );
+        // Set mid value
         midValue.xyz       = midValue.xyz - min( min( midValue.x, midValue.y ), midValue.z );
         midValue.xyz       *= midCC_scale;
-#endif
-#if( RT_CORRECT_BLACKPOINT_0_TO_1 == 0 )
-        minValue.xyz       = 0.0f;
-#endif
-#if( RT_CORRECT_WHITEPOINT_0_TO_1 == 0 )
-        maxValue.xyz       = 1.0f;
-#endif
+        midValue.xyz       = lerp( 0.0f, midValue.xyz, RT_CORRECT_MIDPOINT );
+        // Main color correction
         color.xyz          = saturate( color.xyz - minValue.xyz ) / saturate( maxValue.xyz - minValue.xyz );
-#if( RT_CORRECT_WHITEPOINT_0_TO_1 == 1 ) 
+        // Luma preservation, mid point correction
         float corrLum      = max( dot( color.xyz, 0.333333f ), 0.000001f );
-        color.xyz          = lerp( color.xyz, color.xyz * saturate( corrLumOrig / corrLum ), RT_WHITEPOINT_RESPECT_LUMA_0_TO_1 );
-#endif
-#if( RT_CORRECT_BLACKPOINT_0_TO_1 == 1 )
+        color.xyz          = lerp( color.xyz, color.xyz * saturate( corrLumOrig / corrLum ), RT_WHITEPOINT_RESPECT_LUMA );
         float greyValue    = max( dot( minValue.xyz, 0.333333f ), 0.000001f );
-        color.xyz          = lerp( color.xyz, color.xyz * ( 1.0f - greyValue ) + greyValue, RT_BLACKPOINT_RESPECT_LUMA_0_TO_1 );
-#endif
-#if( RT_ADJUST_GREYPOINT_0_TO_1 == 1 )
+        color.xyz          = lerp( color.xyz, color.xyz * ( 1.0f - greyValue ) + greyValue, RT_BLACKPOINT_RESPECT_LUMA );
         float lum          = dot( color.xyz, 0.333333f );
         lum                = lum >= 0.5f ? abs( lum * 2.0f - 2.0f ) : lum * 2.0f;
         color.xyz          = color.xyz - ( midValue.xyz * lum );
-#endif
+        
         color.xyz          = SRGBToLinear( color.xyz );
         return float4( color.xyz, 1.0f );
     }
@@ -356,26 +334,12 @@ namespace pd80_removetint
     technique prod80_01_RemoveTint
     < ui_tooltip = "Remove Tint/Color Cast\n\n"
 			   "Automatically adjust Blackpoint, Whitepoint, and remove color tints/casts while enhacing contrast.\n"
+               "Both correcting per individual channel, as well as Light/Dark colors are supported.\n"
                "This shader will not adjust tinting applied in gamma, and this is considered out of scope.\n\n"
-			   "RT_CORRECT_WHITEPOINT_0_TO_1\n"
-               "Enables adjustment to white point. This will adjust the brightest found color to white.\n\n"
-               "RT_WHITEPOINT_RESPECT_LUMA_0_TO_1\n"
-               "Adjustment to white point may scale brightness. This will help scale it back.\n\n"
-               "RT_ADJUST_GREYPOINT_0_TO_1\n"
-               "Experimental! Allows to adjust grey value based on the average middle grey value it found in the scene.\n\n"
-               "RT_CORRECT_BLACKPOINT_0_TO_1\n"
-               "Enables adjustment to backpoint. Sets the lowest found color to black.\n\n"
-               "RT_BLACKPOINT_RESPECT_LUMA_0_TO_1\n"
-               "Adjustment to black point may increase contrast due to black value changes. This replaces the color removed with grey.\n\n"
-               "RT_BLACKPOINT_DETECTION_METHOD_0_TO_1\n"
-               "Changes the method the shader uses to detect the lowest RGB value in the scene. Different methods may give better results.\n"
-               "Method 0 uses per color channel sampling and correction. Method 1 finds the dark and light colors.\n\n"
-               "RT_WHITEPOINT_DETECTION_METHOD_0_TO_1\n"
-               "Changes the method the shader uses to detect the highest RGB value in the scene. Different methods may give better results.\n"
-               "Method 0 uses per color channel sampling and correction. Method 1 finds the dark and light colors.\n\n"
-               "RT_USE_LESS_PRECISION_0_TO_3\n"
-               "Sometimes you want to be more extreme in removal. The higher value here increases how extreme it should remove color.\n"
-               "Too high values will cause shifts in color when no strong tinting is present or outside the scope of this shader.";>
+			   
+               "RT_PRECISION_LEVEL_0_TO_4\n"
+               "Sets the precision level in detecting the white and black points. Higher levels mean less precision and more color removal.\n"
+               "Too high values will remove significant amounts of color and may cause shifts in color, contrast, or banding artefacts.";>
     {
         pass prod80_pass0
         {
