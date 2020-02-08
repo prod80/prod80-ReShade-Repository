@@ -277,7 +277,7 @@ namespace pd80_removetint
 
         minValue.xyz       = lerp( minMethod0.xyz, minMethod1.xyz, RT_CORRECT_BLACKPOINT_METHOD );
         maxValue.xyz       = lerp( maxMethod0.xyz, maxMethod1.xyz, RT_CORRECT_WHITEPOINT_METHOD );
-        midValue.xyz       /= Sigma;
+        midValue.xyz       = midColor.xyz / Sigma;
         //Try and avoid some flickering
         //Not really working, too radical changes in min values sometimes
         float3 prevMin     = tex2Dfetch( samplerPrevMin, int4( 0, 0, 0, 0 )).xyz;
@@ -289,7 +289,7 @@ namespace pd80_removetint
         // Return
         minValue           = float4( minValue.xyz, 1.0f );
         maxValue           = float4( maxValue.xyz, 1.0f );
-        midValue           = float4( midColor.xyz, 1.0f );
+        midValue           = float4( midValue.xyz, 1.0f );
     }
 
     float4 PS_RemoveTint(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
