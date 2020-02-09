@@ -1,5 +1,5 @@
 /*
-    Description : PD80 Posterize Pixelate for Reshade https://reshade.me/
+    Description : PD80 06 Posterize Pixelate for Reshade https://reshade.me/
     Author      : prod80 (Bas Veth)
     License     : MIT, Copyright (c) 2020 prod80
 
@@ -80,7 +80,7 @@ namespace pd80_posterizepixelate
     }
 
     //// TECHNIQUES /////////////////////////////////////////////////////////////////
-    technique prod80_Posterization
+    technique prod80_06_Posterize_Pixelate
     {
         pass prod80_pass0
         {
