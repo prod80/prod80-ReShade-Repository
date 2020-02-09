@@ -299,7 +299,6 @@ namespace pd80_removetint
     float4 PS_RemoveTint(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color       = tex2D( samplerLinearColor, texcoord );
-        float corrLumOrig  = dot( color.xyz, 0.333333f );
         float3 minValue    = tex2Dfetch( samplerDS_1x1_Min, int4( 0, 0, 0, 0 )).xyz;
         float3 maxValue    = tex2Dfetch( samplerDS_1x1_Max, int4( 0, 0, 0, 0 )).xyz;
         float3 midValue    = tex2Dfetch( samplerDS_1x1_Mid, int4( 0, 0, 0, 0 )).xyz;
@@ -316,8 +315,8 @@ namespace pd80_removetint
         // Main color correction
         color.xyz          = saturate( color.xyz - minValue.xyz ) / saturate( maxValue.xyz - minValue.xyz );
         // Luma preservation, mid point correction
-        float corrLum      = max( dot( color.xyz, 0.333333f ), 0.000001f );
-        color.xyz          = lerp( color.xyz, color.xyz * saturate( corrLumOrig / corrLum ), rt_whitepoint_respect_luma );
+        float corrLum      = max( dot( maxValue.xyz, 0.333333f ), 0.000001f );
+        color.xyz          = lerp( color.xyz, color.xyz * corrLum, rt_whitepoint_respect_luma );
         float greyValue    = max( dot( minValue.xyz, 0.333333f ), 0.000001f );
         color.xyz          = lerp( color.xyz, color.xyz * ( 1.0f - greyValue ) + greyValue, rt_blackpoint_respect_luma );
         float lum          = dot( color.xyz, 0.333333f );
