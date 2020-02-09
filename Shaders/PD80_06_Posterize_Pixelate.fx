@@ -48,6 +48,13 @@ namespace pd80_posterizepixelate
         ui_min = 1;
         ui_max = 100;
         > = 1;
+    uniform float effect_strength <
+        ui_type = "slider";
+        ui_label = "Effect Strength";
+        ui_category = "Posterize Pixelate";
+        ui_min = 0.0f;
+        ui_max = 1.0f;
+        > = 1.0;
 	
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
@@ -62,6 +69,7 @@ namespace pd80_posterizepixelate
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float4 PS_Posterize(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
+        float3 orig       = tex2D( samplerColor, texcoord ).xyz;
         float sigma       = 0.0f;
         float3 color      = 0.0f;
         float2 uv         = texcoord.xy * float2( BUFFER_WIDTH, BUFFER_HEIGHT );
@@ -76,6 +84,7 @@ namespace pd80_posterizepixelate
         }
         color.xyz         /= sigma;
         color.xyz         = floor( color.xyz * number_of_levels ) / ( number_of_levels - 1 );
+        color.xyz         = lerp( orig.xyz, color.xyz, effect_strength );
         return float4( color.xyz, 1.0f );
     }
 
