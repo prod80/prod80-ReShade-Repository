@@ -44,8 +44,8 @@ namespace pd80_posterizepixelate
         ui_min = 2;
         ui_max = 255;
         > = 255;
-	uniform int pixel_size <
-		ui_label = "Pixel Size";
+    uniform int pixel_size <
+        ui_label = "Pixel Size";
         ui_category = "Pixelate";
         ui_type = "slider";
         ui_min = 1;
