@@ -55,18 +55,20 @@ namespace pd80_removetint
 #endif
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
     uniform bool enable_fade <
+        ui_text = "----------------------------------------------";
         ui_label = "Enable Time Based Fade";
         ui_category = "Global: Remove Tint";
         > = true;
-    uniform bool RT_CORRECT_WHITEPOINT <
+    uniform bool rt_enable_whitepoint_correction <
+        ui_text = "----------------------------------------------";
         ui_label = "Enable Whitepoint Correction";
         ui_category = "Whitepoint: Remove Tint";
         > = false;
-    uniform bool RT_WHITEPOINT_RESPECT_LUMA <
+    uniform bool rt_whitepoint_respect_luma <
         ui_label = "Respect Luma";
         ui_category = "Whitepoint: Remove Tint";
         > = true;
-    uniform int RT_CORRECT_WHITEPOINT_METHOD < __UNIFORM_COMBO_INT1
+    uniform int rt_whitepoint_method < __UNIFORM_COMBO_INT1
         ui_label = "Color Detection Method";
         ui_category = "Whitepoint: Remove Tint";
         ui_items = "By Color Channel\0Find Light Color\0";
@@ -78,15 +80,16 @@ namespace pd80_removetint
         ui_min = 0.0f;
         ui_max = 1.0f;
         > = 1.0;
-    uniform bool RT_CORRECT_BLACKPOINT <
+    uniform bool rt_enable_blackpoint_correction <
+        ui_text = "----------------------------------------------";
         ui_label = "Enable Blackpoint Correction";
         ui_category = "Blackpoint: Remove Tint";
         > = true;
-    uniform bool RT_BLACKPOINT_RESPECT_LUMA <
+    uniform bool rt_blackpoint_respect_luma <
         ui_label = "Respect Luma";
         ui_category = "Blackpoint: Remove Tint";
         > = true;
-    uniform int RT_CORRECT_BLACKPOINT_METHOD < __UNIFORM_COMBO_INT1
+    uniform int rt_blackpoint_method < __UNIFORM_COMBO_INT1
         ui_label = "Color Detection Method";
         ui_category = "Blackpoint: Remove Tint";
         ui_items = "By Color Channel\0Find Dark Color\0";
@@ -98,7 +101,8 @@ namespace pd80_removetint
         ui_min = 0.0f;
         ui_max = 1.0f;
         > = 1.0;
-    uniform bool RT_CORRECT_MIDPOINT <
+    uniform bool rt_enable_midpoint_correction <
+        ui_text = "----------------------------------------------";
         ui_label = "Enable Midtone Correction";
         ui_category = "Midtone: Remove Tint";
         > = false;
@@ -222,8 +226,8 @@ namespace pd80_removetint
             }
         }
 
-        minValue.xyz       = lerp( minMethod0.xyz, minMethod1.xyz, RT_CORRECT_BLACKPOINT_METHOD );
-        maxValue.xyz       = lerp( maxMethod0.xyz, maxMethod1.xyz, RT_CORRECT_WHITEPOINT_METHOD );
+        minValue.xyz       = lerp( minMethod0.xyz, minMethod1.xyz, rt_blackpoint_method );
+        maxValue.xyz       = lerp( maxMethod0.xyz, maxMethod1.xyz, rt_whitepoint_method );
         // Return
         minValue           = float4( minValue.xyz, 1.0f );
         maxValue           = float4( maxValue.xyz, 1.0f );
@@ -275,8 +279,8 @@ namespace pd80_removetint
             }
         }
 
-        minValue.xyz       = lerp( minMethod0.xyz, minMethod1.xyz, RT_CORRECT_BLACKPOINT_METHOD );
-        maxValue.xyz       = lerp( maxMethod0.xyz, maxMethod1.xyz, RT_CORRECT_WHITEPOINT_METHOD );
+        minValue.xyz       = lerp( minMethod0.xyz, minMethod1.xyz, rt_blackpoint_method );
+        maxValue.xyz       = lerp( maxMethod0.xyz, maxMethod1.xyz, rt_whitepoint_method );
         midValue.xyz       = midColor.xyz / Sigma;
         //Try and avoid some flickering
         //Not really working, too radical changes in min values sometimes
@@ -301,24 +305,24 @@ namespace pd80_removetint
         float3 midValue    = tex2Dfetch( samplerDS_1x1_Mid, int4( 0, 0, 0, 0 )).xyz;
         // Set min value
         minValue.xyz       = lerp( 0.0f, minValue.xyz, rt_bp_str );
-        minValue.xyz       = lerp( 0.0f, minValue.xyz, RT_CORRECT_BLACKPOINT );
+        minValue.xyz       = lerp( 0.0f, minValue.xyz, rt_enable_blackpoint_correction );
         // Set max value
         maxValue.xyz       = lerp( 1.0f, maxValue.xyz, rt_wp_str );
-        maxValue.xyz       = lerp( 1.0f, maxValue.xyz, RT_CORRECT_WHITEPOINT );
+        maxValue.xyz       = lerp( 1.0f, maxValue.xyz, rt_enable_whitepoint_correction );
         // Set mid value
         midValue.xyz       = midValue.xyz - 0.5f;
         midValue.xyz       *= midCC_scale;
-        midValue.xyz       = lerp( 0.0f, midValue.xyz, RT_CORRECT_MIDPOINT );
+        midValue.xyz       = lerp( 0.0f, midValue.xyz, rt_enable_midpoint_correction );
         // Main color correction
         color.xyz          = saturate( color.xyz - minValue.xyz ) / saturate( maxValue.xyz - minValue.xyz );
         // Luma preservation, mid point correction
         float corrLum      = max( dot( color.xyz, 0.333333f ), 0.000001f );
-        color.xyz          = lerp( color.xyz, color.xyz * saturate( corrLumOrig / corrLum ), RT_WHITEPOINT_RESPECT_LUMA );
+        color.xyz          = lerp( color.xyz, color.xyz * saturate( corrLumOrig / corrLum ), rt_whitepoint_respect_luma );
         float greyValue    = max( dot( minValue.xyz, 0.333333f ), 0.000001f );
-        color.xyz          = lerp( color.xyz, color.xyz * ( 1.0f - greyValue ) + greyValue, RT_BLACKPOINT_RESPECT_LUMA );
+        color.xyz          = lerp( color.xyz, color.xyz * ( 1.0f - greyValue ) + greyValue, rt_blackpoint_respect_luma );
         float lum          = dot( color.xyz, 0.333333f );
         lum                = lum >= 0.5f ? abs( lum * 2.0f - 2.0f ) : lum * 2.0f;
-        color.xyz          = color.xyz - ( midValue.xyz * lum );
+        color.xyz          = saturate( color.xyz - ( midValue.xyz * lum ));
         
         color.xyz          = SRGBToLinear( color.xyz );
         return float4( color.xyz, 1.0f );
@@ -333,7 +337,7 @@ namespace pd80_removetint
     //// TECHNIQUES /////////////////////////////////////////////////////////////////
     technique prod80_01_RemoveTint
     < ui_tooltip = "Remove Tint/Color Cast\n\n"
-			   "Automatically adjust Blackpoint, Whitepoint, and remove color tints/casts while enhacing contrast.\n"
+			   "Automatically adjust Blackpoint, Whitepoint, and remove color tints/casts while enhancing contrast.\n"
                "Both correcting per individual channel, as well as Light/Dark colors are supported.\n"
                "This shader will not adjust tinting applied in gamma, and this is considered out of scope.\n\n"
 			   
