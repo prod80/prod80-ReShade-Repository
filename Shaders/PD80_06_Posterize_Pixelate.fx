@@ -32,6 +32,9 @@
 namespace pd80_posterizepixelate
 {
     //// PREPROCESSOR DEFINITIONS ///////////////////////////////////////////////////
+    #ifndef PP_DRAW_BLOCKS
+        #define PP_DRAW_BLOCKS      0
+    #endif
 
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
     uniform int number_of_levels <
@@ -69,19 +72,27 @@ namespace pd80_posterizepixelate
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float4 PS_Posterize(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
-        float3 orig       = tex2D( samplerColor, texcoord ).xyz;
+        float3 orig       = tex2D( samplerColor, texcoord.xy ).xyz; 
         float sigma       = 0.0f;
         float3 color      = 0.0f;
         float2 uv         = texcoord.xy * float2( BUFFER_WIDTH, BUFFER_HEIGHT );
+        float2 qualifier  = floor( uv.xy );
         uv.xy             = floor( uv.xy / pixel_size ) * pixel_size;
-        for( int y = uv.y; y < uv.y + pixel_size && y < BUFFER_HEIGHT; ++y )
+#if( PP_DRAW_BLOCKS == 1 )
+        if( all( qualifier.xy - uv.xy ))
         {
-            for( int x = uv.x; x < uv.x + pixel_size && x < BUFFER_WIDTH; ++x )
+#endif
+            for( int y = uv.y; y < uv.y + pixel_size && y < BUFFER_HEIGHT; ++y )
             {
-                color.xyz += tex2Dfetch( samplerColor, int4( x, y, 0, 0 )).xyz;
-                sigma     += 1.0f;
+                for( int x = uv.x; x < uv.x + pixel_size && x < BUFFER_WIDTH; ++x )
+                {
+                    color.xyz += tex2Dfetch( samplerColor, int4( x, y, 0, 0 )).xyz;
+                    sigma     += 1.0f;
+                }
             }
+#if( PP_DRAW_BLOCKS == 1 )
         }
+#endif
         color.xyz         /= sigma;
         color.xyz         = floor( color.xyz * number_of_levels ) / ( number_of_levels - 1 );
         color.xyz         = lerp( orig.xyz, color.xyz, effect_strength );
