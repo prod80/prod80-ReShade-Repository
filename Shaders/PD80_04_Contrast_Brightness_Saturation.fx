@@ -47,14 +47,14 @@ namespace pd80_conbrisat
         ui_max = 1.5;
         > = 0.0;
     uniform float saturation <
-        ui_label = "Global Saturation";
+        ui_label = "Saturation";
         ui_category = "Final Adjustments";
         ui_type = "slider";
         ui_min = -1.0;
         ui_max = 1.0;
         > = 0.0;
     uniform float vibrance <
-        ui_label = "Global Vibrance";
+        ui_label = "Vibrance";
         ui_category = "Final Adjustments";
         ui_type = "slider";
         ui_min = -1.0;
