@@ -33,49 +33,29 @@ namespace pd80_ColorGradients
 {
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
     uniform float3 midcolor <
-    ui_type = "color";
-    ui_label = "Mid Tone Color";
-    ui_category = "Gradients";
-    > = float3(1.0, 0.325, 0.0);
-
+        ui_type = "color";
+        ui_label = "Mid Tone Color";
+        ui_category = "Gradients";
+        > = float3(1.0, 0.5, 0.0);
     uniform float3 shadowcolor <
-    ui_type = "color";
-    ui_label = "Shadow Color";
-    ui_category = "Gradients";
-    > = float3(1.0, 0.0, 0.325);
-
-    uniform float midpower <
-    ui_label = "Mid Tone Color Distribution Curve";
-    ui_category = "Gradients";
-    ui_type = "slider";
-    ui_min = 0.05;
-    ui_max = 5.0;
-    > = 2.0;
-
-    uniform float shadowpower <
-    ui_label = "Shadow Color Distribution Curve";
-    ui_category = "Gradients";
-    ui_type = "slider";
-    ui_min = 0.05;
-    ui_max = 5.0;
-    > = 3.0;
-
+        ui_type = "color";
+        ui_label = "Shadow Color";
+        ui_category = "Gradients";
+        > = float3(0.0, 0.5, 1.0);
     uniform float CGdesat <
-    ui_label = "Desaturate Base Image";
-    ui_category = "Gradients";
-    ui_type = "slider";
-    ui_min = 0.0;
-    ui_max = 1.0;
-    > = 0.0;
-
+        ui_label = "Desaturate Base Image";
+        ui_category = "Gradients";
+        ui_type = "slider";
+        ui_min = 0.0;
+        ui_max = 1.0;
+        > = 0.0;
     uniform float finalmix <
-    ui_label = "Mix with Original";
-    ui_category = "Gradients";
-    ui_type = "slider";
-    ui_min = 0.0;
-    ui_max = 1.0;
-    > = 0.333;
-
+        ui_label = "Mix with Original";
+        ui_category = "Gradients";
+        ui_type = "slider";
+        ui_min = 0.0;
+        ui_max = 1.0;
+        > = 0.333;
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
@@ -122,21 +102,28 @@ namespace pd80_ColorGradients
         return ( RGB - 0.5f ) * C + HSL.z;
     }
 
+    float curve( float x )
+    {
+        return x * x * x * ( x * ( x * 6.0f - 15.0f ) + 10.0f );
+    }
+
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float4 PS_ColorGradients(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color     = tex2D( samplerColor, texcoord );
         color.xyz        = saturate( color.xyz );
-        float avgcolor   = getLuminance( color.xyz );
-        float low        = pow( 1.0f - avgcolor, shadowpower );
-        float high       = pow( avgcolor, midpower );
-        float mid        = saturate( 1.0f - low - high );
-        float3 midC      = RGBToHSL( midcolor.xyz );
-        float3 shaC      = RGBToHSL( shadowcolor.xyz );
-        midC.xyz         = HSLToRGB( float3( midC.xy, avgcolor ));
-        shaC.xyz         = HSLToRGB( float3( shaC.xy, avgcolor ));
-        float3 CG        = shaC.xyz * low + midC.xyz * mid + high;
-        color.xyz        = lerp( lerp( color.xyz, avgcolor, CGdesat ), CG.xyz, finalmix );
+        float3 hsl       = RGBToHSL( color.xyz );
+        float cWeight    = dot( color.xyz, 0.333333f );
+        float pLuma      = getLuminance( color.xyz );
+        float w_s        = curve( max( 1.0f - cWeight * 2.0f, 0.0f ));
+        float w_h        = curve( max(( cWeight - 0.5f ) * 2.0f, 0.0f ));
+        float w_m        = 1.0f - w_s - w_h;
+        float3 hsl_sc    = RGBToHSL( shadowcolor.xyz );
+        float3 hsl_mc    = RGBToHSL( midcolor.xyz );
+        hsl_sc.xyz       = HSLToRGB( float3( hsl_sc.xy, cWeight ));
+        hsl_mc.xyz       = HSLToRGB( float3( hsl_mc.xy, cWeight ));
+        float3 new_c     = hsl_sc.xyz * w_s + hsl_mc.xyz * w_m + w_h;
+        color.xyz        = lerp( lerp( color.xyz, pLuma, CGdesat ), new_c.xyz, finalmix );
         return float4( color.xyz, 1.0f );
     }
 

@@ -38,27 +38,6 @@ namespace pd80_colorbalance
         ui_label = "Preserve Luminosity";
         ui_category = "Color Balance";
     > = true;
-    uniform float shadowcurve <
-        ui_label = "Shadow Distribution Curve.\nHigher is less influence";
-        ui_category = "Color Balance";
-        ui_type = "slider";
-        ui_min = 1.0;
-        ui_max = 4.0;
-        > = 1.0;
-    uniform float midcurve <
-        ui_label = "Midtones Distribution Curve.\nHigher is more influence";
-        ui_category = "Color Balance";
-        ui_type = "slider";
-        ui_min = 1.0;
-        ui_max = 4.0;
-        > = 1.0;
-    uniform float highlightcurve <
-        ui_label = "Highlight Distribution Curve.\nHigher is less influence";
-        ui_category = "Color Balance";
-        ui_type = "slider";
-        ui_min = 1.0;
-        ui_max = 4.0;
-        > = 1.0;
     uniform float s_RedShift <
         ui_label = "Cyan <--> Red";
         ui_category = "Shadows:";
@@ -134,26 +113,9 @@ namespace pd80_colorbalance
     #define ES_CMY   float3( dot( ES_RGB.yz, 0.5 ), dot( ES_RGB.xz, 0.5 ), dot( ES_RGB.xy, 0.5 ))
 
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
-    float3 SRGBToLinear( in float3 color )
+    float curve( float3 x )
     {
-        float3 x         = color * 12.92f;
-        float3 y         = 1.055f * pow( saturate( color ), 1.0f / 2.4f ) - 0.055f;
-        float3 clr       = color;
-        clr.r            = color.r < 0.0031308f ? x.r : y.r;
-        clr.g            = color.g < 0.0031308f ? x.g : y.g;
-        clr.b            = color.b < 0.0031308f ? x.b : y.b;
-        return clr;
-    }
-
-    float3 LinearTosRGB( in float3 color )
-    {
-        float3 x         = color / 12.92f;
-        float3 y         = pow( max(( color + 0.055f ) / 1.055f, 0.0f ), 2.4f );
-        float3 clr       = color;
-        clr.r            = color.r <= 0.04045f ? x.r : y.r;
-        clr.g            = color.g <= 0.04045f ? x.g : y.g;
-        clr.b            = color.b <= 0.04045f ? x.b : y.b;
-        return clr;
+        return x * x * x * ( x * ( x * 6.0f - 15.0f ) + 10.0f );
     }
 
     float3 ColorBalance( float3 c, float3 shadows, float3 midtones, float3 highlights )
@@ -162,8 +124,8 @@ namespace pd80_colorbalance
         float luma   = dot( c.xyz, 0.333f );
         
         // Determine the distribution curves between shadows, midtones, and highlights
-        float3 dist_s= pow( 1.0f - c.xyz, shadowcurve + midcurve );
-        float3 dist_h= pow( c.xyz, highlightcurve + midcurve );
+        float3 dist_s= curve( max( 1.0f - c.xyz * 2.0f, 0.0f ));
+        float3 dist_h= curve( max(( c.xyz - 0.5f ) * 2.0f, 0.0f ));
 
         // Get luminosity offsets
         // One could omit this whole code part in case no luma should be preserved
@@ -186,22 +148,19 @@ namespace pd80_colorbalance
 
         // Consider color as luma for rest
         // Red Channel
-        float low_r  = 1.0f - c.x;
-        low_r        = dist_s.x;
+        float low_r  = dist_s.x;
         float high_r = dist_h.x;
         float mid_r  = saturate( 1.0f - low_r - high_r );
         float hl_r   = high_r * ( highlights.x * h_r * ( 1.0f - luma ));
         float new_r  = c.x * ( low_r * shadows.x * s_r + mid_r * midtones.x * m_r ) * ( 1.0f - c.x ) + hl_r;
         // Green Channel
-        float low_g  = 1.0f - c.y;
-        low_g        = dist_s.y;
+        float low_g  = dist_s.y;
         float high_g = dist_h.y;
         float mid_g  = saturate( 1.0f - low_g - high_g );
         float hl_g   = high_g * ( highlights.y * h_g * ( 1.0f - luma ));
         float new_g  = c.y * ( low_g * shadows.y * s_g + mid_g * midtones.y * m_g ) * ( 1.0f - c.y ) + hl_g;
         // Blue Channel
-        float low_b  = 1.0f - c.z;
-        low_b        = dist_s.z;
+        float low_b  = dist_s.z;
         float high_b = dist_h.z;
         float mid_b  = saturate( 1.0f - low_b - high_b );
         float hl_b   = high_b * ( highlights.z * h_b * ( 1.0f - luma ));
@@ -214,11 +173,9 @@ namespace pd80_colorbalance
     float4 PS_ColorBalance(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color      = tex2D( samplerColor, texcoord );
-        color.xyz         = SRGBToLinear( color.xyz );
         color.xyz         = ColorBalance( color.xyz, float3( s_RedShift, s_GreenShift, s_BlueShift ), 
                                                      float3( m_RedShift, m_GreenShift, m_BlueShift ),
                                                      float3( h_RedShift, h_GreenShift, h_BlueShift ));
-        color.xyz         = LinearTosRGB( color.xyz );
         return float4( color.xyz, 1.0f );
     }
 
