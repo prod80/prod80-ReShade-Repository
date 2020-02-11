@@ -57,6 +57,13 @@ namespace pd80_SMH
         ui_max = 1.0;
         > = 0.0;
     */
+    uniform float tint_s <
+        ui_label = "Tint";
+        ui_category = "Shadow Adjustments";
+        ui_type = "slider";
+        ui_min = -1.0;
+        ui_max = 1.0;
+        > = 0.0;
     uniform float saturation_s <
         ui_label = "Saturation";
         ui_category = "Shadow Adjustments";
@@ -94,6 +101,13 @@ namespace pd80_SMH
         ui_max = 1.0;
         > = 0.0;
     */
+    uniform float tint_m <
+        ui_label = "Tint";
+        ui_category = "Midtone Adjustments";
+        ui_type = "slider";
+        ui_min = -1.0;
+        ui_max = 1.0;
+        > = 0.0;
     uniform float saturation_m <
         ui_label = "Saturation";
         ui_category = "Midtone Adjustments";
@@ -131,6 +145,13 @@ namespace pd80_SMH
         ui_max = 1.0;
         > = 0.0;
     */
+    uniform float tint_h <
+        ui_label = "Tint";
+        ui_category = "Highlight Adjustments";
+        ui_type = "slider";
+        ui_min = -1.0;
+        ui_max = 1.0;
+        > = 0.0;
     uniform float saturation_h <
         ui_label = "Saturation";
         ui_category = "Highlight Adjustments";
@@ -247,10 +268,17 @@ namespace pd80_SMH
         float weight_s    = curve( max( 1.0f - pLuma * 2.0f, 0.0f ));
         float weight_h    = curve( max(( pLuma - 0.5f ) * 2.0f, 0.0f ));
         float weight_m    = saturate( 1.0f - weight_s - weight_h );
+
+        float3 cold       = float3( 0.0f,  0.365f, 1.0f ); //LBB
+        float3 warm       = float3( 0.98f, 0.588f, 0.0f ); //LBA
         
         // Shadows
         color.xyz        = con( color.xyz, contrast_s   * weight_s );
         color.xyz        = bri( color.xyz, brightness_s * weight_s );
+        if( tint_s < 0.0f )
+            color.xyz    = lerp( color.xyz, softlight( color.xyz, cold.xyz ), abs( tint_s * weight_s ));
+        else
+            color.xyz    = lerp( color.xyz, softlight( color.xyz, warm.xyz ), tint_s * weight_s );
         /* Just breaks stuff, left code for later use
         color.xyz        = RGBToHSL( saturate( color.xyz ));
         color.x          = frac( abs( color.x + hue_s * weight_s ));
@@ -262,6 +290,10 @@ namespace pd80_SMH
         // Midtones
         color.xyz        = con( color.xyz, contrast_m   * weight_m );
         color.xyz        = bri( color.xyz, brightness_m * weight_m );
+        if( tint_m < 0.0f )
+            color.xyz    = lerp( color.xyz, softlight( color.xyz, cold.xyz ), abs( tint_m * weight_m ));
+        else
+            color.xyz    = lerp( color.xyz, softlight( color.xyz, warm.xyz ), tint_m * weight_m );
         /* Just breaks stuff, left code for later use
         color.xyz        = RGBToHSL( saturate( color.xyz ));
         color.x          = frac( abs( color.x + hue_m * weight_m ));
@@ -273,6 +305,10 @@ namespace pd80_SMH
         // Highlights
         color.xyz        = con( color.xyz, contrast_h   * weight_h );
         color.xyz        = bri( color.xyz, brightness_h * weight_h );
+        if( tint_h < 0.0f )
+            color.xyz    = lerp( color.xyz, softlight( color.xyz, cold.xyz ), abs( tint_h * weight_h ));
+        else
+            color.xyz    = lerp( color.xyz, softlight( color.xyz, warm.xyz ), tint_h * weight_h );
         /* Just breaks stuff, left code for later use
         color.xyz        = RGBToHSL( saturate( color.xyz ));
         color.x          = frac( abs( color.x + hue_h * weight_h ));
