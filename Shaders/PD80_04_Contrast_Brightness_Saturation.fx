@@ -225,7 +225,7 @@ namespace pd80_conbrisat
         float3 c = softlight( res.xyz, res.xyz );
         float b = 0.0f;
         b = x < 0.0f ? b = x * 0.5f : b = x;
-        return lerp( res.xyz, c.xyz, b );
+        return saturate( lerp( res.xyz, c.xyz, b ));
     }
 
     float3 bri( float3 res, float x )
@@ -234,7 +234,7 @@ namespace pd80_conbrisat
         float3 c = 1.0f - ( 1.0f - res.xyz ) * ( 1.0f - res.xyz );
         float b = 0.0f;
         b = x < 0.0f ? b = x * 0.5f : b = x;
-        return lerp( res.xyz, c.xyz, b );   
+        return saturate( lerp( res.xyz, c.xyz, b ));   
     }
 
     float3 sat( float3 res, float x )
