@@ -32,9 +32,6 @@
 namespace pd80_posterizepixelate
 {
     //// PREPROCESSOR DEFINITIONS ///////////////////////////////////////////////////
-    #ifndef PP_DRAW_BLOCKS
-        #define PP_DRAW_BLOCKS      0
-    #endif
 
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
     uniform int number_of_levels <
@@ -58,7 +55,13 @@ namespace pd80_posterizepixelate
         ui_min = 0.0f;
         ui_max = 1.0f;
         > = 1.0;
-	
+	uniform float border_str <
+        ui_type = "slider";
+        ui_label = "Border Strength";
+        ui_category = "Posterize Pixelate";
+        ui_min = 0.0f;
+        ui_max = 1.0f;
+        > = 0.0;
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
     
@@ -66,7 +69,7 @@ namespace pd80_posterizepixelate
     sampler samplerColor { Texture = texColorBuffer; };
 
     //// DEFINES ////////////////////////////////////////////////////////////////////
-
+    #define aspect      float( BUFFER_WIDTH * BUFFER_RCP_HEIGHT )
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
 
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
@@ -75,26 +78,20 @@ namespace pd80_posterizepixelate
         float3 orig       = tex2D( samplerColor, texcoord.xy ).xyz; 
         float sigma       = 0.0f;
         float3 color      = 0.0f;
+        float3 temp       = 0.0f;
         float2 uv         = texcoord.xy * float2( BUFFER_WIDTH, BUFFER_HEIGHT );
         float2 qualifier  = floor( uv.xy );
         uv.xy             = floor( uv.xy / pixel_size ) * pixel_size;
-#if( PP_DRAW_BLOCKS == 1 )
-        if( all( qualifier.xy - uv.xy ))
+        for( int y = uv.y; y < uv.y + pixel_size && y < BUFFER_HEIGHT; ++y )
         {
-#endif
-            for( int y = uv.y; y < uv.y + pixel_size && y < BUFFER_HEIGHT; ++y )
+            for( int x = uv.x; x < uv.x + pixel_size && x < BUFFER_WIDTH; ++x )
             {
-                for( int x = uv.x; x < uv.x + pixel_size && x < BUFFER_WIDTH; ++x )
-                {
-                    color.xyz += tex2Dfetch( samplerColor, int4( x, y, 0, 0 )).xyz;
-                    sigma     += 1.0f;
-                }
+                temp.xyz  = tex2Dfetch( samplerColor, int4( x, y, 0, 0 )).xyz;
+                color.xyz += lerp( temp.xyz * ( 1.0f - border_str ), temp.xyz, saturate( qualifier.x - uv.x ));
+                color.xyz += lerp( temp.xyz * ( 1.0f - border_str ), temp.xyz, saturate( qualifier.y - uv.y ));
+                sigma     += 2.0f;
             }
-#if( PP_DRAW_BLOCKS == 1 )
-        } else {
-            sigma = 1.0f;
         }
-#endif
         color.xyz         /= sigma;
         color.xyz         = floor( color.xyz * number_of_levels ) / ( number_of_levels - 1 );
         color.xyz         = lerp( orig.xyz, color.xyz, effect_strength );
