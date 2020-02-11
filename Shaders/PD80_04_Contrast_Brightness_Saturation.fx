@@ -167,11 +167,11 @@ namespace pd80_conbrisat
     sampler samplerColor { Texture = texColorBuffer; };
     sampler samplerDepth { Texture = texDepthBuffer; };
     //// DEFINES ////////////////////////////////////////////////////////////////////
-    #define LumCoeff float3(0.212656, 0.715158, 0.072186)
+
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
     float getLuminance( in float3 x )
     {
-        return dot( x, LumCoeff );
+        return dot( x, float3( 0.212656, 0.715158, 0.072186 ));
     }
 
     float3 HUEToRGB( float H )
