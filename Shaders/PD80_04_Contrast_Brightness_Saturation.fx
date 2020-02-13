@@ -327,9 +327,6 @@ namespace pd80_conbrisat
         color.xyz        = saturate( color.xyz );
         float3 dcolor    = color.xyz;
 
-        color.xyz        = channelsat( color.xyz, sat_r, sat_y, sat_g, sat_c, sat_b, sat_m );
-        color.xyz        = customsat( color.xyz, huemid, huerange, sat_custom );
-
         color.xyz        = con( color.xyz, contrast   );
         color.xyz        = bri( color.xyz, brightness );
         color.xyz        = sat( color.xyz, saturation );
@@ -341,6 +338,9 @@ namespace pd80_conbrisat
         dcolor.xyz       = vib( dcolor.xyz, vibranceD   );
         
         color.xyz        = lerp( color.xyz, dcolor.xyz, enable_depth * depth ); // apply based on depth
+
+        color.xyz        = channelsat( color.xyz, sat_r, sat_y, sat_g, sat_c, sat_b, sat_m );
+        color.xyz        = customsat( color.xyz, huemid, huerange, sat_custom );
 
         color.xyz        = saturate( color.xyz ); // shouldn't be needed, but just to ensure no oddities are there
         color.xyz        = lerp( color.xyz, depth.xxx, display_depth ); // show depth
