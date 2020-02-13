@@ -451,9 +451,6 @@ namespace pd80_selectivecolor
 
     //// DEFINES ////////////////////////////////////////////////////////////////////
 
-    //// BUFFERS ////////////////////////////////////////////////////////////////////
-    // Not supported in ReShade (?)
-
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
     
     float mid( float3 c )
@@ -492,9 +489,6 @@ namespace pd80_selectivecolor
         sat.w = getLuminance( color.xyz );
         return saturate( lerp( sat.w, color.xyz, 1.0f + ( x * ( 1.0f - sat.z ))));
     }
-
-    //// COMPUTE SHADERS ////////////////////////////////////////////////////////////
-    // Not supported in ReShade (?)
 
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float4 PS_SelectiveColor(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
