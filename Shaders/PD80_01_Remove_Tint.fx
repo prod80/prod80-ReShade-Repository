@@ -106,6 +106,10 @@ namespace pd80_removetint
         ui_label = "Enable Midtone Correction";
         ui_category = "Midtone: Remove Tint";
         > = false;
+    uniform bool rt_midpoint_respect_luma <
+        ui_label = "Respect Luma";
+        ui_category = "Midtone: Remove Tint";
+        > = false;
     uniform float midCC_scale <
         ui_type = "slider";
         ui_label = "Midtone Correction Scale";
@@ -321,7 +325,7 @@ namespace pd80_removetint
         color.xyz          = lerp( color.xyz, color.xyz * ( 1.0f - greyValue ) + greyValue, rt_blackpoint_respect_luma );
         float lum          = dot( color.xyz, 0.333333f );
         lum                = lum >= 0.5f ? abs( lum * 2.0f - 2.0f ) : lum * 2.0f;
-        color.xyz          = saturate( color.xyz - ( midValue.xyz * lum ));
+        color.xyz          = saturate( color.xyz - midValue.xyz * lum + dot( midValue.xyz, 0.333333f ) * lum * rt_midpoint_respect_luma );
         
         color.xyz          = SRGBToLinear( color.xyz );
         return float4( color.xyz, 1.0f );
