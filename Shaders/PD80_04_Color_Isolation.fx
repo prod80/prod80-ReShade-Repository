@@ -45,7 +45,7 @@ namespace pd80_ColorIsolation
         ui_category = "Color Isolation";
         ui_type = "slider";
         ui_min = 0.0;
-        ui_max = 0.75;
+        ui_max = 1.0;
         > = 0.167;
     uniform float satLimit <
         ui_label = "Saturation Output";
