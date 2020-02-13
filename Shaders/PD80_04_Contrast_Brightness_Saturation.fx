@@ -60,6 +60,27 @@ namespace pd80_conbrisat
         ui_min = -1.0;
         ui_max = 1.0;
         > = 0.0;
+    uniform float huemid <
+    	ui_label = "Color Hue";
+        ui_category = "Custom Saturation Adjustments";
+        ui_type = "slider";
+        ui_min = 0.0;
+        ui_max = 1.0;
+        > = 0.0;
+    uniform float huerange <
+        ui_label = "Hue Range Selection";
+        ui_category = "Custom Saturation Adjustments";
+        ui_type = "slider";
+        ui_min = 0.0;
+        ui_max = 1.0;
+        > = 0.167;
+    uniform float sat_custom <
+        ui_label = "Custom Saturation Level";
+        ui_category = "Custom Saturation Adjustments";
+        ui_type = "slider";
+        ui_min = -2.0;
+        ui_max = 2.0;
+        > = 0.0;
     uniform float sat_r <
         ui_label = "Red Saturation";
         ui_category = "Color Saturation Adjustments";
@@ -253,8 +274,8 @@ namespace pd80_conbrisat
 
     float3 channelsat( float3 col, float r, float y, float g, float c, float b, float m )
     {
-        float3 hsl       = RGBToHSL( col.xyz ).x;
-        float desat      = getLuminance( col.xyz );
+        float3 hsl         = RGBToHSL( col.xyz ).x;
+        float desat        = getLuminance( col.xyz );
 
         //Get weights
         float weight_r     = curve( max( 1.0f - abs(  hsl.x               * 6.0f ), 0.0f )) +
@@ -282,6 +303,20 @@ namespace pd80_conbrisat
         return saturate( ret.xyz );
     }
 
+    float3 customsat( float3 col, float hue, float range, float sat )
+    {
+        float3 hsl         = RGBToHSL( col.xyz );
+        float desat        = getLuminance( col.xyz );
+        float r            = rcp( range );
+        float3 w           = max( 1.0f - abs(( hsl.x - hue        ) * r ), 0.0f );
+        w.y                = max( 1.0f - abs(( hsl.x + 1.0f - hue ) * r ), 0.0f );
+        w.z                = max( 1.0f - abs(( hsl.x - 1.0f - hue ) * r ), 0.0f );
+        float weight       = curve( dot( w.xyz, 1.0f )) * sat;
+        col.xyz            = weight > 0.0f ? lerp( desat, col.xyz, min( 1.0f + weight * ( 1.0f - hsl.y ), 2.0f )) :
+                                             lerp( desat, col.xyz, max( 1.0f + weight, 0.0f ));
+        return saturate( col.xyz );
+    }
+
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float4 PS_CBS(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
@@ -293,6 +328,7 @@ namespace pd80_conbrisat
         float3 dcolor    = color.xyz;
 
         color.xyz        = channelsat( color.xyz, sat_r, sat_y, sat_g, sat_c, sat_b, sat_m );
+        color.xyz        = customsat( color.xyz, huemid, huerange, sat_custom );
 
         color.xyz        = con( color.xyz, contrast   );
         color.xyz        = bri( color.xyz, brightness );
