@@ -113,7 +113,7 @@ namespace pd80_colorbalance
     #define ES_CMY   float3( dot( ES_RGB.yz, 0.5 ), dot( ES_RGB.xz, 0.5 ), dot( ES_RGB.xy, 0.5 ))
 
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
-    float curve( float3 x )
+    float3 curve( float3 x )
     {
         return x * x * x * ( x * ( x * 6.0f - 15.0f ) + 10.0f );
     }
