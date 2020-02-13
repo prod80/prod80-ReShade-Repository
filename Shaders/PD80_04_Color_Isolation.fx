@@ -32,55 +32,45 @@
 namespace pd80_ColorIsolation
 {
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
-    uniform float satLimit <
-    ui_label = "Saturation Output";
-    ui_category = "Color Isolation";
-    ui_type = "slider";
-    ui_min = 0.0;
-    ui_max = 1.0;
-    > = 1.0;
-
     uniform float hueMid <
-    ui_label = "Hue Selection (Middle)";
-    ui_category = "Color Isolation";
-    ui_tooltip = "0 = Red, 0.167 = Yellow, 0.333 = Green, 0.5 = Cyan, 0.666 = Blue, 0.833 = Magenta";
-    ui_type = "slider";
-    ui_min = 0.0;
-    ui_max = 1.0;
-    > = 0.0;
-
-    uniform float hueRangeMin <
-    ui_label = "Hue Range Below Middle";
-    ui_category = "Color Isolation";
-    ui_tooltip = "Hues to process below Hue Selection";
-    ui_type = "slider";
-    ui_min = 0.0;
-    ui_max = 0.75;
-    > = 0.333;
-
-    uniform float hueRangeMax <
-    ui_label = "Hue Range Above Middle";
-    ui_category = "Color Isolation";
-    ui_tooltip = "Hues to process above Hue Selection";
-    ui_type = "slider";
-    ui_min = 0.0;
-    ui_max = 0.75;
-    > = 0.333;
-
+        ui_label = "Hue Selection (Middle)";
+        ui_category = "Color Isolation";
+        ui_tooltip = "0 = Red, 0.167 = Yellow, 0.333 = Green, 0.5 = Cyan, 0.666 = Blue, 0.833 = Magenta";
+        ui_type = "slider";
+        ui_min = 0.0;
+        ui_max = 1.0;
+        > = 0.0;
+    uniform float hueRange <
+        ui_label = "Hue Range Selection";
+        ui_category = "Color Isolation";
+        ui_type = "slider";
+        ui_min = 0.0;
+        ui_max = 0.75;
+        > = 0.167;
+    uniform float satLimit <
+        ui_label = "Saturation Output";
+        ui_category = "Color Isolation";
+        ui_type = "slider";
+        ui_min = 0.0;
+        ui_max = 1.0;
+        > = 1.0;
     uniform float fxcolorMix <
-    ui_label = "Mix with Original";
-    ui_category = "Color Isolation";
-    ui_type = "slider";
-    ui_min = 0.0;
-    ui_max = 1.0;
-    > = 1.0;
+        ui_label = "Mix with Original";
+        ui_category = "Color Isolation";
+        ui_type = "slider";
+        ui_min = 0.0;
+        ui_max = 1.0;
+        > = 1.0;
 
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
+
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerColor { Texture = texColorBuffer; };
+
     //// DEFINES ////////////////////////////////////////////////////////////////////
     #define LumCoeff float3(0.212656, 0.715158, 0.072186)
+
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
     float getLuminance( in float3 x )
     {
@@ -121,9 +111,8 @@ namespace pd80_ColorIsolation
         return ( RGB - 0.5f ) * C + HSL.z;
     }
 
-    float smootherstep( in float edge0, in float edge1, in float x )
+    float smootherstep( float x )
     {
-        x               = clamp(( x - edge0 ) / ( edge1 - edge0 ), 0.0f, 1.0f );
         return x * x * x * ( x * ( x * 6.0f - 15.0f ) + 10.0f );
     }
 
@@ -132,19 +121,19 @@ namespace pd80_ColorIsolation
     {
         float4 color     = tex2D( samplerColor, texcoord );
         color.xyz        = saturate( color.xyz ); //Can't work with HDR
-        float ci_gray    = getLuminance( color.xyz );
-        float ci_hue     = RGBToHSL( color.xyz ).x;
-        float2 limit     = float2( hueMid - hueRangeMin, hueMid + hueRangeMax );
-        float3 new_c     = 0.0f;
-        if( limit.y > 1.0f && ci_hue < limit.y - 1.0f )
-            ci_hue       += 1;
-        if( limit.x < 0.0f && ci_hue > limit.x + 1.0f )
-            ci_hue       -= 1;
-        if( ci_hue < hueMid )
-            new_c.xyz    = lerp( ci_gray, color.xyz, smootherstep( limit.x, hueMid, ci_hue ) * satLimit );
-        if( ci_hue >= hueMid )
-            new_c.xyz    = lerp( ci_gray, color.xyz, ( 1.0f - smootherstep( hueMid, limit.y, ci_hue )) * satLimit );
-        color.xyz        = lerp( color.xyz, new_c.xyz, fxcolorMix );
+        
+        float grey       = getLuminance( color.xyz );
+        float hue        = RGBToHSL( color.xyz ).x;
+        
+        float r          = rcp( hueRange );
+        float3 w         = max( 1.0f - abs(( hue - hueMid        ) * r ), 0.0f );
+        w.y              = max( 1.0f - abs(( hue + 1.0f - hueMid ) * r ), 0.0f );
+        w.z              = max( 1.0f - abs(( hue - 1.0f - hueMid ) * r ), 0.0f );
+        float weight     = dot( w.xyz, 1.0f );
+        
+        float3 newc      = lerp( grey, color.xyz, smootherstep( weight ) * satLimit );
+        color.xyz        = lerp( color.xyz, newc.xyz, fxcolorMix );
+
         return float4( color.xyz, 1.0f );
     }
 
