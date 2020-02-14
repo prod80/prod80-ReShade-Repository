@@ -1,5 +1,7 @@
 Effects created for Reshade: https://reshade.me/
 
+Download this repository: https://github.com/prod80/prod80-ReShade-Repository/archive/master.zip
+
 I take a quality over performance approach when creating the effects.
 
 Categorized by suggested load order, but use as you see fit. Different load orders lead to different effects.
