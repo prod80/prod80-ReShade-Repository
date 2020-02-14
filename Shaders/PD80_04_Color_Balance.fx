@@ -129,44 +129,20 @@ namespace pd80_colorbalance
 
         // Get luminosity offsets
         // One could omit this whole code part in case no luma should be preserved
-        float s_r = 1.0f; float m_r = 1.0f; float h_r = 1.0f;
-        float s_g = 1.0f; float m_g = 1.0f; float h_g = 1.0f;
-        float s_b = 1.0f; float m_b = 1.0f; float h_b = 1.0f;
-        
+        float3 s_rgb = 1.0f;
+        float3 m_rgb = 1.0f;
+        float3 h_rgb = 1.0f;
+
         if( preserve_luma )
         {
-            s_r      = shadows.x > 0.0    ? s_r = ES_RGB.x * shadows.x    : s_r = ES_CMY.x * abs( shadows.x );
-            m_r      = midtones.x > 0.0   ? m_r = ES_RGB.x * midtones.x   : m_r = ES_CMY.x * abs( midtones.x );
-            h_r      = highlights.x > 0.0 ? h_r = ES_RGB.x * highlights.x : h_r = ES_CMY.x * abs( highlights.x );
-            s_g      = shadows.y > 0.0    ? s_g = ES_RGB.y * shadows.y    : s_g = ES_CMY.y * abs( shadows.y );
-            m_g      = midtones.y > 0.0   ? m_g = ES_RGB.y * midtones.y   : m_g = ES_CMY.y * abs( midtones.y );
-            h_g      = highlights.y > 0.0 ? h_g = ES_RGB.y * highlights.y : h_g = ES_CMY.y * abs( highlights.y );
-            s_b      = shadows.z > 0.0    ? s_b = ES_RGB.z * shadows.z    : s_b = ES_CMY.z * abs( shadows.z );
-            m_b      = midtones.z > 0.0   ? m_b = ES_RGB.z * midtones.z   : m_b = ES_CMY.z * abs( midtones.z );
-            h_b      = highlights.z > 0.0 ? h_b = ES_RGB.z * highlights.z : h_b = ES_CMY.z * abs( highlights.z );
+            s_rgb    = shadows > 0.0f     ? ES_RGB * shadows      : ES_CMY * abs( shadows );
+            m_rgb    = midtones > 0.0f    ? ES_RGB * midtones     : ES_CMY * abs( midtones );
+            h_rgb    = highlights > 0.0f  ? ES_RGB * highlights   : ES_CMY * abs( highlights );
         }
-
-        // Consider color as luma for rest
-        // Red Channel
-        float low_r  = dist_s.x;
-        float high_r = dist_h.x;
-        float mid_r  = saturate( 1.0f - low_r - high_r );
-        float hl_r   = high_r * ( highlights.x * h_r * ( 1.0f - luma ));
-        float new_r  = c.x * ( low_r * shadows.x * s_r + mid_r * midtones.x * m_r ) * ( 1.0f - c.x ) + hl_r;
-        // Green Channel
-        float low_g  = dist_s.y;
-        float high_g = dist_h.y;
-        float mid_g  = saturate( 1.0f - low_g - high_g );
-        float hl_g   = high_g * ( highlights.y * h_g * ( 1.0f - luma ));
-        float new_g  = c.y * ( low_g * shadows.y * s_g + mid_g * midtones.y * m_g ) * ( 1.0f - c.y ) + hl_g;
-        // Blue Channel
-        float low_b  = dist_s.z;
-        float high_b = dist_h.z;
-        float mid_b  = saturate( 1.0f - low_b - high_b );
-        float hl_b   = high_b * ( highlights.z * h_b * ( 1.0f - luma ));
-        float new_b  = c.z * ( low_b * shadows.z * s_b + mid_b * midtones.z * m_b ) * ( 1.0f - c.z ) + hl_b;
-
-        return saturate( c.xyz + float3( new_r, new_g, new_b ));
+        float3 mids  = saturate( 1.0f - dist_s.xyz - dist_h.xyz );
+        float3 highs = dist_h.xyz * ( highlights.xyz * h_rgb.xyz * ( 1.0f - luma ));
+        float3 newc  = c.xyz * ( dist_s.xyz * shadows.xyz * s_rgb.xyz + mids.xyz * midtones.xyz * m_rgb.xyz ) * ( 1.0f - c.xyz ) + highs.xyz;
+        return saturate( c.xyz + newc.xyz );
     }
 
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
