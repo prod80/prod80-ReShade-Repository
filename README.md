@@ -6,7 +6,7 @@ My primary focus is color, contrast, brightness manipulation. These shaders will
 
 The shaders are categorized (numbered) by suggested load order, but use as you see fit. Different load orders lead to different effects.
 
-As always, I like to share and am against commercializing any effects. If you're happy with my work, all I would ask in return is: spread the word. You can link the download link above, or a link to this repository directly. 
+As always, I like to share. If you're happy with my work, all I would ask in return is: spread the word. You can link the download link above, or a link to this repository directly. 
 
 For any questions, you can find me on the Reshade discord: https://discord.gg/nGaJfv
 
