@@ -34,6 +34,11 @@ namespace pd80_SMH
     //// PREPROCESSOR DEFINITIONS ///////////////////////////////////////////////////
 
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
+    uniform int luma_mode < __UNIFORM_COMBO_INT1
+        ui_label = "Luma Mode";
+        ui_category = "Luma Mode";
+        ui_items = "Use Average\0Use Perceived Luma\0Use Max Value\0";
+        > = 2;
     uniform float contrast_s <
         ui_label = "Contrast";
         ui_category = "Shadow Adjustments";
@@ -367,7 +372,25 @@ namespace pd80_SMH
     float4 PS_SMH(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color      = tex2D( samplerColor, texcoord );
-        float pLuma       = max( max( color.x, color.y ), color.z );
+        float pLuma       = 0.0f;
+        switch( luma_mode )
+        {
+            case 0: // Use average
+            {
+                pLuma     = dot( color.xyz, float3( 0.333333f, 0.333334f, 0.333333f ));
+            }
+            break;
+            case 1: // Use perceived luma
+            {
+                pLuma     = getLuminance( color.xyz );
+            }
+            break;
+            case 2: // Use max
+            {
+                pLuma     = max( max( color.x, color.y ), color.z );
+            }
+            break;
+        }
 
         float weight_s    = curve( max( 1.0f - pLuma * 2.0f, 0.0f ));
         float weight_h    = curve( max(( pLuma - 0.5f ) * 2.0f, 0.0f ));
