@@ -246,10 +246,10 @@ namespace pd80_SMH
     float3 darken(float3 c, float3 b)       { return min(c,b);}
     float3 multiply(float3 c, float3 b) 	{ return c*b;}
     float3 linearburn(float3 c, float3 b) 	{ return max(c+b-1.0f, 0.0f);}
-    float3 colorburn(float3 c, float3 b) 	{ return b==0.0f ? b:max((1.0f-((1.0f-c)/b)), 0.0f);}
+    float3 colorburn(float3 c, float3 b) 	{ return b<=0.000001f ? b:saturate(1.0f-((1.0f-c)/b));}
     float3 lighten(float3 c, float3 b) 		{ return max(b, c);}
     float3 screen(float3 c, float3 b) 		{ return 1.0f-(1.0f-c)*(1.0f-b);}
-    float3 colordodge(float3 c, float3 b) 	{ return b==1.0f ? b:min(c/(1.0f-b), 1.0f);}
+    float3 colordodge(float3 c, float3 b) 	{ return b>=0.999999f ? b:saturate(c/(1.0f-b));}
     float3 lineardodge(float3 c, float3 b) 	{ return min(c+b, 1.0f);}
     float3 overlay(float3 c, float3 b) 		{ return c<0.5f ? 2.0f*c*b:(1.0f-2.0f*(1.0f-c)*(1.0f-b));}
     float3 softlight(float3 c, float3 b) 	{ return b<0.5f ? (2.0f*c*b+c*c*(1.0f-2.0f*b)):(sqrt(c)*(2.0f*b-1.0f)+2.0f*c*(1.0f-b));}
@@ -257,7 +257,7 @@ namespace pd80_SMH
     float3 linearlight(float3 c, float3 b) 	{ return b<0.5f ? linearburn(c, (2.0f*b)):lineardodge(c, (2.0f*(b-0.5f)));}
     float3 pinlight(float3 c, float3 b) 	{ return b<0.5f ? darken(c, (2.0f*b)):lighten(c, (2.0f*(b-0.5f)));}
     float3 hardmix(float3 c, float3 b)      { return vividlight(c,b)<0.5f ? 0.0 : 1.0;}
-    float3 reflect(float3 c, float3 b)      { return b==1.0F ? b:min(c*c/(1.0f-b),1.0f);}
+    float3 reflect(float3 c, float3 b)      { return b>=0.999999f ? b:saturate(c*c/(1.0f-b));}
     float3 glow(float3 c, float3 b)         { return reflect(b, c);}
     float3 blendhue(float3 c, float3 b)
     {
