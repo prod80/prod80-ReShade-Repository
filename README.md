@@ -1,4 +1,5 @@
-Highly advanced Color Effects created for Reshade: https://reshade.me/ :: always use with the latest version to maximalize compatibility and performance.
+Highly advanced Color Effects created for Reshade: https://reshade.me/
+Always use with the latest version for compatibility and performance.
 
 Download this repository: https://github.com/prod80/prod80-ReShade-Repository/archive/master.zip
 
