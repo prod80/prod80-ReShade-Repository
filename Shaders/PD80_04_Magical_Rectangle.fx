@@ -38,6 +38,10 @@ namespace pd80_magicalrectangle
         ui_category = "Shape Manipulation";
         ui_items = "Square\0Circle\0";
         > = 0;
+    uniform bool invert_shape <
+        ui_label = "Invert Shape";
+        ui_category = "Shape Manipulation";
+        > = false;
     uniform uint rotation <
         ui_type = "slider";
         ui_label = "Rotation Factor";
@@ -373,13 +377,14 @@ namespace pd80_magicalrectangle
         {
             if( gradient_type )
             {
-                bl        = smoothstep( 0.0f, 0.0f + smoothing, uv.xy ) * pow( uv.y, gradient_curve );
+                bl        = smoothstep( 0.0f, 0.0f + smoothing, uv.xy ) * pow( abs( uv.y ), gradient_curve );
             }
-            tr            = smoothstep( 0.0f, 0.0f + smoothing, 1.0f - uv.xy ) * pow( uv.x, gradient_curve );
+            tr            = smoothstep( 0.0f, 0.0f + smoothing, 1.0f - uv.xy ) * pow( abs( uv.x ), gradient_curve );
         }
         float depthfade   = smoothstep( depthpos - depth_smoothing, depthpos + depth_smoothing, depth );
         // Combine them all
         float R           = bl.x * bl.y * tr.x * tr.y * depthfade;
+        R                 = ( invert_shape ) ? 1.0f - R : R;
         // Blend the borders
         color.xyz         = lerp( color.xyz, saturate( color.xyz * saturate( 1.0f - R ) + R * intensity ), R );
         // Add to color, use R for Alpha
