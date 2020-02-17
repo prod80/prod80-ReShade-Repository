@@ -53,14 +53,14 @@ namespace pd80_magicalrectangle
         ui_category = "Shape Manipulation";
         ui_min = 0.0;
         ui_max = 0.5;
-        > = 0.075;
+        > = 0.125;
     uniform float ret_size_y <
         ui_type = "slider";
         ui_label = "Vertical Size";
         ui_category = "Shape Manipulation";
         ui_min = 0.0;
         ui_max = 0.5;
-        > = 0.075;
+        > = 0.125;
     uniform float depthpos <
         ui_type = "slider";
         ui_label = "Depth Position";
@@ -342,9 +342,16 @@ namespace pd80_magicalrectangle
         // Smooth factor
         float2 smooth     = float2( smoothing, smoothing );
         // Sizing
+        float dim         = ceil( sqrt( BUFFER_WIDTH * BUFFER_WIDTH + BUFFER_HEIGHT * BUFFER_HEIGHT )); // Diagonal size
+        float maxlen      = max( BUFFER_WIDTH, BUFFER_HEIGHT );
+        dim               = dim / maxlen; // Scalar with screen diagonal
         float2 uv         = texcoord2.xy;
-        float2 offset     = float2( 1.0f - ( ret_size_x + 0.5f ), 1.0f - ( ret_size_y + 0.5f ));
-        uv.xy             = min( max( uv.xy - offset.xy, 0.0f ) / ( 1.0f - ( 2.0f * offset.xy )), 1.0f );
+        uv.xy             = uv.xy * 2.0f - 1.0f; // rescale to -1..0..1 range
+        uv.xy             /= ( float2( ret_size_x, ret_size_y ) * dim ); // scale rectangle
+        // uv.xy             *= uv.yx; // flare me up
+        // uv.xy             = dot( uv.xy, uv.xy );
+        uv.xy             = ( uv.xy + 1.0f ) / 2.0f; // scale back to 0..1 range
+        
         // Using smoothstep to create values from 0 to 1, 1 being the drawn shape around center
         // First makes bottom and left side, then flips coord to make top and right side: x | 1 - 
         // Do some funky stuff with gradients
@@ -390,7 +397,7 @@ namespace pd80_magicalrectangle
     < ui_tooltip = "The Magical Rectangle\n\n"
                    "This shader gives you a rectangular shape on your screen that you can manipulate in 3D space.\n"
                    "It can blend on depth, blur edges, change color, change blending, change shape, and so on.\n"
-                   "It will allow you to manipulate parts of the scene in various ways. Not mithstanding; add mist,\n"
+                   "It will allow you to manipulate parts of the scene in various ways. Not withstanding; add mist,\n"
                    "remove mist, change clouds, create backgrounds, draw flares, add contrasts, change hues, etc. in ways\n"
                    "another shader will not be able to do.";>
     {
