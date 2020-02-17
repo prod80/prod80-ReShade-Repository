@@ -33,6 +33,11 @@ namespace pd80_magicalrectangle
     //// PREPROCESSOR DEFINITIONS ///////////////////////////////////////////////////
 
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
+    uniform int shape < __UNIFORM_COMBO_INT1
+        ui_label = "Shape";
+        ui_category = "Shape Manipulation";
+        ui_items = "Square\0Circle\0";
+        > = 0;
     uniform uint rotation <
         ui_type = "slider";
         ui_label = "Rotation Factor";
@@ -74,7 +79,7 @@ namespace pd80_magicalrectangle
         ui_category = "Shape Manipulation";
         ui_min = 0.0;
         ui_max = 1.0;
-        > = 0.002;
+        > = 0.01;
     uniform float depth_smoothing <
         ui_type = "slider";
         ui_label = "Depth Smoothing";
@@ -82,10 +87,6 @@ namespace pd80_magicalrectangle
         ui_min = 0.0;
         ui_max = 1.0;
         > = 0.002;
-    uniform bool invert_R <
-        ui_label = "Invert Shape";
-        ui_category = "Shape Manipulation";
-        > = false;
     uniform float intensity <
         ui_type = "slider";
         ui_label = "Lightness";
@@ -120,8 +121,15 @@ namespace pd80_magicalrectangle
         ui_label = "Gradient Curve";
         ui_category = "Shape Gradient";
         ui_min = 0.001;
+        ui_max = 2.0;
+        > = 0.25;
+    uniform float intensity_boost <
+        ui_type = "slider";
+        ui_label = "Intensity Boost";
+        ui_category = "Intensity Boost";
+        ui_min = 1.0;
         ui_max = 4.0;
-        > = 0.5;
+        > = 1.0;
     uniform int blendmode_1 < __UNIFORM_COMBO_INT1
         ui_label = "Blendmode";
         ui_category = "Shape Blending";
@@ -339,39 +347,41 @@ namespace pd80_magicalrectangle
         float4 color      = tex2D( samplerColor, texcoord );
         // Depth stuff
         float depth       = ReShade::GetLinearizedDepth( texcoord ).x;
-        // Smooth factor
-        float2 smooth     = float2( smoothing, smoothing );
         // Sizing
         float dim         = ceil( sqrt( BUFFER_WIDTH * BUFFER_WIDTH + BUFFER_HEIGHT * BUFFER_HEIGHT )); // Diagonal size
         float maxlen      = max( BUFFER_WIDTH, BUFFER_HEIGHT );
         dim               = dim / maxlen; // Scalar with screen diagonal
         float2 uv         = texcoord2.xy;
         uv.xy             = uv.xy * 2.0f - 1.0f; // rescale to -1..0..1 range
-        uv.xy             /= ( float2( ret_size_x, ret_size_y ) * dim ); // scale rectangle
-        // uv.xy             *= uv.yx; // flare me up
-        // uv.xy             = dot( uv.xy, uv.xy );
+        uv.xy             /= ( float2( ret_size_x + ret_size_x * smoothing, ret_size_y + ret_size_y * smoothing ) * dim ); // scale rectangle
+        switch( shape )
+        {
+            case 0: // square
+            { uv.xy       = uv.xy; } break;
+            case 1: // circle
+            { uv.xy       = lerp( dot( uv.xy, uv.xy ), dot( uv.xy, -uv.xy ), gradient_type ); } break;
+        }
         uv.xy             = ( uv.xy + 1.0f ) / 2.0f; // scale back to 0..1 range
         
         // Using smoothstep to create values from 0 to 1, 1 being the drawn shape around center
-        // First makes bottom and left side, then flips coord to make top and right side: x | 1 - 
+        // First makes bottom and left side, then flips coord to make top and right side: x | 1 - x
         // Do some funky stuff with gradients
         // Finally make a depth fade
-        float2 bl         = smoothstep( 0.0f, 0.0f + smooth.x, uv.xy );
-        float2 tr         = smoothstep( 0.0f, 0.0f + smooth.y, 1.0f - uv.xy );
+        float2 bl         = smoothstep( 0.0f, 0.0f + smoothing, uv.xy );
+        float2 tr         = smoothstep( 0.0f, 0.0f + smoothing, 1.0f - uv.xy );
         if( enable_gradient )
         {
             if( gradient_type )
             {
-                bl        = smoothstep( 0.0f, 0.0f + smooth.x, uv.xy ) * pow( uv.y, gradient_curve );
+                bl        = smoothstep( 0.0f, 0.0f + smoothing, uv.xy ) * pow( uv.y, gradient_curve );
             }
-            tr            = smoothstep( 0.0f, 0.0f + smooth.y, 1.0f - uv.xy ) * pow( uv.x, gradient_curve );
+            tr            = smoothstep( 0.0f, 0.0f + smoothing, 1.0f - uv.xy ) * pow( uv.x, gradient_curve );
         }
         float depthfade   = smoothstep( depthpos - depth_smoothing, depthpos + depth_smoothing, depth );
         // Combine them all
         float R           = bl.x * bl.y * tr.x * tr.y * depthfade;
-        R                 = ( invert_R ) ? saturate( 1.0f - R ) : R;
-        // Blend the borders when smoothing is used
-        color.xyz         = lerp( color.xyz, color.xyz * ( 1.0f - R ) + R * intensity, R );
+        // Blend the borders
+        color.xyz         = lerp( color.xyz, saturate( color.xyz * saturate( 1.0f - R ) + R * intensity ), R );
         // Add to color, use R for Alpha
         return float4( color.xyz, R );
     }	
@@ -382,6 +392,7 @@ namespace pd80_magicalrectangle
         float3 color;
         float4 layer_1    = tex2D( samplerMagicRectangle, texcoord );
         // Doing some HSL color space conversions to colorize
+        layer_1.xyz       = saturate( layer_1.xyz * intensity_boost );
         layer_1.xyz       = RGBToHSL( layer_1.xyz );
         layer_1.xyz       = HSLToRGB( float3( hue, saturation, layer_1.z ));
         // Blend mode with background
