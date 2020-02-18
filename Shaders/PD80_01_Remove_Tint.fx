@@ -165,39 +165,7 @@ namespace pd80_removetint
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
     uniform float frametime < source = "frametime"; >;
 
-    float3 LinearTosRGB( in float3 color )
-    {
-        float3 x         = color * 12.92f;
-        float3 y         = 1.055f * pow( saturate( color ), 1.0f / 2.4f ) - 0.055f;
-        float3 clr       = color;
-        clr.r            = color.r < 0.0031308f ? x.r : y.r;
-        clr.g            = color.g < 0.0031308f ? x.g : y.g;
-        clr.b            = color.b < 0.0031308f ? x.b : y.b;
-        return saturate( clr );
-    }
-
-    float3 SRGBToLinear( in float3 color )
-    {
-        float3 x         = color / 12.92f;
-        float3 y         = pow( max(( color + 0.055f ) / 1.055f, 0.0f ), 2.4f );
-        float3 clr       = color;
-        clr.r            = color.r <= 0.04045f ? x.r : y.r;
-        clr.g            = color.g <= 0.04045f ? x.g : y.g;
-        clr.b            = color.b <= 0.04045f ? x.b : y.b;
-        return saturate( clr );
-    }
-
-
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
-    float4 PS_WriteColor(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
-    {
-        float4 color      = tex2D( samplerColorBuffer, texcoord );
-        //Don't ask me why, but this shader doesn't operate properly in linear or sRGB,
-        //but does when converting sRGB to sRGB and back to 'Linear' (which is again sRGB)... (?)
-        color.xyz         = LinearTosRGB( color.xyz );
-        return float4( color.xyz, 1.0f );
-    }
-
     //Downscale to 32x32 min/max color matrix
     void PS_MinMax_1( float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 minValue : SV_Target0, out float4 maxValue : SV_Target1, out float4 midValue : SV_Target2 )
     {
@@ -224,7 +192,7 @@ namespace pd80_removetint
         {
             for( int x = uv.x; x < uv.x + Range.x && x < BUFFER_WIDTH/RT_RES; x += 1 )
             {
-                currColor    = tex2Dfetch( samplerLinearColor, int4( x, y, 0, RT_MIPLVL )).xyz;
+                currColor    = tex2Dfetch( samplerColorBuffer, int4( x, y, 0, RT_MIPLVL )).xyz;
                 // Dark color detection methods
                 // Per channel
                 minMethod0.x = lerp( minMethod0.x, currColor.x, step( currColor.x, minMethod0.x ));
@@ -317,9 +285,12 @@ namespace pd80_removetint
         maxValue.xyz       = lerp( prevMax.xyz, maxValue.xyz, fade );
         midValue.xyz       = lerp( prevMid.xyz, midValue.xyz, fade );
         // Freeze Correction
-        minValue.xyz       = lerp( minValue.xyz, prevMin.xyz, freeze );
-        maxValue.xyz       = lerp( maxValue.xyz, prevMax.xyz, freeze );
-        midValue.xyz       = lerp( midValue.xyz, prevMid.xyz, freeze );
+        if( freeze )
+        {
+            minValue.xyz   = prevMin.xyz;
+            maxValue.xyz   = prevMax.xyz;
+            midValue.xyz   = prevMid.xyz;
+        }
         // Return
         minValue           = float4( minValue.xyz, 1.0f );
         maxValue           = float4( maxValue.xyz, 1.0f );
@@ -328,7 +299,7 @@ namespace pd80_removetint
 
     float4 PS_RemoveTint(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
-        float4 color       = tex2D( samplerLinearColor, texcoord );
+        float4 color       = tex2D( samplerColorBuffer, texcoord );
         float3 minValue    = tex2Dfetch( samplerDS_1x1_Min, int4( 0, 0, 0, 0 )).xyz;
         float3 maxValue    = tex2Dfetch( samplerDS_1x1_Max, int4( 0, 0, 0, 0 )).xyz;
         float3 midValue    = tex2Dfetch( samplerDS_1x1_Mid, int4( 0, 0, 0, 0 )).xyz;
@@ -354,8 +325,7 @@ namespace pd80_removetint
         float lum          = dot( color.xyz, 0.333333f );
         lum                = lum >= 0.5f ? abs( lum * 2.0f - 2.0f ) : lum * 2.0f;
         color.xyz          = saturate( color.xyz - midValue.xyz * lum + dot( midValue.xyz, 0.333333f ) * lum * rt_midpoint_respect_luma );
-        
-        color.xyz          = SRGBToLinear( color.xyz );
+
         return float4( color.xyz, 1.0f );
     }
 
@@ -377,12 +347,6 @@ namespace pd80_removetint
                "Sets the precision level in detecting the white and black points. Higher levels mean less precision and more color removal.\n"
                "Too high values will remove significant amounts of color and may cause shifts in color, contrast, or banding artefacts.";>
     {
-        pass prod80_pass0
-        {
-            VertexShader       = PostProcessVS;
-            PixelShader        = PS_WriteColor;
-            RenderTarget       = texLinearColor;
-        }
         pass prod80_pass1
         {
             VertexShader       = PostProcessVS;
@@ -414,5 +378,3 @@ namespace pd80_removetint
         }
     }
 }
-
-
