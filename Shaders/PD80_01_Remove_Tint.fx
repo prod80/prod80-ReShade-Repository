@@ -160,7 +160,7 @@ namespace pd80_removetint
     sampler samplerDS_1x1_Mid { Texture = texDS_1x1_Mid; };
     sampler samplerPrevMin { Texture = texPrevMin; };
     sampler samplerPrevMax { Texture = texPrevMax; };
-    sampler samplerPrevMid { Texture = texPrevMax; };
+    sampler samplerPrevMid { Texture = texPrevMid; };
 
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
     uniform float frametime < source = "frametime"; >;
@@ -276,19 +276,18 @@ namespace pd80_removetint
             }
         }
 
-        minValue.xyz       = lerp( minMethod0.xyz, minMethod1.xyz, rt_blackpoint_method );
-        maxValue.xyz       = lerp( maxMethod0.xyz, maxMethod1.xyz, rt_whitepoint_method );
+        minValue.xyz       = ( rt_blackpoint_method ) ? minMethod1.xyz : minMethod0.xyz;
+        maxValue.xyz       = ( rt_whitepoint_method ) ? maxMethod1.xyz : maxMethod0.xyz;
         midValue.xyz       = midColor.xyz / Sigma;
         //Try and avoid some flickering
         //Not really working, too radical changes in min values sometimes
         float3 prevMin     = tex2Dfetch( samplerPrevMin, int4( 0, 0, 0, 0 )).xyz;
         float3 prevMax     = tex2Dfetch( samplerPrevMax, int4( 0, 0, 0, 0 )).xyz;
         float3 prevMid     = tex2Dfetch( samplerPrevMid, int4( 0, 0, 0, 0 )).xyz;
-        float fade         = saturate( frametime * 0.006f );
-        fade               = lerp( 1.0f, fade, enable_fade );
-        minValue.xyz       = lerp( prevMin.xyz, minValue.xyz, fade );
-        maxValue.xyz       = lerp( prevMax.xyz, maxValue.xyz, fade );
-        midValue.xyz       = lerp( prevMid.xyz, midValue.xyz, fade );
+        float f            = ( enable_fade ) ? saturate( frametime * 0.006f ) : 1.0f;
+        minValue.xyz       = lerp( prevMin.xyz, minValue.xyz, f );
+        maxValue.xyz       = lerp( prevMax.xyz, maxValue.xyz, f );
+        midValue.xyz       = lerp( prevMid.xyz, midValue.xyz, f );
         // Freeze Correction
         if( freeze )
         {
@@ -310,14 +309,14 @@ namespace pd80_removetint
         float3 midValue    = tex2Dfetch( samplerDS_1x1_Mid, int4( 0, 0, 0, 0 )).xyz;
         // Set min value
         minValue.xyz       = lerp( 0.0f, minValue.xyz, rt_bp_str );
-        minValue.xyz       = lerp( 0.0f, minValue.xyz, rt_enable_blackpoint_correction );
+        minValue.xyz       = ( rt_enable_blackpoint_correction ) ? minValue.xyz : 0.0f;
         // Set max value
         maxValue.xyz       = lerp( 1.0f, maxValue.xyz, rt_wp_str );
-        maxValue.xyz       = lerp( 1.0f, maxValue.xyz, rt_enable_whitepoint_correction );
+        maxValue.xyz       = ( rt_enable_whitepoint_correction ) ? maxValue.xyz : 1.0f;
         // Set mid value
         midValue.xyz       = midValue.xyz - 0.5f;
         midValue.xyz       *= midCC_scale;
-        midValue.xyz       = lerp( 0.0f, midValue.xyz, rt_enable_midpoint_correction );
+        midValue.xyz       = ( rt_enable_midpoint_correction ) ? midValue.xyz : 0.0f;
         // Main color correction
         color.xyz          = saturate( color.xyz - minValue.xyz ) / saturate( maxValue.xyz - minValue.xyz );
         // White Point luma preservation
