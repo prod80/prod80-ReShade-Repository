@@ -363,6 +363,7 @@ namespace pd80_removetint
     {
         minValue           = tex2Dfetch( samplerDS_1x1_Min, int4( 0, 0, 0, 0 ));
         maxValue           = tex2Dfetch( samplerDS_1x1_Max, int4( 0, 0, 0, 0 ));
+        midValue           = tex2Dfetch( samplerDS_1x1_Mid, int4( 0, 0, 0, 0 ));
     }
 
     //// TECHNIQUES /////////////////////////////////////////////////////////////////
