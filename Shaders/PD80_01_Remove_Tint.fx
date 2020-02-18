@@ -59,6 +59,10 @@ namespace pd80_removetint
         ui_label = "Enable Time Based Fade";
         ui_category = "Global: Remove Tint";
         > = true;
+    uniform bool freeze <
+        ui_label = "Freeze Correction";
+        ui_category = "Global: Remove Tint";
+        > = false;
     uniform bool rt_enable_whitepoint_correction <
         ui_text = "----------------------------------------------";
         ui_label = "Enable Whitepoint Correction";
@@ -143,6 +147,7 @@ namespace pd80_removetint
     texture texDS_1x1_Mid { Width = 1; Height = 1; Format = RGBA16F; };
     texture texPrevMin { Width = 1; Height = 1; Format = RGBA16F; };
     texture texPrevMax { Width = 1; Height = 1; Format = RGBA16F; };
+    texture texPrevMid { Width = 1; Height = 1; Format = RGBA16F; };
     
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerColorBuffer { Texture = texColorBuffer; };
@@ -155,6 +160,7 @@ namespace pd80_removetint
     sampler samplerDS_1x1_Mid { Texture = texDS_1x1_Mid; };
     sampler samplerPrevMin { Texture = texPrevMin; };
     sampler samplerPrevMax { Texture = texPrevMax; };
+    sampler samplerPrevMid { Texture = texPrevMax; };
 
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
     uniform float frametime < source = "frametime"; >;
@@ -304,10 +310,16 @@ namespace pd80_removetint
         //Not really working, too radical changes in min values sometimes
         float3 prevMin     = tex2Dfetch( samplerPrevMin, int4( 0, 0, 0, 0 )).xyz;
         float3 prevMax     = tex2Dfetch( samplerPrevMax, int4( 0, 0, 0, 0 )).xyz;
+        float3 prevMid     = tex2Dfetch( samplerPrevMid, int4( 0, 0, 0, 0 )).xyz;
         float fade         = saturate( frametime * 0.006f );
         fade               = lerp( 1.0f, fade, enable_fade );
         minValue.xyz       = lerp( prevMin.xyz, minValue.xyz, fade );
         maxValue.xyz       = lerp( prevMax.xyz, maxValue.xyz, fade );
+        midValue.xyz       = lerp( prevMid.xyz, midValue.xyz, fade );
+        // Freeze Correction
+        minValue.xyz       = lerp( minValue.xyz, prevMin.xyz, freeze );
+        maxValue.xyz       = lerp( maxValue.xyz, prevMax.xyz, freeze );
+        midValue.xyz       = lerp( midValue.xyz, prevMid.xyz, freeze );
         // Return
         minValue           = float4( minValue.xyz, 1.0f );
         maxValue           = float4( maxValue.xyz, 1.0f );
@@ -347,7 +359,7 @@ namespace pd80_removetint
         return float4( color.xyz, 1.0f );
     }
 
-    void PS_StorePrev( float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 minValue : SV_Target0, out float4 maxValue : SV_Target1 )
+    void PS_StorePrev( float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 minValue : SV_Target0, out float4 maxValue : SV_Target1, out float4 midValue : SV_Target2 )
     {
         minValue           = tex2Dfetch( samplerDS_1x1_Min, int4( 0, 0, 0, 0 ));
         maxValue           = tex2Dfetch( samplerDS_1x1_Max, int4( 0, 0, 0, 0 ));
@@ -397,6 +409,7 @@ namespace pd80_removetint
             PixelShader        = PS_StorePrev;
             RenderTarget0      = texPrevMin;
             RenderTarget1      = texPrevMax;
+            RenderTarget2      = texPrevMid;
         }
     }
 }
