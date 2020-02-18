@@ -61,7 +61,7 @@ namespace pd80_depthslicer
         ui_category = "Depth Slicer";
         ui_min = 0.0;
         ui_max = 1.0;
-        > = 0.05;
+        > = 0.005;
     uniform float intensity <
         ui_type = "slider";
         ui_label = "Lightness";
