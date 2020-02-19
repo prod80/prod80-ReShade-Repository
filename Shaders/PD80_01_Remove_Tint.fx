@@ -312,6 +312,10 @@ namespace pd80_removetint
         minValue.xyz       = ( rt_enable_blackpoint_correction ) ? minValue.xyz : 0.0f;
         // Set max value
         maxValue.xyz       = lerp( 1.0f, maxValue.xyz, rt_wp_str );
+        // Avoid DIV/0
+        maxValue.x         = ( minValue.x >= maxValue.x ) ? minValue.x + 0.001f : maxValue.x;
+        maxValue.y         = ( minValue.y >= maxValue.y ) ? minValue.y + 0.001f : maxValue.y;
+        maxValue.z         = ( minValue.z >= maxValue.z ) ? minValue.z + 0.001f : maxValue.z;
         maxValue.xyz       = ( rt_enable_whitepoint_correction ) ? maxValue.xyz : 1.0f;
         // Set mid value
         midValue.xyz       = midValue.xyz - 0.5f;
@@ -320,10 +324,10 @@ namespace pd80_removetint
         // Main color correction
         color.xyz          = saturate( color.xyz - minValue.xyz ) / saturate( maxValue.xyz - minValue.xyz );
         // White Point luma preservation
-        float corrLum      = max( dot( maxValue.xyz, 0.333333f ), 0.000001f );
+        float corrLum      = dot( maxValue.xyz, 0.333333f );
         color.xyz          = lerp( color.xyz, color.xyz * corrLum, rt_whitepoint_respect_luma * rt_wp_rl_str );
         // Black Point luma preservation
-        float greyValue    = max( dot( minValue.xyz, 0.333333f ), 0.000001f );
+        float greyValue    = dot( minValue.xyz, 0.333333f );
         color.xyz          = lerp( color.xyz, color.xyz * ( 1.0f - greyValue ) + greyValue, rt_blackpoint_respect_luma * rt_bp_rl_str );
         // Mid Point correction
         float lum          = dot( color.xyz, 0.333333f );
