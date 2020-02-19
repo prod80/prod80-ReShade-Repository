@@ -324,15 +324,16 @@ namespace pd80_removetint
         // Main color correction
         color.xyz          = saturate( color.xyz - minValue.xyz ) / saturate( maxValue.xyz - minValue.xyz );
         // White Point luma preservation
-        float corrLum      = dot( maxValue.xyz, 0.333333f );
-        color.xyz          = lerp( color.xyz, color.xyz * corrLum, rt_whitepoint_respect_luma * rt_wp_rl_str );
+        float avgMax       = dot( maxValue.xyz, 0.333333f );
+        color.xyz          = lerp( color.xyz, color.xyz * avgMax, rt_whitepoint_respect_luma * rt_wp_rl_str );
         // Black Point luma preservation
-        float greyValue    = dot( minValue.xyz, 0.333333f );
-        color.xyz          = lerp( color.xyz, color.xyz * ( 1.0f - greyValue ) + greyValue, rt_blackpoint_respect_luma * rt_bp_rl_str );
+        float avgMin       = dot( minValue.xyz, 0.333333f );
+        color.xyz          = lerp( color.xyz, color.xyz * ( 1.0f - avgMin ) + avgMin, rt_blackpoint_respect_luma * rt_bp_rl_str );
         // Mid Point correction
-        float lum          = dot( color.xyz, 0.333333f );
-        lum                = lum >= 0.5f ? abs( lum * 2.0f - 2.0f ) : lum * 2.0f;
-        color.xyz          = saturate( color.xyz - midValue.xyz * lum + dot( midValue.xyz, 0.333333f ) * lum * rt_midpoint_respect_luma );
+        float avgCol       = dot( color.xyz, 0.333333f ); // After correction
+        float avgMid       = dot( midValue.xyz, 0.333333f );
+        avgCol             = avgCol >= 0.5f ? abs( avgCol * 2.0f - 2.0f ) : avgCol * 2.0f;
+        color.xyz          = saturate( color.xyz - midValue.xyz * avgCol + avgMid * avgCol * rt_midpoint_respect_luma );
 
         return float4( color.xyz, 1.0f );
     }
