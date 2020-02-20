@@ -75,7 +75,7 @@ namespace pd80_removetint
     uniform int rt_whitepoint_method < __UNIFORM_COMBO_INT1
         ui_label = "Color Detection Method";
         ui_category = "Whitepoint: Remove Tint";
-        ui_items = "By Color Channel\0Find Light Color\0";
+        ui_items = "By Color Channel (auto-color)\0Find Light Color (auto-tone)\0";
         > = 1;
     uniform float rt_wp_str <
         ui_type = "slider";
@@ -103,7 +103,7 @@ namespace pd80_removetint
     uniform int rt_blackpoint_method < __UNIFORM_COMBO_INT1
         ui_label = "Color Detection Method";
         ui_category = "Blackpoint: Remove Tint";
-        ui_items = "By Color Channel\0Find Dark Color\0";
+        ui_items = "By Color Channel (auto-color)\0Find Dark Color  (auto-tone)\0";
         > = 1;
     uniform float rt_bp_str <
         ui_type = "slider";
@@ -126,6 +126,10 @@ namespace pd80_removetint
         > = false;
     uniform bool rt_midpoint_respect_luma <
         ui_label = "Respect Luma";
+        ui_category = "Midtone: Remove Tint";
+        > = false;
+    uniform bool mid_use_alt_method <
+        ui_label = "Use average Dark-Light as Mid";
         ui_category = "Midtone: Remove Tint";
         > = false;
     uniform float midCC_scale <
@@ -185,6 +189,11 @@ namespace pd80_removetint
         float getMin;   float getMin2;
         float getMax;   float getMax2;
 
+        float3 prevMin     = tex2Dfetch( samplerPrevMin, int4( 0, 0, 0, 0 )).xyz;
+        float3 prevMax     = tex2Dfetch( samplerPrevMax, int4( 0, 0, 0, 0 )).xyz;
+        float middle       = dot( float2( dot( prevMin.xyz, 0.333333f ), dot( prevMax.xyz, 0.333333f )), 0.5f );
+        middle             = ( mid_use_alt_method ) ? middle : 0.5f;
+
         //Downsample
         float2 Range       = float2( BUFFER_WIDTH, BUFFER_HEIGHT ) / ( 32.0f * RT_RES );
 
@@ -208,8 +217,8 @@ namespace pd80_removetint
                 getMin2      = max( max( minMethod1.x, minMethod1.y ), minMethod1.z );
                 minMethod1.xyz = lerp( minMethod1.xyz, currColor.xyz, step( getMin, getMin2 ));
                 // Mid point detection
-                getMid       = dot( abs( currColor.xyz - 0.5f ), 1.0f );
-                getMid2      = dot( abs( midValue.xyz - 0.5f ), 1.0f );
+                getMid       = dot( abs( currColor.xyz - middle ), 1.0f );
+                getMid2      = dot( abs( midValue.xyz - middle ), 1.0f );
                 midValue.xyz = lerp( midValue.xyz, currColor.xyz, step( getMid, getMid2 ));
                 // Light color detection methods
                 // Per channel
@@ -307,6 +316,9 @@ namespace pd80_removetint
         float3 minValue    = tex2Dfetch( samplerDS_1x1_Min, int4( 0, 0, 0, 0 )).xyz;
         float3 maxValue    = tex2Dfetch( samplerDS_1x1_Max, int4( 0, 0, 0, 0 )).xyz;
         float3 midValue    = tex2Dfetch( samplerDS_1x1_Mid, int4( 0, 0, 0, 0 )).xyz;
+        // Get middle correction method
+        float middle       = dot( float2( dot( minValue.xyz, 0.333333f ), dot( maxValue.xyz, 0.333333f )), 0.5f );
+        middle             = ( mid_use_alt_method ) ? middle : 0.5f;
         // Set min value
         minValue.xyz       = lerp( 0.0f, minValue.xyz, rt_bp_str );
         minValue.xyz       = ( rt_enable_blackpoint_correction ) ? minValue.xyz : 0.0f;
@@ -318,7 +330,7 @@ namespace pd80_removetint
         maxValue.z         = ( minValue.z >= maxValue.z ) ? minValue.z + 0.001f : maxValue.z;
         maxValue.xyz       = ( rt_enable_whitepoint_correction ) ? maxValue.xyz : 1.0f;
         // Set mid value
-        midValue.xyz       = midValue.xyz - 0.5f;
+        midValue.xyz       = midValue.xyz - middle;
         midValue.xyz       *= midCC_scale;
         midValue.xyz       = ( rt_enable_midpoint_correction ) ? midValue.xyz : 0.0f;
         // Main color correction
@@ -330,7 +342,7 @@ namespace pd80_removetint
         float avgMin       = dot( minValue.xyz, 0.333333f );
         color.xyz          = lerp( color.xyz, color.xyz * ( 1.0f - avgMin ) + avgMin, rt_blackpoint_respect_luma * rt_bp_rl_str );
         // Mid Point correction
-        float avgCol       = dot( color.xyz, 0.333333f ); // After correction
+        float avgCol       = dot( color.xyz, 0.333333f ); // Avg after main correction
         float avgMid       = dot( midValue.xyz, 0.333333f );
         avgCol             = avgCol >= 0.5f ? abs( avgCol * 2.0f - 2.0f ) : avgCol * 2.0f;
         color.xyz          = saturate( color.xyz - midValue.xyz * avgCol + avgMid * avgCol * rt_midpoint_respect_luma );
