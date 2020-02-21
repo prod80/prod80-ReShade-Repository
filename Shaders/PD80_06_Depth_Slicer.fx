@@ -253,8 +253,8 @@ namespace pd80_depthslicer
     {
         pass prod80_pass0
         {
-            VertexShader   = PostProcessVS;
-            PixelShader    = PS_DepthSlice;
+            VertexShader  = PostProcessVS;
+            PixelShader   = PS_DepthSlice;
         }
     }
 }
