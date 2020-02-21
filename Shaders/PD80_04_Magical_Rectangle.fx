@@ -92,24 +92,71 @@ namespace pd80_magicalrectangle
         ui_max = 1.0;
         > = 0.002;
     uniform float intensity <
+        ui_text = "-------------------------------------\n"
+                  "Use Opacity and Blend Mode to adjust\n"
+                  "Shape controls the Shape coloring\n"
+                  "Image controls the underlying picture\n"
+                  "-------------------------------------";
         ui_type = "slider";
-        ui_label = "Lightness";
+        ui_label = "Shape: Lightness";
         ui_category = "Shape Coloration";
         ui_min = 0.0;
         ui_max = 1.0;
         > = 0.5;
-    uniform float hue <
+    uniform float sh_hue <
         ui_type = "slider";
-        ui_label = "Hue";
+        ui_label = "Shape: Hue";
         ui_category = "Shape Coloration";
         ui_min = 0.0;
         ui_max = 1.0;
         > = 0.083;
-    uniform float saturation <
+    uniform float sh_saturation <
         ui_type = "slider";
-        ui_label = "Saturation";
+        ui_label = "Shape: Saturation";
         ui_category = "Shape Coloration";
         ui_min = 0.0;
+        ui_max = 1.0;
+        > = 0.0;
+    uniform float mr_exposure <
+        ui_type = "slider";
+        ui_label = "Image: Exposure";
+        ui_category = "Shape Coloration";
+        ui_min = -4.0;
+        ui_max = 4.0;
+        > = 0.0;
+    uniform float mr_contrast <
+        ui_type = "slider";
+        ui_label = "Image: Contrast";
+        ui_category = "Shape Coloration";
+        ui_min = -1.0;
+        ui_max = 1.0;
+        > = 0.0;
+    uniform float mr_brightness <
+        ui_type = "slider";
+        ui_label = "Image: Brightness";
+        ui_category = "Shape Coloration";
+        ui_min = -1.0;
+        ui_max = 1.0;
+        > = 0.0;
+    uniform float mr_hue <
+        ui_type = "slider";
+        ui_label = "Image: Hue";
+        ui_category = "Shape Coloration";
+        ui_min = -1.0;
+        ui_max = 1.0;
+        > = 0.0;
+    uniform float mr_saturation <
+        ui_type = "slider";
+        ui_label = "Image: Saturation";
+        ui_category = "Shape Coloration";
+        ui_min = -1.0;
+        ui_max = 1.0;
+        > = 0.0;
+    uniform float mr_vibrance <
+        ui_type = "slider";
+        ui_label = "Image: Vibrance";
+        ui_category = "Shape Coloration";
+        ui_min = -1.0;
         ui_max = 1.0;
         > = 0.0;
     uniform bool enable_gradient <
@@ -234,6 +281,13 @@ namespace pd80_magicalrectangle
         return HSLToRGB( float3( hsl.xy, RGBToHSL( b.xyz ).z ));
     }
     
+    float3 exposure( float3 res, float x, float factor )
+    {
+        float b = 0.0f;
+        b = x < 0.0f ? b = x * 0.333f : b = x;
+        return lerp( res.xyz, saturate( res.xyz * ( b * ( 1.0f - res.xyz ) + 1.0f )), factor );
+    }
+
     float3 con( float3 res, float x )
     {
         //softlight
@@ -264,6 +318,14 @@ namespace pd80_magicalrectangle
         sat.z = sat.y - sat.x;
         sat.w = getLuminance( res.xyz );
         return lerp( sat.w, res.xyz, 1.0f + ( x * ( 1.0f - sat.z )));
+    }
+
+    float3 hue( float3 res, float shift, float x )
+    {
+        float3 hsl = RGBToHSL( res.xyz );
+        hsl.x = frac( hsl.x + ( shift + 1.0f ) / 2.0f - 0.5f );
+        hsl.xyz = HSLToRGB( hsl.xyz );
+        return lerp( res.xyz, hsl.xyz, x );
     }
 
     float curve( float x )
@@ -396,14 +458,21 @@ namespace pd80_magicalrectangle
         float4 orig       = tex2D( samplerColor, texcoord );
         float3 color;
         float4 layer_1    = tex2D( samplerMagicRectangle, texcoord );
+        orig.xyz          = exposure( orig.xyz, mr_exposure, saturate( layer_1.w ));
+        orig.xyz          = con( orig.xyz, mr_contrast * saturate( layer_1.w ));
+        orig.xyz          = bri( orig.xyz, mr_brightness * saturate( layer_1.w ));
+        orig.xyz          = hue( orig.xyz, mr_hue, saturate( layer_1.w ));
+        orig.xyz          = sat( orig.xyz, mr_saturation * saturate( layer_1.w ));
+        orig.xyz          = vib( orig.xyz, mr_vibrance * saturate( layer_1.w ));
+
         // Doing some HSL color space conversions to colorize
         layer_1.xyz       = saturate( layer_1.xyz * intensity_boost );
         layer_1.xyz       = RGBToHSL( layer_1.xyz );
-        layer_1.xyz       = HSLToRGB( float3( hue, saturation, layer_1.z ));
+        layer_1.xyz       = HSLToRGB( float3( sh_hue, sh_saturation, layer_1.z ));
         // Blend mode with background
         layer_1.xyz       = blendmode( orig.xyz, layer_1.xyz, blendmode_1 );
         // Opacity
-        color.xyz         = lerp( orig.xyz, layer_1.xyz, layer_1.w * opacity );
+        color.xyz         = lerp( orig.xyz, layer_1.xyz, saturate( layer_1.w ) * opacity );
         // Output to screen
         return float4( color.xyz, 1.0f );
     }
