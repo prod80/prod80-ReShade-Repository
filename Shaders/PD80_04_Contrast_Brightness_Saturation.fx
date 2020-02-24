@@ -32,6 +32,13 @@
 namespace pd80_conbrisat
 {
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
+    uniform float exposureN <
+        ui_label = "Exposure";
+        ui_category = "Final Adjustments";
+        ui_type = "slider";
+        ui_min = -4.0;
+        ui_max = 4.0;
+        > = 0.0;
     uniform float contrast <
         ui_label = "Contrast";
         ui_category = "Final Adjustments";
@@ -152,6 +159,13 @@ namespace pd80_conbrisat
         ui_min = 0.05;
         ui_max = 8.0;
         > = 1.0;
+    uniform float exposureD <
+        ui_label = "Exposure Far";
+        ui_category = "Final Adjustments: Far";
+        ui_type = "slider";
+        ui_min = -4.0;
+        ui_max = 4.0;
+        > = 0.0;
     uniform float contrastD <
         ui_label = "Contrast Far";
         ui_category = "Final Adjustments: Far";
@@ -238,6 +252,13 @@ namespace pd80_conbrisat
     { 
         return b < 0.5f ? ( 2.0f * c * b + c * c * ( 1.0f - 2.0f * b )) :
                           ( sqrt( c ) * ( 2.0f * b - 1.0f ) + 2.0f * c * ( 1.0f - b ));
+    }
+
+    float3 exposure( float3 res, float x )
+    {
+        float b = 0.0f;
+        b = x < 0.0f ? b = x * 0.333f : b = x;
+        return saturate( res.xyz * ( b * ( 1.0f - res.xyz ) + 1.0f ));
     }
 
     float3 con( float3 res, float x )
@@ -327,11 +348,13 @@ namespace pd80_conbrisat
         color.xyz        = saturate( color.xyz );
         float3 dcolor    = color.xyz;
 
+        color.xyz        = exposure( color.xyz, exposureN );
         color.xyz        = con( color.xyz, contrast   );
         color.xyz        = bri( color.xyz, brightness );
         color.xyz        = sat( color.xyz, saturation );
         color.xyz        = vib( color.xyz, vibrance   );
 
+        dcolor.xyz       = exposure( dcolor.xyz, exposureD );
         dcolor.xyz       = con( dcolor.xyz, contrastD   );
         dcolor.xyz       = bri( dcolor.xyz, brightnessD );
         dcolor.xyz       = sat( dcolor.xyz, saturationD );

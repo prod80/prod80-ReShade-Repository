@@ -39,6 +39,13 @@ namespace pd80_SMH
         ui_category = "Luma Mode";
         ui_items = "Use Average\0Use Perceived Luma\0Use Max Value\0";
         > = 2;
+    uniform float exposure_s <
+        ui_label = "Exposure";
+        ui_category = "Shadow Adjustments";
+        ui_type = "slider";
+        ui_min = -4.0;
+        ui_max = 4.0;
+        > = 0.0;
     uniform float contrast_s <
         ui_label = "Contrast";
         ui_category = "Shadow Adjustments";
@@ -91,6 +98,13 @@ namespace pd80_SMH
         ui_min = -1.0;
         ui_max = 1.0;
         > = 0.0;
+    uniform float exposure_m <
+        ui_label = "Exposure";
+        ui_category = "Midtone Adjustments";
+        ui_type = "slider";
+        ui_min = -4.0;
+        ui_max = 4.0;
+        > = 0.0;
     uniform float contrast_m <
         ui_label = "Contrast";
         ui_category = "Midtone Adjustments";
@@ -142,6 +156,13 @@ namespace pd80_SMH
         ui_type = "slider";
         ui_min = -1.0;
         ui_max = 1.0;
+        > = 0.0;
+    uniform float exposure_h <
+        ui_label = "Exposure";
+        ui_category = "Highlight Adjustments";
+        ui_type = "slider";
+        ui_min = -4.0;
+        ui_max = 4.0;
         > = 0.0;
     uniform float contrast_h <
         ui_label = "Contrast";
@@ -280,6 +301,13 @@ namespace pd80_SMH
         return HSLToRGB( float3( hsl.xy, RGBToHSL( b.xyz ).z ));
     }
     
+    float3 exposure( float3 res, float x )
+    {
+        float b = 0.0f;
+        b = x < 0.0f ? b = x * 0.333f : b = x;
+        return saturate( res.xyz * ( b * ( 1.0f - res.xyz ) + 1.0f ));
+    }
+
     float3 con( float3 res, float x )
     {
         //softlight
@@ -400,7 +428,8 @@ namespace pd80_SMH
         float3 warm       = float3( 0.98f, 0.588f, 0.0f ); //LBA
         
         // Shadows
-        color.xyz        = con( color.xyz, contrast_s   * weight_s );
+        color.xyz        = exposure( color.xyz, exposure_s * weight_s );
+        color.xyz        = con( color.xyz, contrast_s * weight_s );
         color.xyz        = bri( color.xyz, brightness_s * weight_s );
         float3 blend_s   = blendmode( color.xyz, blendcolor_s.xyz, blendmode_s );
         color.xyz        = lerp( color.xyz, blend_s.xyz, opacity_s * weight_s );
@@ -412,6 +441,7 @@ namespace pd80_SMH
         color.xyz        = vib( color.xyz, vibrance_s   * weight_s );
 
         // Midtones
+        color.xyz        = exposure( color.xyz, exposure_m * weight_m );
         color.xyz        = con( color.xyz, contrast_m   * weight_m );
         color.xyz        = bri( color.xyz, brightness_m * weight_m );
         float3 blend_m   = blendmode( color.xyz, blendcolor_m.xyz, blendmode_m );
@@ -424,6 +454,7 @@ namespace pd80_SMH
         color.xyz        = vib( color.xyz, vibrance_m   * weight_m );
 
         // Highlights
+        color.xyz        = exposure( color.xyz, exposure_h * weight_h );
         color.xyz        = con( color.xyz, contrast_h   * weight_h );
         color.xyz        = bri( color.xyz, brightness_h * weight_h );
         float3 blend_h   = blendmode( color.xyz, blendcolor_h.xyz, blendmode_h );
