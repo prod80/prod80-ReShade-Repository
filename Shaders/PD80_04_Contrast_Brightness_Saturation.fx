@@ -95,6 +95,13 @@ namespace pd80_conbrisat
         ui_min = -2.0;
         ui_max = 2.0;
         > = 0.0;
+    uniform float sat_o <
+        ui_label = "Orange Saturation";
+        ui_category = "Color Saturation Adjustments";
+        ui_type = "slider";
+        ui_min = -2.0;
+        ui_max = 2.0;
+        > = 0.0;
     uniform float sat_y <
         ui_label = "Yellow Saturation";
         ui_category = "Color Saturation Adjustments";
@@ -109,8 +116,8 @@ namespace pd80_conbrisat
         ui_min = -2.0;
         ui_max = 2.0;
         > = 0.0;
-    uniform float sat_c <
-        ui_label = "Cyan Saturation";
+    uniform float sat_a <
+        ui_label = "Aqua Saturation";
         ui_category = "Color Saturation Adjustments";
         ui_type = "slider";
         ui_min = -2.0;
@@ -118,6 +125,13 @@ namespace pd80_conbrisat
         > = 0.0;
     uniform float sat_b <
         ui_label = "Blue Saturation";
+        ui_category = "Color Saturation Adjustments";
+        ui_type = "slider";
+        ui_min = -2.0;
+        ui_max = 2.0;
+        > = 0.0;
+    uniform float sat_p <
+        ui_label = "Purple Saturation";
         ui_category = "Color Saturation Adjustments";
         ui_type = "slider";
         ui_min = -2.0;
@@ -293,31 +307,37 @@ namespace pd80_conbrisat
         return lerp( sat.w, res.xyz, 1.0f + ( x * ( 1.0f - sat.z )));
     }
 
-    float3 channelsat( float3 col, float r, float y, float g, float c, float b, float m )
+    float3 channelsat( float3 col, float r, float o, float y, float g, float a, float b, float p, float m )
     {
         float3 hsl         = RGBToHSL( col.xyz ).x;
         float desat        = getLuminance( col.xyz );
 
         //Get weights
-        float weight_r     = curve( max( 1.0f - abs(  hsl.x               * 6.0f ), 0.0f )) +
-                             curve( max( 1.0f - abs(( hsl.x - 1.0f      ) * 6.0f ), 0.0f ));
-        float weight_y     = curve( max( 1.0f - abs(( hsl.x - 0.166667f ) * 6.0f ), 0.0f ));
-        float weight_g     = curve( max( 1.0f - abs(( hsl.x - 0.333333f ) * 6.0f ), 0.0f ));
-        float weight_c     = curve( max( 1.0f - abs(( hsl.x - 0.5f      ) * 6.0f ), 0.0f ));
-        float weight_b     = curve( max( 1.0f - abs(( hsl.x - 0.666667f ) * 6.0f ), 0.0f ));
-        float weight_m     = curve( max( 1.0f - abs(( hsl.x - 0.833333f ) * 6.0f ), 0.0f ));
+        float weight_r     = curve( max( 1.0f - abs(  hsl.x            * 8.0f ), 0.0f )) +
+                             curve( max( 1.0f - abs(( hsl.x - 1.0f   ) * 8.0f ), 0.0f ));
+        float weight_o     = curve( max( 1.0f - abs(( hsl.x - 0.125f ) * 8.0f ), 0.0f ));
+        float weight_y     = curve( max( 1.0f - abs(( hsl.x - 0.25f  ) * 8.0f ), 0.0f ));
+        float weight_g     = curve( max( 1.0f - abs(( hsl.x - 0.375f ) * 8.0f ), 0.0f ));
+        float weight_a     = curve( max( 1.0f - abs(( hsl.x - 0.5f   ) * 8.0f ), 0.0f ));
+        float weight_b     = curve( max( 1.0f - abs(( hsl.x - 0.625f ) * 8.0f ), 0.0f ));
+        float weight_p     = curve( max( 1.0f - abs(( hsl.x - 0.75f  ) * 8.0f ), 0.0f ));
+        float weight_m     = curve( max( 1.0f - abs(( hsl.x - 0.875f ) * 8.0f ), 0.0f ));
 
         float3 ret         = col.xyz;
         ret.xyz            = r > 0.0f ? lerp( desat, ret.xyz, min( 1.0f + r * weight_r * ( 1.0f - hsl.y ), 2.0f )) :
                                         lerp( desat, ret.xyz, max( 1.0f + r * weight_r, 0.0f ));
+        ret.xyz            = o > 0.0f ? lerp( desat, ret.xyz, min( 1.0f + o * weight_o * ( 1.0f - hsl.y ), 2.0f )) :
+                                        lerp( desat, ret.xyz, max( 1.0f + o * weight_o, 0.0f ));
         ret.xyz            = y > 0.0f ? lerp( desat, ret.xyz, min( 1.0f + y * weight_y * ( 1.0f - hsl.y ), 2.0f )) :
                                         lerp( desat, ret.xyz, max( 1.0f + y * weight_y, 0.0f ));
         ret.xyz            = g > 0.0f ? lerp( desat, ret.xyz, min( 1.0f + g * weight_g * ( 1.0f - hsl.y ), 2.0f )) :
                                         lerp( desat, ret.xyz, max( 1.0f + g * weight_g, 0.0f ));
-        ret.xyz            = c > 0.0f ? lerp( desat, ret.xyz, min( 1.0f + c * weight_c * ( 1.0f - hsl.y ), 2.0f )) :
-                                        lerp( desat, ret.xyz, max( 1.0f + c * weight_c, 0.0f ));
+        ret.xyz            = a > 0.0f ? lerp( desat, ret.xyz, min( 1.0f + a * weight_a * ( 1.0f - hsl.y ), 2.0f )) :
+                                        lerp( desat, ret.xyz, max( 1.0f + a * weight_a, 0.0f ));
         ret.xyz            = b > 0.0f ? lerp( desat, ret.xyz, min( 1.0f + b * weight_b * ( 1.0f - hsl.y ), 2.0f )) :
                                         lerp( desat, ret.xyz, max( 1.0f + b * weight_b, 0.0f ));
+        ret.xyz            = p > 0.0f ? lerp( desat, ret.xyz, min( 1.0f + p * weight_p * ( 1.0f - hsl.y ), 2.0f )) :
+                                        lerp( desat, ret.xyz, max( 1.0f + p * weight_p, 0.0f ));
         ret.xyz            = m > 0.0f ? lerp( desat, ret.xyz, min( 1.0f + m * weight_m * ( 1.0f - hsl.y ), 2.0f )) :
                                         lerp( desat, ret.xyz, max( 1.0f + m * weight_m, 0.0f ));
 
@@ -362,7 +382,7 @@ namespace pd80_conbrisat
         
         color.xyz        = lerp( color.xyz, dcolor.xyz, enable_depth * depth ); // apply based on depth
 
-        color.xyz        = channelsat( color.xyz, sat_r, sat_y, sat_g, sat_c, sat_b, sat_m );
+        color.xyz        = channelsat( color.xyz, sat_r, sat_o, sat_y, sat_g, sat_a, sat_b, sat_p, sat_m );
         color.xyz        = customsat( color.xyz, huemid, huerange, sat_custom );
 
         color.xyz        = saturate( color.xyz ); // shouldn't be needed, but just to ensure no oddities are there
