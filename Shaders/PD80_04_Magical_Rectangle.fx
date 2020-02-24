@@ -205,6 +205,8 @@ namespace pd80_magicalrectangle
     #define ASPECT_RATIO float( BUFFER_WIDTH * BUFFER_RCP_HEIGHT )
 
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
+    uniform bool hasdepth < source = "bufready_depth"; >;
+
     float getLuminance( in float3 x )
     {
         return dot( x, float3( 0.212656, 0.715158, 0.072186 ));
@@ -444,6 +446,7 @@ namespace pd80_magicalrectangle
             tr            = smoothstep( 0.0f, 0.0f + smoothing, 1.0f - uv.xy ) * pow( abs( uv.x ), gradient_curve );
         }
         float depthfade   = smoothstep( depthpos - depth_smoothing, depthpos + depth_smoothing, depth );
+        depthfade         = lerp( 1.0f, depthfade, hasdepth );
         // Combine them all
         float R           = bl.x * bl.y * tr.x * tr.y * depthfade;
         R                 = ( invert_shape ) ? 1.0f - R : R;
@@ -484,7 +487,8 @@ namespace pd80_magicalrectangle
                    "It can blend on depth, blur edges, change color, change blending, change shape, and so on.\n"
                    "It will allow you to manipulate parts of the scene in various ways. Not withstanding; add mist,\n"
                    "remove mist, change clouds, create backgrounds, draw flares, add contrasts, change hues, etc. in ways\n"
-                   "another shader will not be able to do.";>
+                   "another shader will not be able to do.\n\n"
+                   "This shader requires access to depth buffer for full functionality!";>
     {
         pass prod80_pass0
         {
