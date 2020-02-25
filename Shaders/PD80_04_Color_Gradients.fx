@@ -32,36 +32,120 @@
 namespace pd80_ColorGradients
 {
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
-    uniform float3 midcolor <
+    // Light Scene
+    uniform float3 blendcolor_ls_m <
         ui_type = "color";
-        ui_label = "Mid Tone Color";
-        ui_category = "Gradients";
-        > = float3(1.0, 0.5, 0.0);
-    uniform float3 shadowcolor <
+        ui_label = "Color";
+        ui_category = "Light Scene: Midtone Color";
+        > = float3( 0.98, 0.588, 0.0 );
+    uniform int blendmode_ls_m < __UNIFORM_COMBO_INT1
+        ui_label = "Blendmode";
+        ui_category = "Light Scene: Midtone Color";
+        ui_items = "Default\0Darken\0Multiply\0Linearburn\0Colorburn\0Lighten\0Screen\0Colordodge\0Lineardodge\0Overlay\0Softlight\0Vividlight\0Linearlight\0Pinlight\0Hardmix\0Reflect\0Glow\0Hue\0Saturation\0Color\0Luminosity\0";
+        > = 10;
+    uniform float opacity_ls_m <
+        ui_label = "Opacity";
+        ui_category = "Light Scene: Midtone Color";
+        ui_type = "slider";
+        ui_min = 0.0;
+        ui_max = 1.0;
+        > = 1.0;
+    uniform float3 blendcolor_ls_s <
         ui_type = "color";
-        ui_label = "Shadow Color";
-        ui_category = "Gradients";
-        > = float3(0.0, 0.5, 1.0);
+        ui_label = "Color";
+        ui_category = "Light Scene: Shadow Color";
+        > = float3( 0.0,  0.365, 1.0 );
+    uniform int blendmode_ls_s < __UNIFORM_COMBO_INT1
+        ui_label = "Blendmode";
+        ui_category = "Light Scene: Shadow Color";
+        ui_items = "Default\0Darken\0Multiply\0Linearburn\0Colorburn\0Lighten\0Screen\0Colordodge\0Lineardodge\0Overlay\0Softlight\0Vividlight\0Linearlight\0Pinlight\0Hardmix\0Reflect\0Glow\0Hue\0Saturation\0Color\0Luminosity\0";
+        > = 5;
+    uniform float opacity_ls_s <
+        ui_label = "Opacity";
+        ui_category = "Light Scene: Shadow Color";
+        ui_type = "slider";
+        ui_min = 0.0;
+        ui_max = 1.0;
+        > = 0.3;
+    // Dark Scene
+    uniform float3 blendcolor_ds_m <
+        ui_type = "color";
+        ui_label = "Color";
+        ui_category = "Dark Scene: Midtone Color";
+        > = float3( 0.0,  0.365, 1.0 );
+    uniform int blendmode_ds_m < __UNIFORM_COMBO_INT1
+        ui_label = "Blendmode";
+        ui_category = "Dark Scene: Midtone Color";
+        ui_items = "Default\0Darken\0Multiply\0Linearburn\0Colorburn\0Lighten\0Screen\0Colordodge\0Lineardodge\0Overlay\0Softlight\0Vividlight\0Linearlight\0Pinlight\0Hardmix\0Reflect\0Glow\0Hue\0Saturation\0Color\0Luminosity\0";
+        > = 10;
+    uniform float opacity_ds_m <
+        ui_label = "Opacity";
+        ui_category = "Dark Scene: Midtone Color";
+        ui_type = "slider";
+        ui_min = 0.0;
+        ui_max = 1.0;
+        > = 1.0;
+    uniform float3 blendcolor_ds_s <
+        ui_type = "color";
+        ui_label = "Color";
+        ui_category = "Dark Scene: Shadow Color";
+        > = float3( 0.0,  0.039, 0.588 );
+    uniform int blendmode_ds_s < __UNIFORM_COMBO_INT1
+        ui_label = "Blendmode";
+        ui_category = "Dark Scene: Shadow Color";
+        ui_items = "Default\0Darken\0Multiply\0Linearburn\0Colorburn\0Lighten\0Screen\0Colordodge\0Lineardodge\0Overlay\0Softlight\0Vividlight\0Linearlight\0Pinlight\0Hardmix\0Reflect\0Glow\0Hue\0Saturation\0Color\0Luminosity\0";
+        > = 10;
+    uniform float opacity_ds_s <
+        ui_label = "Opacity";
+        ui_category = "Dark Scene: Shadow Color";
+        ui_type = "slider";
+        ui_min = 0.0;
+        ui_max = 1.0;
+        > = 1.0;
     uniform float CGdesat <
         ui_label = "Desaturate Base Image";
-        ui_category = "Gradients";
+        ui_category = "Mixing Values";
         ui_type = "slider";
         ui_min = 0.0;
         ui_max = 1.0;
         > = 0.0;
     uniform float finalmix <
         ui_label = "Mix with Original";
-        ui_category = "Gradients";
+        ui_category = "Mixing Values";
         ui_type = "slider";
         ui_min = 0.0;
         ui_max = 1.0;
         > = 0.333;
+    uniform float minlevel <
+        ui_label = "Pure Dark Scene Level";
+        ui_category = "Scene Luminance Adaptation";
+        ui_type = "slider";
+        ui_min = 0.0;
+        ui_max = 1.0;
+        > = 0.125;
+    uniform float maxlevel <
+        ui_label = "Pure Light Scene Level";
+        ui_category = "Scene Luminance Adaptation";
+        ui_type = "slider";
+        ui_min = 0.0;
+        ui_max = 1.0;
+        > = 0.3;
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
+    texture texLuma { Width = 256; Height = 256; Format = R16F; MipLevels = 8; };
+    texture texAvgLuma { Format = R16F; };
+    texture texPrevAvgLuma { Format = R16F; };
+
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerColor { Texture = texColorBuffer; };
+    sampler samplerLuma { Texture = texLuma; };
+    sampler samplerAvgLuma { Texture = texAvgLuma; };
+    sampler samplerPrevAvgLuma { Texture = texPrevAvgLuma; };
+
     //// DEFINES ////////////////////////////////////////////////////////////////////
     #define LumCoeff float3(0.212656, 0.715158, 0.072186)
+    uniform float Frametime < source = "frametime"; >;
+
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
     float getLuminance( in float3 x )
     {
@@ -107,33 +191,183 @@ namespace pd80_ColorGradients
         return x * x * x * ( x * ( x * 6.0f - 15.0f ) + 10.0f );
     }
 
+    float3 darken(float3 c, float3 b)       { return min(c,b);}
+    float3 multiply(float3 c, float3 b) 	{ return c*b;}
+    float3 linearburn(float3 c, float3 b) 	{ return max(c+b-1.0f, 0.0f);}
+    float3 colorburn(float3 c, float3 b) 	{ return b<=0.000001f ? b:saturate(1.0f-((1.0f-c)/b));}
+    float3 lighten(float3 c, float3 b) 		{ return max(b, c);}
+    float3 screen(float3 c, float3 b) 		{ return 1.0f-(1.0f-c)*(1.0f-b);}
+    float3 colordodge(float3 c, float3 b) 	{ return b>=0.999999f ? b:saturate(c/(1.0f-b));}
+    float3 lineardodge(float3 c, float3 b) 	{ return min(c+b, 1.0f);}
+    float3 overlay(float3 c, float3 b) 		{ return c<0.5f ? 2.0f*c*b:(1.0f-2.0f*(1.0f-c)*(1.0f-b));}
+    float3 softlight(float3 c, float3 b) 	{ return b<0.5f ? (2.0f*c*b+c*c*(1.0f-2.0f*b)):(sqrt(c)*(2.0f*b-1.0f)+2.0f*c*(1.0f-b));}
+    float3 vividlight(float3 c, float3 b) 	{ return b<0.5f ? colorburn(c, (2.0f*b)):colordodge(c, (2.0f*(b-0.5f)));}
+    float3 linearlight(float3 c, float3 b) 	{ return b<0.5f ? linearburn(c, (2.0f*b)):lineardodge(c, (2.0f*(b-0.5f)));}
+    float3 pinlight(float3 c, float3 b) 	{ return b<0.5f ? darken(c, (2.0f*b)):lighten(c, (2.0f*(b-0.5f)));}
+    float3 hardmix(float3 c, float3 b)      { return vividlight(c,b)<0.5f ? 0.0 : 1.0;}
+    float3 reflect(float3 c, float3 b)      { return b>=0.999999f ? b:saturate(c*c/(1.0f-b));}
+    float3 glow(float3 c, float3 b)         { return reflect(b, c);}
+    float3 blendhue(float3 c, float3 b)
+    {
+        float3 hsl = RGBToHSL( c.xyz );
+        return HSLToRGB( float3( RGBToHSL( b.xyz ).x, hsl.yz ));
+    }
+    float3 blendsaturation(float3 c, float3 b)
+    {
+        float3 hsl = RGBToHSL( c.xyz );
+        return HSLToRGB( float3( hsl.x, RGBToHSL( b.xyz ).y, hsl.z ));
+    }
+    float3 blendcolor(float3 c, float3 b)
+    {
+        float3 hsl = RGBToHSL( b.xyz );
+        return HSLToRGB( float3( hsl.xy, RGBToHSL( c.xyz ).z ));
+    }
+    float3 blendluminosity(float3 c, float3 b)
+    {
+        float3 hsl = RGBToHSL( c.xyz );
+        return HSLToRGB( float3( hsl.xy, RGBToHSL( b.xyz ).z ));
+    }
+
+    float3 blendmode( float3 c, float3 b, int mode )
+    {
+        float3 ret;
+        switch( mode )
+        {
+            case 0:  // Default
+            { ret.xyz = b.xyz; } break;
+            case 1:  // Darken
+            { ret.xyz = darken( c, b ); } break;
+            case 2:  // Multiply
+            { ret.xyz = multiply( c, b ); } break;
+            case 3:  // Linearburn
+            { ret.xyz = linearburn( c, b ); } break;
+            case 4:  // Colorburn
+            { ret.xyz = colorburn( c, b ); } break;
+            case 5:  // Lighten
+            { ret.xyz = lighten( c, b ); } break;
+            case 6:  // Screen
+            { ret.xyz = screen( c, b ); } break;
+            case 7:  // Colordodge
+            { ret.xyz = colordodge( c, b ); } break;
+            case 8:  // Lineardodge
+            { ret.xyz = lineardodge( c, b ); } break;
+            case 9:  // Overlay
+            { ret.xyz = overlay( c, b ); } break;
+            case 10:  // Softlight
+            { ret.xyz = softlight( c, b ); } break;
+            case 11: // Vividlight
+            { ret.xyz = vividlight( c, b ); } break;
+            case 12: // Linearlight
+            { ret.xyz = linearlight( c, b ); } break;
+            case 13: // Pinlight
+            { ret.xyz = pinlight( c, b ); } break;
+            case 14: // Hard Mix
+            { ret.xyz = hardmix( c, b ); } break;
+            case 15: // Reflect
+            { ret.xyz = reflect( c, b ); } break;
+            case 16: // Glow
+            { ret.xyz = glow( c, b ); } break;
+            case 17: // Hue
+            { ret.xyz = blendhue( c, b ); } break;
+            case 18: // Saturation
+            { ret.xyz = blendsaturation( c, b ); } break;
+            case 19: // Color
+            { ret.xyz = blendcolor( c, b ); } break;
+            case 20: // Luminosity
+            { ret.xyz = blendluminosity( c, b ); } break;
+        }
+        return saturate( ret );
+    }
+
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
+    float PS_WriteLuma(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
+    {
+        float4 color     = tex2D( samplerColor, texcoord );
+        float luma       = max( max( color.x, color.y ), color.z );
+        return luma; //writes to texLuma
+    }
+
+    float PS_AvgLuma(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
+    {
+        float luma       = tex2Dlod( samplerLuma, float4( 0.5f, 0.5f, 0, 8 )).x;
+        float prevluma   = tex2D( samplerPrevAvgLuma, float2( 0.5f, 0.5f )).x;
+        float avgLuma    = lerp( prevluma, luma, saturate( Frametime * 0.003f ));
+        return avgLuma; //writes to texAvgLuma
+    }
+
     float4 PS_ColorGradients(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color     = tex2D( samplerColor, texcoord );
+        float sceneluma  = tex2D( samplerAvgLuma, float2( 0.5f, 0.5f )).x;
+        float ml         = ( minlevel >= maxlevel ) ? maxlevel - 0.01f : minlevel;
+        sceneluma        = smoothstep( ml, maxlevel, sceneluma );
         color.xyz        = saturate( color.xyz );
-        float3 hsl       = RGBToHSL( color.xyz );
+        
+        // Weights
         float cWeight    = dot( color.xyz, 0.333333f );
-        float pLuma      = getLuminance( color.xyz );
         float w_s        = curve( max( 1.0f - cWeight * 2.0f, 0.0f ));
         float w_h        = curve( max(( cWeight - 0.5f ) * 2.0f, 0.0f ));
         float w_m        = 1.0f - w_s - w_h;
-        float3 hsl_sc    = RGBToHSL( shadowcolor.xyz );
-        float3 hsl_mc    = RGBToHSL( midcolor.xyz );
-        hsl_sc.xyz       = HSLToRGB( float3( hsl_sc.xy, cWeight ));
-        hsl_mc.xyz       = HSLToRGB( float3( hsl_mc.xy, cWeight ));
-        float3 new_c     = hsl_sc.xyz * w_s + hsl_mc.xyz * w_m + w_h;
-        color.xyz        = lerp( lerp( color.xyz, pLuma, CGdesat ), new_c.xyz, finalmix );
+
+        // Desat original
+        float pLuma      = getLuminance( color.xyz );
+        color.xyz        = lerp( color.xyz, pLuma, CGdesat );
+
+        // Coloring
+        float3 LS_col;
+        float3 DS_col;
+
+        // Light scene
+        float3 LS_b_s    = blendmode( color.xyz, blendcolor_ls_s.xyz, blendmode_ls_s );
+        LS_b_s.xyz       = lerp( color.xyz, LS_b_s.xyz, opacity_ls_s );
+        float3 LS_b_m    = blendmode( color.xyz, blendcolor_ls_m.xyz, blendmode_ls_m );
+        LS_b_m.xyz       = lerp( color.xyz, LS_b_m.xyz, opacity_ls_m );
+        LS_col.xyz       = LS_b_s.xyz * w_s + LS_b_m.xyz * w_m + w_h;
+
+        // Dark Scene
+        float3 DS_b_s    = blendmode( color.xyz, blendcolor_ds_s.xyz, blendmode_ds_s );
+        DS_b_s.xyz       = lerp( color.xyz, DS_b_s.xyz, opacity_ds_s );
+        float3 DS_b_m    = blendmode( color.xyz, blendcolor_ds_m.xyz, blendmode_ds_m );
+        DS_b_m.xyz       = lerp( color.xyz, DS_b_m.xyz, opacity_ds_m );
+        DS_col.xyz       = DS_b_s.xyz * w_s + DS_b_m.xyz * w_m + w_h;
+
+        // Mix
+        float3 new_c     = lerp( DS_col.xyz, LS_col.xyz, sceneluma );
+        color.xyz        = lerp( color.xyz, new_c.xyz, finalmix );
         return float4( color.xyz, 1.0f );
+    }
+
+    float PS_PrevAvgLuma(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
+    {
+        float avgLuma    = tex2D( samplerAvgLuma, float2( 0.5f, 0.5f )).x;
+        return avgLuma; //writes to texPrevAvgLuma
     }
 
     //// TECHNIQUES /////////////////////////////////////////////////////////////////
     technique prod80_04_ColorGradient
     {
+        pass Luma
+        {
+            VertexShader   = PostProcessVS;
+            PixelShader    = PS_WriteLuma;
+            RenderTarget   = texLuma;
+        }
+        pass AvgLuma
+        {
+            VertexShader   = PostProcessVS;
+            PixelShader    = PS_AvgLuma;
+            RenderTarget   = texAvgLuma;
+        }
         pass ColorGradients
         {
             VertexShader   = PostProcessVS;
             PixelShader    = PS_ColorGradients;
+        }
+        pass PreviousLuma
+        {
+            VertexShader   = PostProcessVS;
+            PixelShader    = PS_PrevAvgLuma;
+            RenderTarget   = texPrevAvgLuma;
         }
     }
 }
