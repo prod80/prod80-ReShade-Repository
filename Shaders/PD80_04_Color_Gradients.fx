@@ -89,7 +89,7 @@ namespace pd80_ColorGradients
                   "To simulate Day-Night color grading.\n"
                   "-------------------------------------";
         ui_label = "Enable Color Transitions";
-        ui_category = "Dark Scene: Midtone Color";
+        ui_category = "Enable Color Transitions";
         > = true;
     uniform float3 blendcolor_ds_m <
         ui_type = "color";
