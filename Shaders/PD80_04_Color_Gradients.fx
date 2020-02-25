@@ -32,6 +32,20 @@
 namespace pd80_ColorGradients
 {
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
+    uniform float CGdesat <
+        ui_label = "Desaturate Base Image";
+        ui_category = "Mixing Values";
+        ui_type = "slider";
+        ui_min = 0.0;
+        ui_max = 1.0;
+        > = 0.0;
+    uniform float finalmix <
+        ui_label = "Mix with Original";
+        ui_category = "Mixing Values";
+        ui_type = "slider";
+        ui_min = 0.0;
+        ui_max = 1.0;
+        > = 0.333;
     // Light Scene
     uniform float3 blendcolor_ls_m <
         ui_type = "color";
@@ -68,6 +82,15 @@ namespace pd80_ColorGradients
         ui_max = 1.0;
         > = 0.3;
     // Dark Scene
+    uniform bool enable_ds <
+        ui_text = "-------------------------------------\n"
+                  "Enables transitions of gradients\n"
+                  "depending on average scene luminance.\n"
+                  "To simulate Day-Night color grading.\n"
+                  "-------------------------------------";
+        ui_label = "Enable Color Transitions";
+        ui_category = "Dark Scene: Midtone Color";
+        > = true;
     uniform float3 blendcolor_ds_m <
         ui_type = "color";
         ui_label = "Color";
@@ -102,20 +125,6 @@ namespace pd80_ColorGradients
         ui_min = 0.0;
         ui_max = 1.0;
         > = 1.0;
-    uniform float CGdesat <
-        ui_label = "Desaturate Base Image";
-        ui_category = "Mixing Values";
-        ui_type = "slider";
-        ui_min = 0.0;
-        ui_max = 1.0;
-        > = 0.0;
-    uniform float finalmix <
-        ui_label = "Mix with Original";
-        ui_category = "Mixing Values";
-        ui_type = "slider";
-        ui_min = 0.0;
-        ui_max = 1.0;
-        > = 0.333;
     uniform float minlevel <
         ui_label = "Pure Dark Scene Level";
         ui_category = "Scene Luminance Adaptation";
@@ -333,6 +342,7 @@ namespace pd80_ColorGradients
 
         // Mix
         float3 new_c     = lerp( DS_col.xyz, LS_col.xyz, sceneluma );
+        new_c.xyz        = ( enable_ds ) ? new_c.xyz : LS_col.xyz;
         color.xyz        = lerp( color.xyz, new_c.xyz, finalmix );
         return float4( color.xyz, 1.0f );
     }
