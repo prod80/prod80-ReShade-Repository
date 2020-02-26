@@ -38,6 +38,11 @@ namespace pd80_colorbalance
         ui_label = "Preserve Luminosity";
         ui_category = "Color Balance";
     > = true;
+    uniform int separation_mode < __UNIFORM_COMBO_INT1
+        ui_label = "Luma Separation Mode";
+        ui_category = "Color Balance";
+        ui_items = "Harsh Separation\0Smooth Separation\0";
+        > = 0;
     uniform float s_RedShift <
         ui_label = "Cyan <--> Red";
         ui_category = "Shadows:";
@@ -115,7 +120,7 @@ namespace pd80_colorbalance
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
     float3 curve( float3 x )
     {
-        return x * x * x * ( x * ( x * 6.0f - 15.0f ) + 10.0f );
+        return x * x * ( 3.0f - 2.0f * x );
     }
 
     float3 ColorBalance( float3 c, float3 shadows, float3 midtones, float3 highlights )
@@ -124,8 +129,45 @@ namespace pd80_colorbalance
         float luma   = dot( c.xyz, 0.333f );
         
         // Determine the distribution curves between shadows, midtones, and highlights
-        float3 dist_s= curve( max( 1.0f - c.xyz * 2.0f, 0.0f ));
-        float3 dist_h= curve( max(( c.xyz - 0.5f ) * 2.0f, 0.0f ));
+        float3 dist_s; float3 dist_h;
+
+        switch( separation_mode )
+        {
+            /*
+            Clear cutoff between shadows and highlights
+            Maximizes precision at the loss of harsher transitions between contrasts
+            Curves look like:
+
+            Shadows                Highlights             Midtones
+            ‾‾‾—_   	                         _—‾‾‾         _——‾‾‾——_
+                 ‾‾——__________    __________——‾‾         ___—‾         ‾—___
+            0.0.....0.5.....1.0    0.0.....0.5.....1.0    0.0.....0.5.....1.0
+            
+            */
+            case 0:
+            {
+                dist_s.xyz  = curve( max( 1.0f - c.xyz * 2.0f, 0.0f ));
+                dist_h.xyz  = curve( max(( c.xyz - 0.5f ) * 2.0f, 0.0f ));
+            } break;
+
+            /*
+            Higher degree of blending between individual curves
+            F.e. shadows will still have a minimal weight all the way into highlight territory
+            Ensures smoother transition areas between contrasts
+            Curves look like:
+
+            Shadows                Highlights             Midtones
+            ‾‾‾—_                                _—‾‾‾          __---__
+                 ‾‾———————_____    _____———————‾‾         ___-‾‾       ‾‾-___
+            0.0.....0.5.....1.0    0.0.....0.5.....1.0    0.0.....0.5.....1.0
+            
+            */
+            case 1:
+            {
+                dist_s.xyz  = pow( 1.0f - c.xyz, 4.0f );
+                dist_h.xyz  = pow( c.xyz, 4.0f );
+            } break;
+        }
 
         // Get luminosity offsets
         // One could omit this whole code part in case no luma should be preserved
@@ -149,6 +191,7 @@ namespace pd80_colorbalance
     float4 PS_ColorBalance(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color      = tex2D( samplerColor, texcoord );
+        color.xyz         = saturate( color.xyz );
         color.xyz         = ColorBalance( color.xyz, float3( s_RedShift, s_GreenShift, s_BlueShift ), 
                                                      float3( m_RedShift, m_GreenShift, m_BlueShift ),
                                                      float3( h_RedShift, h_GreenShift, h_BlueShift ));
