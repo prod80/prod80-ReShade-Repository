@@ -39,6 +39,11 @@ namespace pd80_SMH
         ui_category = "Luma Mode";
         ui_items = "Use Average\0Use Perceived Luma\0Use Max Value\0";
         > = 2;
+    uniform int separation_mode < __UNIFORM_COMBO_INT1
+        ui_label = "Luma Separation Mode";
+        ui_category = "Luma Mode";
+        ui_items = "Harsh Separation\0Smooth Separation\0";
+        > = 0;
     uniform float exposure_s <
         ui_label = "Exposure";
         ui_category = "Shadow Adjustments";
@@ -400,6 +405,7 @@ namespace pd80_SMH
     float4 PS_SMH(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color      = tex2D( samplerColor, texcoord );
+        color.xyz         = saturate( color.xyz );
         float pLuma       = 0.0f;
         switch( luma_mode )
         {
@@ -419,10 +425,48 @@ namespace pd80_SMH
             }
             break;
         }
+        
+        float weight_s; float weight_h; float weight_m;
 
-        float weight_s    = curve( max( 1.0f - pLuma * 2.0f, 0.0f ));
-        float weight_h    = curve( max(( pLuma - 0.5f ) * 2.0f, 0.0f ));
-        float weight_m    = saturate( 1.0f - weight_s - weight_h );
+        switch( separation_mode )
+        {
+            /*
+            Clear cutoff between shadows and highlights
+            Maximizes precision at the loss of harsher transitions between contrasts
+            Curves look like:
+
+            Shadows                Highlights             Midtones
+            ‾‾‾—_   	                         _—‾‾‾         _——‾‾‾——_
+                 ‾‾——__________    __________——‾‾         ___—‾         ‾—___
+            0.0.....0.5.....1.0    0.0.....0.5.....1.0    0.0.....0.5.....1.0
+            
+            */
+            case 0:
+            {
+                weight_s  = curve( max( 1.0f - pLuma * 2.0f, 0.0f ));
+                weight_h  = curve( max(( pLuma - 0.5f ) * 2.0f, 0.0f ));
+                weight_m  = saturate( 1.0f - weight_s - weight_h );
+            } break;
+
+            /*
+            Higher degree of blending between individual curves
+            F.e. shadows will still have a minimal weight all the way into highlight territory
+            Ensures smoother transition areas between contrasts
+            Curves look like:
+
+            Shadows                Highlights             Midtones
+            ‾‾‾—_                                _—‾‾‾          __---__
+                 ‾‾———————_____    _____———————‾‾         ___-‾‾       ‾‾-___
+            0.0.....0.5.....1.0    0.0.....0.5.....1.0    0.0.....0.5.....1.0
+            
+            */
+            case 1:
+            {
+                weight_s  = pow( 1.0f - pLuma, 4.0f );
+                weight_h  = pow( pLuma, 4.0f );
+                weight_m  = saturate( 1.0f - weight_s - weight_h );
+            } break;
+        }
 
         float3 cold       = float3( 0.0f,  0.365f, 1.0f ); //LBB
         float3 warm       = float3( 0.98f, 0.588f, 0.0f ); //LBA
