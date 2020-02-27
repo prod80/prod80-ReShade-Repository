@@ -258,7 +258,7 @@ namespace pd80_ca
         color.xyz           /= dot( d.xyz, 0.333333f ); // seems so-so OK
         color.xyz           = lerp( orig.xyz, color.xyz, CA_strength );
         color.xyz           = lerp( color.xyz, vignetteColor.xyz * caintensity.x + ( 1.0f - caintensity.x ) * color.xyz, show_CA );
-        color.xyz           = lerp( color.xyz, depth.xxx, display_depth );
+        color.xyz           = display_depth ? depth.xxx : color.xyz;
         return float4( color.xyz, 1.0f );
     }
 

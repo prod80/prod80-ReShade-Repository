@@ -386,7 +386,7 @@ namespace pd80_conbrisat
         color.xyz        = customsat( color.xyz, huemid, huerange, sat_custom );
 
         color.xyz        = saturate( color.xyz ); // shouldn't be needed, but just to ensure no oddities are there
-        color.xyz        = lerp( color.xyz, depth.xxx, display_depth ); // show depth
+        color.xyz        = display_depth ? depth.xxx : color.xyz; // show depth
 
         return float4( color.xyz, 1.0f );
     }

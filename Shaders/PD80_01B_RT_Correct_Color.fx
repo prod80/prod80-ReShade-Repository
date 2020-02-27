@@ -236,8 +236,8 @@ namespace pd80_correctcolor
             }
         }
 
-        minValue.xyz       = lerp( minMethod0.xyz, minMethod1.xyz, rt_blackpoint_method );
-        maxValue.xyz       = lerp( maxMethod0.xyz, maxMethod1.xyz, rt_whitepoint_method );
+        minValue.xyz       = rt_blackpoint_method ? minMethod1.xyz : minMethod0.xyz;
+        maxValue.xyz       = rt_whitepoint_method ? maxMethod1.xyz : maxMethod0.xyz;
         // Return
         minValue           = float4( minValue.xyz, 1.0f );
         maxValue           = float4( maxValue.xyz, 1.0f );
@@ -290,8 +290,8 @@ namespace pd80_correctcolor
             }
         }
 
-        minValue.xyz       = ( rt_blackpoint_method ) ? minMethod1.xyz : minMethod0.xyz;
-        maxValue.xyz       = ( rt_whitepoint_method ) ? maxMethod1.xyz : maxMethod0.xyz;
+        minValue.xyz       = rt_blackpoint_method ? minMethod1.xyz : minMethod0.xyz;
+        maxValue.xyz       = rt_whitepoint_method ? maxMethod1.xyz : maxMethod0.xyz;
         midValue.xyz       = midColor.xyz / Sigma;
         //Try and avoid some flickering
         //Not really working, too radical changes in min values sometimes

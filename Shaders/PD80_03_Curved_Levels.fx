@@ -304,22 +304,22 @@ namespace pd80_curvedlevels
 
     float blackwhiteIN( float c, float b, float w )
     {
-        return saturate( max( c - b, 0.0f )/max( w - b, 0.0000001f ));
+        return saturate( c - b )/max( saturate( w - b ), 0.000001f );
     }
 
     float blackwhiteOUT( float c, float b, float w )
     {
-        return c * max( w - b, 0.0f ) + b;
+        return c * max( saturate( w - b ), 0.000001f ) + b;
     }
 
     float3 blackwhiteIN( float3 c, float b, float w )
     {
-        return saturate( max( c.xyz - b, 0.0f )/max( w - b, 0.0000001f ));
+        return saturate( c.xyz - b )/max( saturate( w - b ), 0.000001f );
     }
 
     float3 blackwhiteOUT( float3 c, float b, float w )
     {
-        return c.xyz * max( w - b, 0.0f ) + b;
+        return c.xyz * max( saturate( w - b ), 0.000001f ) + b;
     }
 
     float4 setBoundaries( float tx, float ty, float sx, float sy )
@@ -363,7 +363,6 @@ namespace pd80_curvedlevels
         float4 color      = tex2D( samplerColor, texcoord );
         float2 coords     = float2(( texcoord.x - 0.75f ) * 4.0f, ( 1.0f - texcoord.y ) * 4.0f ); // For vizualization
         color.xyz         = saturate( color.xyz );
-        color.xyz         = pow( color.xyz, 1.0f / 2.2f ); // Don't work in sRGB space
 
         #if( CURVEDCONTRASTS_VISUALIZE == 1 )
         int def_bi        = 0;
@@ -465,8 +464,6 @@ namespace pd80_curvedlevels
             }
         }
         #endif
-        
-        color.xyz         = pow( color.xyz, 2.2f );
         return float4( color.xyz, 1.0f );
     }
 

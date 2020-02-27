@@ -165,7 +165,7 @@ namespace pd80_technicolor
         // Add saturation to taste
         color.xyz         = lerp( getLuminance( color.xyz ), color.xyz, Saturation2 );
 
-        if( enable3strip == TRUE ) {
+        if( enable3strip ) {
             float3 temp    = 1.0 - orig.xyz;
             float3 target  = temp.grg;
             float3 target2 = temp.bbr;

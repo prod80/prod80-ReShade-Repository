@@ -616,7 +616,7 @@ namespace pd80_selectivecolor
             color.xyz     = vib( color.xyz, w_adj_vib * smoothstep( 0.5f, 1.0f, min_value ));
         }
 
-        if( max_value != 0.0f && min_value != 1.0f )
+        if( max_value > 0.0f && min_value < 1.0f )
         {
             color.x       = color.x + adjustcolor( sNeutrals, color.x, n_adj_cya, n_adj_bla, corr_method );
             color.y       = color.y + adjustcolor( sNeutrals, color.y, n_adj_mag, n_adj_bla, corr_method );

@@ -54,18 +54,6 @@ namespace pd80_hqbloom
     #ifndef BLOOM_QUALITY
         #define BLOOM_QUALITY		2
     #endif
-    
-    // Enable or disable testing of bloom vs depth buffer
-    #ifndef BLOOM_ENABLE_DEPTH_TEST
-        #define BLOOM_ENABLE_DEPTH_TEST   0
-    #endif
-    
-    // Depth testing can't co-exist with CA. Disabling depth testing when CA is enabled
-    #if( BLOOM_ENABLE_DEPTH_TEST - BLOOM_ENABLE_CA < 1 )
-    	#define BLOOM_RUN_ZTEST      0
-    #else
-    	#define BLOOM_RUN_ZTEST      1
-    #endif
 
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
     uniform bool debugBloom <
@@ -104,16 +92,6 @@ namespace pd80_hqbloom
         ui_min = -1.0;
         ui_max = 1.0;
         > = 0.0;
-    /*
-    uniform float bintensity <
-        ui_label = "Bloom Intensity";
-        ui_tooltip = "Bloom Intensity";
-        ui_category = "Bloom";
-        ui_type = "slider";
-        ui_min = 0.0;
-        ui_max = 5.0;
-        > = 1.0;
-    */
     uniform float BlurSigma <
         ui_label = "Bloom Width";
         ui_tooltip = "...";
@@ -429,8 +407,8 @@ namespace pd80_hqbloom
     {
         float4 color     = tex2D( samplerColor, texcoord );
         float luma       = tex2D( samplerBAvgLuma, float2( 0.5f, 0.5f )).x;
-        color.xyz        = max( color.xyz - luma, 0.0f );
-        color.xyz        *= ( 1.0f / ( 1.0f - luma )); // Scale back intensity
+        luma             = clamp( luma, 0.000001f, 0.999999f );
+        color.xyz        = saturate( color.xyz - luma ) / saturate( 1.0f - luma );
         color.xyz        = CalcExposedColor( color.xyz, luma, bExposure, GreyValue );
         return float4( color.xyz, 1.0f ); 
     }
@@ -438,11 +416,6 @@ namespace pd80_hqbloom
     float4 PS_GaussianH(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color     = tex2D( samplerBloomIn, texcoord );
-        #if( BLOOM_RUN_ZTEST == 1 )
-        float depth      = smoothstep( 0.0f, 0.1f, ReShade::GetLinearizedDepth( texcoord ).x );
-        float dplus; float dmin; float depthplus; float depthmin;
-        float4 col1; float4 col2;
-        #endif
         float px         = 1.0f / SWIDTH;
         float SigmaSum   = 0.0f;
         float pxlOffset  = 1.5f;
@@ -474,26 +447,9 @@ namespace pd80_hqbloom
         {
             buffSigma.x  = Sigma.x * Sigma.y;
             buffSigma.y  = Sigma.x + buffSigma.x;
-            #if( BLOOM_RUN_ZTEST == 1 )
-            // Get depth info for texture fetch
-            dplus        = smoothstep( 0.0f, 0.1f, ReShade::GetLinearizedDepth( texcoord.xy + float2( pxlOffset * px, 0.0f )).x );
-            dmin         = smoothstep( 0.0f, 0.1f, ReShade::GetLinearizedDepth( texcoord.xy - float2( pxlOffset * px, 0.0f )).x );
-            // Set thresholds when to mix or not
-            depthplus    = smoothstep( -0.22f, 0.02f, dplus - depth );
-            depthmin     = smoothstep( -0.22f, 0.02f, dmin - depth );
-            // Fetch textures
-            col1         = tex2D( samplerBloomIn, texcoord.xy + float2( pxlOffset * px, 0.0f ));
-            col2         = tex2D( samplerBloomIn, texcoord.xy - float2( pxlOffset * px, 0.0f ));
-            // Apply guassian kernel and depth
-            color        += col1 * buffSigma.y * depthplus; 
-            color        += col2 * buffSigma.y * depthmin;
-            SigmaSum     += ( Sigma.x * depthplus + Sigma.x * depthmin + buffSigma.x * depthplus + buffSigma.x * depthmin );
-            #endif
-            #if( BLOOM_RUN_ZTEST == 0 )
             color        += tex2D( samplerBloomIn, texcoord.xy + float2( pxlOffset * px, 0.0f )) * buffSigma.y;
             color        += tex2D( samplerBloomIn, texcoord.xy - float2( pxlOffset * px, 0.0f )) * buffSigma.y;
             SigmaSum     += ( 2.0f * Sigma.x + 2.0f * buffSigma.x );
-            #endif
             pxlOffset    += 2.0f;
             Sigma.xy     *= Sigma.yz;
             Sigma.xy     *= Sigma.yz;
@@ -506,11 +462,6 @@ namespace pd80_hqbloom
     float4 PS_GaussianV(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color     = tex2D( samplerBloomH, texcoord );
-        #if( BLOOM_RUN_ZTEST == 1 )
-        float depth      = smoothstep( 0.0f, 0.1f, ReShade::GetLinearizedDepth( texcoord ).x );
-        float dplus; float dmin; float depthplus; float depthmin;
-        float4 col1; float4 col2;
-        #endif
         float py         = 1.0f / SHEIGHT;
         float SigmaSum   = 0.0f;
         float pxlOffset  = 1.5f;
@@ -542,22 +493,9 @@ namespace pd80_hqbloom
         {
             buffSigma.x  = Sigma.x * Sigma.y;
             buffSigma.y  = Sigma.x + buffSigma.x;
-            #if( BLOOM_RUN_ZTEST == 1 )
-            dplus        = smoothstep( 0.0f, 0.1f, ReShade::GetLinearizedDepth( texcoord.xy + float2( 0.0f, pxlOffset * py )).x );
-            dmin         = smoothstep( 0.0f, 0.1f, ReShade::GetLinearizedDepth( texcoord.xy - float2( 0.0f, pxlOffset * py )).x );
-            depthplus    = smoothstep( -0.22f, 0.02f, dplus - depth );
-            depthmin     = smoothstep( -0.22f, 0.02f, dmin - depth );
-            col1         = tex2D( samplerBloomH, texcoord.xy + float2( 0.0f, pxlOffset * py ));
-            col2         = tex2D( samplerBloomH, texcoord.xy - float2( 0.0f, pxlOffset * py ));
-            color        += col1 * buffSigma.y * depthplus;
-            color        += col2 * buffSigma.y * depthmin;
-            SigmaSum     += ( Sigma.x * depthplus + Sigma.x * depthmin + buffSigma.x * depthplus + buffSigma.x * depthmin );
-            #endif
-            #if( BLOOM_RUN_ZTEST == 0 )
             color        += tex2D( samplerBloomH, texcoord.xy + float2( 0.0f, pxlOffset * py )) * buffSigma.y;
             color        += tex2D( samplerBloomH, texcoord.xy - float2( 0.0f, pxlOffset * py )) * buffSigma.y;
             SigmaSum     += ( 2.0f * Sigma.x + 2.0f * buffSigma.x );
-            #endif 
             pxlOffset    += 2.0f;
             Sigma.xy     *= Sigma.yz;
             Sigma.xy     *= Sigma.yz;
@@ -769,7 +707,7 @@ namespace pd80_hqbloom
             bloom.xyz = res.xyz;
         #endif
         #if( BLOOM_ENABLE_CA == 0 )
-        if( enableBKelvin == TRUE )
+        if( enableBKelvin )
         {
             float3 K       = KelvinToRGB( BKelvin );
             float3 bLum    = RGBToHCV( bloom.xyz );
@@ -778,10 +716,9 @@ namespace pd80_hqbloom
             bloom.xyz      = HSLToRGB( float3( retHSL.xy, bLum.x ));
         }
         #endif
-        //bloom            = min( bloom.xyz * bintensity, 1.0f );
         float3 bcolor    = screen( color.xyz, bloom.xyz );
         color.xyz        = lerp( color.xyz, bcolor.xyz, BloomMix );
-        color.xyz        = lerp( color.xyz, bloom.xyz, debugBloom ); // render only bloom to screen
+        color.xyz        = debugBloom ? bloom.xyz : color.xyz; // render only bloom to screen
         return float4( color.xyz, 1.0f );
     }
 

@@ -229,7 +229,7 @@ namespace pd80_lumasharpen
         float depth      = ReShade::GetLinearizedDepth( texcoord ).x;
         depth            = smoothstep( depthStart, depthEnd, depth );
         depth            = pow( depth, depthCurve );
-        depth            = lerp( depth, 1.0f - depth, enable_reverse );
+        depth            = enable_reverse ? 1.0f - depth : depth;
         
         float3 edges     = max( saturate( orig.xyz - gaussian.xyz ) - Threshold, 0.0f );
         float3 invGauss  = saturate( 1.0f - gaussian.xyz );
@@ -238,8 +238,8 @@ namespace pd80_lumasharpen
         edges            = max(( saturate( Sharpening * edges.xyz )) - ( saturate( Sharpening * invOGauss.xyz )), 0.0f );
         float3 blend     = saturate( orig.xyz + lerp( min( edges.xyz, limiter ), 0.0, enable_depth * depth ));
         float3 color     = BlendLuma( orig.xyz, blend.xyz );
-        color.xyz        = lerp( color.xyz, lerp( min( edges.xyz, limiter ), min( edges.xyz, limiter ) * depth, enable_depth ), enableShowEdges );
-        color.xyz        = lerp( color.xyz, depth.xxx, display_depth );
+        color.xyz        = enableShowEdges ? lerp( min( edges.xyz, limiter ), min( edges.xyz, limiter ) * depth, enable_depth ) : color.xyz;
+        color.xyz        = display_depth ? depth.xxx : color.xyz;
         return float4( color.xyz, 1.0f );
     }
 
