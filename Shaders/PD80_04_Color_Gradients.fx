@@ -32,6 +32,11 @@
 namespace pd80_ColorGradients
 {
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
+    uniform int separation_mode < __UNIFORM_COMBO_INT1
+        ui_label = "Luma Separation Mode";
+        ui_category = "Mixing Values";
+        ui_items = "Harsh Separation\0Smooth Separation\0";
+        > = 0;
     uniform float CGdesat <
         ui_label = "Desaturate Base Image";
         ui_category = "Mixing Values";
@@ -197,7 +202,7 @@ namespace pd80_ColorGradients
 
     float curve( float x )
     {
-        return x * x * x * ( x * ( x * 6.0f - 15.0f ) + 10.0f );
+        return x * x * ( 3.0f - 2.0f * x );
     }
 
     float3 darken(float3 c, float3 b)       { return min(c,b);}
@@ -314,9 +319,47 @@ namespace pd80_ColorGradients
         
         // Weights
         float cWeight    = dot( color.xyz, 0.333333f );
-        float w_s        = curve( max( 1.0f - cWeight * 2.0f, 0.0f ));
-        float w_h        = curve( max(( cWeight - 0.5f ) * 2.0f, 0.0f ));
-        float w_m        = 1.0f - w_s - w_h;
+        float w_s; float w_h; float w_m;
+
+        switch( separation_mode )
+        {
+            /*
+            Clear cutoff between shadows and highlights
+            Maximizes precision at the loss of harsher transitions between contrasts
+            Curves look like:
+
+            Shadows                Highlights             Midtones
+            ‾‾‾—_   	                         _—‾‾‾         _——‾‾‾——_
+                 ‾‾——__________    __________——‾‾         ___—‾         ‾—___
+            0.0.....0.5.....1.0    0.0.....0.5.....1.0    0.0.....0.5.....1.0
+            
+            */
+            case 0:
+            {
+                w_s      = curve( max( 1.0f - cWeight * 2.0f, 0.0f ));
+                w_h      = curve( max(( cWeight - 0.5f ) * 2.0f, 0.0f ));
+                w_m      = saturate( 1.0f - w_s - w_h );
+            } break;
+
+            /*
+            Higher degree of blending between individual curves
+            F.e. shadows will still have a minimal weight all the way into highlight territory
+            Ensures smoother transition areas between contrasts
+            Curves look like:
+
+            Shadows                Highlights             Midtones
+            ‾‾‾—_                                _—‾‾‾          __---__
+                 ‾‾———————_____    _____———————‾‾         ___-‾‾       ‾‾-___
+            0.0.....0.5.....1.0    0.0.....0.5.....1.0    0.0.....0.5.....1.0
+            
+            */
+            case 1:
+            {
+                w_s      = pow( 1.0f - cWeight, 4.0f );
+                w_h      = pow( cWeight, 4.0f );
+                w_m      = saturate( 1.0f - w_s - w_h );
+            } break;
+        }
 
         // Desat original
         float pLuma      = getLuminance( color.xyz );
