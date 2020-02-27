@@ -213,22 +213,22 @@ namespace pd80_correctcolor
                 currColor      = tex2Dfetch( samplerColor, int4( x, y, 0, RT_MIPLVL )).xyz;
                 // Dark color detection methods
                 // Per channel
-                minMethod0.xyz = step( currColor.xyz, minMethod0.xyz ) ? currColor.xyz : minMethod0.xyz;
+                minMethod0.xyz = ( minMethod0.xyz >= currColor.xyz ) ? currColor.xyz : minMethod0.xyz;
                 // By color
                 getMin         = max( max( currColor.x, currColor.y ), currColor.z );
                 getMin2        = max( max( minMethod1.x, minMethod1.y ), minMethod1.z );
-                minMethod1.xyz = step( getMin, getMin2 ) ? currColor.xyz : minMethod1.xyz;
+                minMethod1.xyz = ( getMin2 >= getMin ) ? currColor.xyz : minMethod1.xyz;
                 // Mid point detection
                 getMid         = dot( abs( currColor.xyz - middle ), 1.0f );
                 getMid2        = dot( abs( midValue.xyz - middle ), 1.0f );
-                midValue.xyz   = step( getMid, getMid2 ) ? currColor.xyz : midValue.xyz;
+                midValue.xyz   = ( getMid2 >= getMid ) ? currColor.xyz : midValue.xyz;
                 // Light color detection methods
                 // Per channel
-                maxMethod0.xyz = step( maxMethod0.xyz, currColor.xyz ) ? currColor.xyz : maxMethod0.xyz;
+                maxMethod0.xyz = ( currColor.xyz >= maxMethod0.xyz ) ? currColor.xyz : maxMethod0.xyz;
                 // By color
                 getMax         = min( min( currColor.x, currColor.y ), currColor.z );
                 getMax2        = min( min( maxMethod1.x, maxMethod1.y ), maxMethod1.z );
-                maxMethod1.xyz = step( getMax2, getMax ) ? currColor.xyz : maxMethod1.xyz;
+                maxMethod1.xyz = ( getMax >= getMax2 ) ? currColor.xyz : maxMethod1.xyz;
             }
         }
 
@@ -263,22 +263,22 @@ namespace pd80_correctcolor
                 // Dark color detection methods
                 minColor       = tex2Dfetch( samplerDS_1_Min, int4( x, y, 0, 0 )).xyz;
                 // Per channel
-                minMethod0.xyz = step( minColor.xyz, minMethod0.xyz ) ? minColor.xyz : minMethod0.xyz;
+                minMethod0.xyz = ( minMethod0.xyz >= minColor.xyz ) ? minColor.xyz : minMethod0.xyz;
                 // By color
                 getMin         = max( max( minColor.x, minColor.y ), minColor.z );
                 getMin2        = max( max( minMethod1.x, minMethod1.y ), minMethod1.z );
-                minMethod1.xyz = step( getMin, getMin2 ) ? minColor.xyz : minMethod1.xyz;
+                minMethod1.xyz = ( getMin2 >= getMin ) ? minColor.xyz : minMethod1.xyz;
                 // Mid point detection
                 midColor       += tex2Dfetch( samplerDS_1_Mid, int4( x, y, 0, 0 )).xyz;
                 Sigma          += 1.0f;
                 // Light color detection methods
                 maxColor       = tex2Dfetch( samplerDS_1_Max, int4( x, y, 0, 0 )).xyz;
                 // Per channel
-                maxMethod0.xyz = step( maxMethod0.xyz, maxColor.xyz ) ? maxColor.xyz : maxMethod0.xyz;
+                maxMethod0.xyz = ( maxColor.xyz >= maxMethod0.xyz ) ? maxColor.xyz : maxMethod0.xyz;
                 // By color
                 getMax         = min( min( maxColor.x, maxColor.y ), maxColor.z );
                 getMax2        = min( min( maxMethod1.x, maxMethod1.y ), maxMethod1.z );
-                maxMethod1.xyz = step( getMax2, getMax ) ? maxColor.xyz : maxMethod1.xyz;
+                maxMethod1.xyz = ( getMax >= getMax2 ) ? maxColor.xyz : maxMethod1.xyz;
             }
         }
 
@@ -290,7 +290,7 @@ namespace pd80_correctcolor
         float3 prevMin     = tex2D( samplerPrevious, float2((texcoord.x + 0.0) / 6.0, texcoord.y)).xyz;
         float3 prevMid     = tex2D( samplerPrevious, float2((texcoord.x + 2.0) / 6.0, texcoord.y)).xyz;
         float3 prevMax     = tex2D( samplerPrevious, float2((texcoord.x + 4.0) / 6.0, texcoord.y)).xyz;
-        float f            = ( enable_fade ) ? saturate( frametime * 0.006f ) : 1.0f;
+        float f            = enable_fade ? saturate( frametime * 0.006f ) : 1.0f;
         minValue.xyz       = lerp( prevMin.xyz, minValue.xyz, f );
         maxValue.xyz       = lerp( prevMax.xyz, maxValue.xyz, f );
         midValue.xyz       = lerp( prevMid.xyz, midValue.xyz, f );
@@ -318,21 +318,19 @@ namespace pd80_correctcolor
         float3 maxValue    = tex2D( samplerDS_1x1, float2((texcoord.x + 4.0) / 6.0, texcoord.y)).xyz;
         // Get middle correction method
         float middle       = dot( float2( dot( minValue.xyz, 0.333333f ), dot( maxValue.xyz, 0.333333f )), 0.5f );
-        middle             = ( mid_use_alt_method ) ? middle : 0.5f;
+        middle             = mid_use_alt_method ? middle : 0.5f;
         // Set min value
         minValue.xyz       = lerp( 0.0f, minValue.xyz, rt_bp_str );
-        minValue.xyz       = ( rt_enable_blackpoint_correction ) ? minValue.xyz : 0.0f;
+        minValue.xyz       = rt_enable_blackpoint_correction ? minValue.xyz : 0.0f;
         // Set max value
         maxValue.xyz       = lerp( 1.0f, maxValue.xyz, rt_wp_str );
         // Avoid DIV/0
-        maxValue.x         = ( minValue.x >= maxValue.x ) ? minValue.x + 0.001f : maxValue.x;
-        maxValue.y         = ( minValue.y >= maxValue.y ) ? minValue.y + 0.001f : maxValue.y;
-        maxValue.z         = ( minValue.z >= maxValue.z ) ? minValue.z + 0.001f : maxValue.z;
-        maxValue.xyz       = ( rt_enable_whitepoint_correction ) ? maxValue.xyz : 1.0f;
+        maxValue.xyz       = ( minValue.xyz >= maxValue.xyz ) ? minValue.xyz + 0.001f : maxValue.xyz;
+        maxValue.xyz       = rt_enable_whitepoint_correction ? maxValue.xyz : 1.0f;
         // Set mid value
         midValue.xyz       = midValue.xyz - middle;
         midValue.xyz       *= midCC_scale;
-        midValue.xyz       = ( rt_enable_midpoint_correction ) ? midValue.xyz : 0.0f;
+        midValue.xyz       = rt_enable_midpoint_correction ? midValue.xyz : 0.0f;
         // Main color correction
         color.xyz          = saturate( color.xyz - minValue.xyz ) / saturate( maxValue.xyz - minValue.xyz );
         // White Point luma preservation
@@ -344,7 +342,7 @@ namespace pd80_correctcolor
         // Mid Point correction
         float avgCol       = dot( color.xyz, 0.333333f ); // Avg after main correction
         float avgMid       = dot( midValue.xyz, 0.333333f );
-        avgCol             = avgCol >= 0.5f ? abs( avgCol * 2.0f - 2.0f ) : avgCol * 2.0f;
+        avgCol             = ( avgCol >= 0.5f ) ? abs( avgCol * 2.0f - 2.0f ) : avgCol * 2.0f;
         color.xyz          = saturate( color.xyz - midValue.xyz * avgCol + avgMid * avgCol * rt_midpoint_respect_luma );
 
         return float4( color.xyz, 1.0f );

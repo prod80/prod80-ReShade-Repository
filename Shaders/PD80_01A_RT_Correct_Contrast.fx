@@ -119,9 +119,9 @@ namespace pd80_correctcontrast
             {
                 currColor    = tex2Dfetch( samplerColorBuffer, int4( x, y, 0, 0 )).xyz;
                 // Dark color detection methods
-                minValue.xyz = step( currColor.xyz, minValue.xyz ) ? currColor.xyz : minValue.xyz;
+                minValue.xyz = ( minValue.xyz >= currColor.xyz ) ? currColor.xyz : minValue.xyz;
                 // Light color detection methods
-                maxValue.xyz = step( maxValue.xyz, currColor.xyz ) ? currColor.xyz : maxValue.xyz;
+                maxValue.xyz = ( currColor.xyz >= maxValue.xyz ) ? currColor.xyz : maxValue.xyz;
             }
         }
         // Return
@@ -145,10 +145,10 @@ namespace pd80_correctcontrast
             {   
                 // Dark color detection methods
                 minColor     = tex2Dfetch( samplerDS_1_Min, int4( x, y, 0, 0 )).xyz;
-                minValue.xyz = step( minColor.xyz, minValue.xyz ) ? minColor.xyz : minValue.xyz;
+                minValue.xyz = ( minValue.xyz >= minColor.xyz ) ? minColor.xyz : minValue.xyz;
                 // Light color detection methods
                 maxColor     = tex2Dfetch( samplerDS_1_Max, int4( x, y, 0, 0 )).xyz;
-                maxValue.xyz = step( maxValue.xyz, maxColor.xyz ) ? maxColor.xyz : maxValue.xyz;
+                maxValue.xyz = ( maxColor.xyz >= maxValue.xyz ) ? maxColor.xyz : maxValue.xyz;
             }
         }
 
@@ -156,7 +156,7 @@ namespace pd80_correctcontrast
         //Not really working, too radical changes in min values sometimes
         float3 prevMin     = tex2D( samplerPrevious, float2((texcoord.x + 0.0) / 4.0, texcoord.y)).xyz;
         float3 prevMax     = tex2D( samplerPrevious, float2((texcoord.x + 2.0) / 4.0, texcoord.y)).xyz;
-        float f            = ( enable_fade ) ? saturate( frametime * 0.006f ) : 1.0f;
+        float f            = enable_fade ? saturate( frametime * 0.006f ) : 1.0f;
         minValue.xyz       = lerp( prevMin.xyz, minValue.xyz, f );
         maxValue.xyz       = lerp( prevMax.xyz, maxValue.xyz, f );
         // Freeze Correction
@@ -182,12 +182,12 @@ namespace pd80_correctcontrast
         float adjWhite     = max( max( maxValue.x, maxValue.y ), maxValue.z );
         // Set min value
         adjBlack           = lerp( 0.0f, adjBlack, rt_bp_str );
-        adjBlack           = ( rt_enable_blackpoint_correction ) ? adjBlack : 0.0f;
+        adjBlack           = rt_enable_blackpoint_correction ? adjBlack : 0.0f;
         // Set max value
         adjWhite           = lerp( 1.0f, adjWhite, rt_wp_str );
         // Avoid DIV/0
         adjWhite           = ( adjBlack >= adjWhite ) ? adjBlack + 0.001f : adjWhite;
-        adjWhite           = ( rt_enable_whitepoint_correction ) ? adjWhite : 1.0f;
+        adjWhite           = rt_enable_whitepoint_correction ? adjWhite : 1.0f;
         // Main color correction
         color.xyz          = saturate( color.xyz - adjBlack ) / saturate( adjWhite - adjBlack );
 
