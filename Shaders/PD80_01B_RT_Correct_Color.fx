@@ -210,29 +210,25 @@ namespace pd80_correctcolor
         {
             for( int x = uv.x; x < uv.x + Range.x && x < BUFFER_WIDTH/RT_RES; x += 1 )
             {
-                currColor    = tex2Dfetch( samplerColor, int4( x, y, 0, RT_MIPLVL )).xyz;
+                currColor      = tex2Dfetch( samplerColor, int4( x, y, 0, RT_MIPLVL )).xyz;
                 // Dark color detection methods
                 // Per channel
-                minMethod0.x = lerp( minMethod0.x, currColor.x, step( currColor.x, minMethod0.x ));
-                minMethod0.y = lerp( minMethod0.y, currColor.y, step( currColor.y, minMethod0.y ));
-                minMethod0.z = lerp( minMethod0.z, currColor.z, step( currColor.z, minMethod0.z ));
+                minMethod0.xyz = step( currColor.xyz, minMethod0.xyz ) ? currColor.xyz : minMethod0.xyz;
                 // By color
-                getMin       = max( max( currColor.x, currColor.y ), currColor.z );
-                getMin2      = max( max( minMethod1.x, minMethod1.y ), minMethod1.z );
-                minMethod1.xyz = lerp( minMethod1.xyz, currColor.xyz, step( getMin, getMin2 ));
+                getMin         = max( max( currColor.x, currColor.y ), currColor.z );
+                getMin2        = max( max( minMethod1.x, minMethod1.y ), minMethod1.z );
+                minMethod1.xyz = step( getMin, getMin2 ) ? currColor.xyz : minMethod1.xyz;
                 // Mid point detection
-                getMid       = dot( abs( currColor.xyz - middle ), 1.0f );
-                getMid2      = dot( abs( midValue.xyz - middle ), 1.0f );
-                midValue.xyz = lerp( midValue.xyz, currColor.xyz, step( getMid, getMid2 ));
+                getMid         = dot( abs( currColor.xyz - middle ), 1.0f );
+                getMid2        = dot( abs( midValue.xyz - middle ), 1.0f );
+                midValue.xyz   = step( getMid, getMid2 ) ? currColor.xyz : midValue.xyz;
                 // Light color detection methods
                 // Per channel
-                maxMethod0.x = lerp( maxMethod0.x, currColor.x, step( maxMethod0.x, currColor.x ));
-                maxMethod0.y = lerp( maxMethod0.y, currColor.y, step( maxMethod0.y, currColor.y ));
-                maxMethod0.z = lerp( maxMethod0.z, currColor.z, step( maxMethod0.z, currColor.z ));
+                maxMethod0.xyz = step( maxMethod0.xyz, currColor.xyz ) ? currColor.xyz : maxMethod0.xyz;
                 // By color
-                getMax       = min( min( currColor.x, currColor.y ), currColor.z );
-                getMax2      = min( min( maxMethod1.x, maxMethod1.y ), maxMethod1.z );
-                maxMethod1.xyz = lerp( maxMethod1.xyz, currColor.xyz, step( getMax2, getMax ));
+                getMax         = min( min( currColor.x, currColor.y ), currColor.z );
+                getMax2        = min( min( maxMethod1.x, maxMethod1.y ), maxMethod1.z );
+                maxMethod1.xyz = step( getMax2, getMax ) ? currColor.xyz : maxMethod1.xyz;
             }
         }
 
@@ -265,28 +261,24 @@ namespace pd80_correctcolor
             for( int x = 0; x < SampleRes.x; x += 1 )
             {   
                 // Dark color detection methods
-                minColor     = tex2Dfetch( samplerDS_1_Min, int4( x, y, 0, 0 )).xyz;
+                minColor       = tex2Dfetch( samplerDS_1_Min, int4( x, y, 0, 0 )).xyz;
                 // Per channel
-                minMethod0.x = lerp( minMethod0.x, minColor.x, step( minColor.x, minMethod0.x ));
-                minMethod0.y = lerp( minMethod0.y, minColor.y, step( minColor.y, minMethod0.y ));
-                minMethod0.z = lerp( minMethod0.z, minColor.z, step( minColor.z, minMethod0.z ));
+                minMethod0.xyz = step( minColor.xyz, minMethod0.xyz ) ? minColor.xyz : minMethod0.xyz;
                 // By color
-                getMin       = max( max( minColor.x, minColor.y ), minColor.z );
-                getMin2      = max( max( minMethod1.x, minMethod1.y ), minMethod1.z );
-                minMethod1.xyz = lerp( minMethod1.xyz, minColor.xyz, step( getMin, getMin2 ));
+                getMin         = max( max( minColor.x, minColor.y ), minColor.z );
+                getMin2        = max( max( minMethod1.x, minMethod1.y ), minMethod1.z );
+                minMethod1.xyz = step( getMin, getMin2 ) ? minColor.xyz : minMethod1.xyz;
                 // Mid point detection
-                midColor     += tex2Dfetch( samplerDS_1_Mid, int4( x, y, 0, 0 )).xyz;
-                Sigma        += 1.0f;
+                midColor       += tex2Dfetch( samplerDS_1_Mid, int4( x, y, 0, 0 )).xyz;
+                Sigma          += 1.0f;
                 // Light color detection methods
-                maxColor     = tex2Dfetch( samplerDS_1_Max, int4( x, y, 0, 0 )).xyz;
+                maxColor       = tex2Dfetch( samplerDS_1_Max, int4( x, y, 0, 0 )).xyz;
                 // Per channel
-                maxMethod0.x = lerp( maxMethod0.x, maxColor.x, step( maxMethod0.x, maxColor.x ));
-                maxMethod0.y = lerp( maxMethod0.y, maxColor.y, step( maxMethod0.y, maxColor.y ));
-                maxMethod0.z = lerp( maxMethod0.z, maxColor.z, step( maxMethod0.z, maxColor.z ));
+                maxMethod0.xyz = step( maxMethod0.xyz, maxColor.xyz ) ? maxColor.xyz : maxMethod0.xyz;
                 // By color
-                getMax       = min( min( maxColor.x, maxColor.y ), maxColor.z );
-                getMax2      = min( min( maxMethod1.x, maxMethod1.y ), maxMethod1.z );
-                maxMethod1.xyz = lerp( maxMethod1.xyz, maxColor.xyz, step( getMax2, getMax ));
+                getMax         = min( min( maxColor.x, maxColor.y ), maxColor.z );
+                getMax2        = min( min( maxMethod1.x, maxMethod1.y ), maxMethod1.z );
+                maxMethod1.xyz = step( getMax2, getMax ) ? maxColor.xyz : maxMethod1.xyz;
             }
         }
 

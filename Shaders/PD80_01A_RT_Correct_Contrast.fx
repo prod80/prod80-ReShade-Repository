@@ -102,8 +102,6 @@ namespace pd80_correctcontrast
     void PS_MinMax_1( float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 minValue : SV_Target0, out float4 maxValue : SV_Target1 )
     {
         float3 currColor;
-        float getMin;   float getMin2;
-        float getMax;   float getMax2;
         minValue.xyz       = 1.0f;
         maxValue.xyz       = 0.0f;
 
@@ -121,13 +119,9 @@ namespace pd80_correctcontrast
             {
                 currColor    = tex2Dfetch( samplerColorBuffer, int4( x, y, 0, 0 )).xyz;
                 // Dark color detection methods
-                minValue.x   = lerp( minValue.x, currColor.x, step( currColor.x, minValue.x ));
-                minValue.y   = lerp( minValue.y, currColor.y, step( currColor.y, minValue.y ));
-                minValue.z   = lerp( minValue.z, currColor.z, step( currColor.z, minValue.z ));
+                minValue.xyz = step( currColor.xyz, minValue.xyz ) ? currColor.xyz : minValue.xyz;
                 // Light color detection methods
-                maxValue.x   = lerp( maxValue.x, currColor.x, step( maxValue.x, currColor.x ));
-                maxValue.y   = lerp( maxValue.y, currColor.y, step( maxValue.y, currColor.y ));
-                maxValue.z   = lerp( maxValue.z, currColor.z, step( maxValue.z, currColor.z ));
+                maxValue.xyz = step( maxValue.xyz, currColor.xyz ) ? currColor.xyz : maxValue.xyz;
             }
         }
         // Return
@@ -141,8 +135,6 @@ namespace pd80_correctcontrast
         float3 minColor; float3 maxColor;
         float3 minValue    = 1.0f;
         float3 maxValue    = 0.0f;
-        float getMin;    float getMin2;
-        float getMax;    float getMax2;
         //Get texture resolution
         int2 SampleRes     = tex2Dsize( samplerDS_1_Max, 0 );
         float Sigma        = 0.0f;
@@ -153,14 +145,10 @@ namespace pd80_correctcontrast
             {   
                 // Dark color detection methods
                 minColor     = tex2Dfetch( samplerDS_1_Min, int4( x, y, 0, 0 )).xyz;
-                minValue.x   = lerp( minValue.x, minColor.x, step( minColor.x, minValue.x ));
-                minValue.y   = lerp( minValue.y, minColor.y, step( minColor.y, minValue.y ));
-                minValue.z   = lerp( minValue.z, minColor.z, step( minColor.z, minValue.z ));
+                minValue.xyz = step( minColor.xyz, minValue.xyz ) ? minColor.xyz : minValue.xyz;
                 // Light color detection methods
                 maxColor     = tex2Dfetch( samplerDS_1_Max, int4( x, y, 0, 0 )).xyz;
-                maxValue.x   = lerp( maxValue.x, maxColor.x, step( maxValue.x, maxColor.x ));
-                maxValue.y   = lerp( maxValue.y, maxColor.y, step( maxValue.y, maxColor.y ));
-                maxValue.z   = lerp( maxValue.z, maxColor.z, step( maxValue.z, maxColor.z ));
+                maxValue.xyz = step( maxValue.xyz, maxColor.xyz ) ? maxColor.xyz : maxValue.xyz;
             }
         }
 
