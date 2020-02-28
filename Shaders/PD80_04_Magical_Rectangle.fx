@@ -212,7 +212,11 @@ namespace pd80_magicalrectangle
         return dot( x, float3( 0.212656, 0.715158, 0.072186 ));
     }
 
-    // Collected from: https://gist.github.com/yiwenl
+    // Collected RGBToHSL from: https://gist.github.com/yiwenl
+    // Adjusted a bunch of things
+    // Credits belong elsewhere, no note, possible here:
+    // http://www.niwa.nu/2013/05/math-behind-colorspace-conversions-rgb-hsl/
+    // HUEToRGB and HSLToRGB is from chilliant
     float3 HUEToRGB( float H )
     {
         return saturate( float3( abs( H * 6.0f - 3.0f ) - 1.0f,
@@ -224,30 +228,29 @@ namespace pd80_magicalrectangle
     {
         float cMin  = min( min( RGB.x, RGB.y ), RGB.z );
         float cMax  = max( max( RGB.x, RGB.y ), RGB.z );
-        float delta = cMax - cMin;
+        float delta = saturate( cMax - cMin );
         float3 deltaRGB = 0.0f;
         float3 hsl  = float3( 0.0f, 0.0f, 0.5f * ( cMax + cMin ));
-        if( delta != 0.0f )
-        {
+		if( delta > 0.0f )
+		{
             hsl.y       = ( hsl.z < 0.5f ) ? delta / ( cMax + cMin ) :
                                              delta / ( 2.0f - cMax - cMin );
-            deltaRGB    = (((cMax - RGB.xyz ) / 6.0f ) + ( delta * 0.5f )) / delta;
+            deltaRGB    = saturate((((cMax - RGB.xyz ) / 6.0f ) + ( delta * 0.5f )) / delta );
             if( RGB.x == cMax )
                 hsl.x   = deltaRGB.z - deltaRGB.y;
             else if( RGB.y == cMax )
                 hsl.x   = 1.0f / 3.0f + deltaRGB.x - deltaRGB.z;
             else
                 hsl.x   = 2.0f / 3.0f + deltaRGB.y - deltaRGB.x;
-            hsl.x       = frac( hsl.x );
         }
         return hsl;
     }
     // ----
-    
+
     float3 HSLToRGB( in float3 HSL )
     {
-        float3 RGB       = HUEToRGB( HSL.x );
-        float C          = ( 1.0f - abs( 2.0f * HSL.z - 1.0f )) * HSL.y;
+        float3 RGB      = HUEToRGB( HSL.x );
+        float C         = ( 1.0f - abs( 2.0f * HSL.z - 1.0f )) * HSL.y;
         return ( RGB - 0.5f ) * C + HSL.z;
     }
 
@@ -472,7 +475,7 @@ namespace pd80_magicalrectangle
         orig.xyz          = hue( orig.xyz, mr_hue, saturate( layer_1.w ));
         orig.xyz          = sat( orig.xyz, mr_saturation * saturate( layer_1.w ));
         orig.xyz          = vib( orig.xyz, mr_vibrance * saturate( layer_1.w ));
-
+        orig.xyz          = saturate( orig.xyz );
         // Doing some HSL color space conversions to colorize
         layer_1.xyz       = saturate( layer_1.xyz * intensity_boost );
         layer_1.xyz       = RGBToHSL( layer_1.xyz );
