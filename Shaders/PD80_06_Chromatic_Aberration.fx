@@ -162,12 +162,11 @@ namespace pd80_ca
     #define py          BUFFER_RCP_HEIGHT
     #define aspect      float( BUFFER_WIDTH * BUFFER_RCP_HEIGHT )
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
-    float3 HUEToRGB( in float H )
+    float3 HUEToRGB( float H )
     {
-        float R          = abs(H * 6.0f - 3.0f) - 1.0f;
-        float G          = 2.0f - abs(H * 6.0f - 2.0f);
-        float B          = 2.0f - abs(H * 6.0f - 4.0f);
-        return saturate( float3( R,G,B ));
+        return saturate( float3( abs( H * 6.0f - 3.0f ) - 1.0f,
+                                 2.0f - abs( H * 6.0f - 2.0f ),
+                                 2.0f - abs( H * 6.0f - 4.0f )));
     }
 
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////

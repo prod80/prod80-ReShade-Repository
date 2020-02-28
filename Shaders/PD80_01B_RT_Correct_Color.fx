@@ -206,9 +206,9 @@ namespace pd80_correctcolor
         uv.xy              = floor( uv.xy / Range );                                             //Block position
         uv.xy              *= Range;                                                             //Block start position
 
-        for( int y = uv.y; y < uv.y + Range.y && y < BUFFER_HEIGHT/RT_RES; y += 1 )
+        for( int y = uv.y; y < uv.y + Range.y && y < BUFFER_HEIGHT/RT_RES; ++y )
         {
-            for( int x = uv.x; x < uv.x + Range.x && x < BUFFER_WIDTH/RT_RES; x += 1 )
+            for( int x = uv.x; x < uv.x + Range.x && x < BUFFER_WIDTH/RT_RES; ++x )
             {
                 currColor      = tex2Dfetch( samplerColor, int4( x, y, 0, RT_MIPLVL )).xyz;
                 // Dark color detection methods
@@ -256,9 +256,9 @@ namespace pd80_correctcolor
         int2 SampleRes     = tex2Dsize( samplerDS_1_Max, 0 );
         float Sigma        = 0.0f;
 
-        for( int y = 0; y < SampleRes.y; y += 1 )
+        for( int y = 0; y < SampleRes.y; ++y )
         {
-            for( int x = 0; x < SampleRes.x; x += 1 )
+            for( int x = 0; x < SampleRes.x; ++x )
             {   
                 // Dark color detection methods
                 minColor       = tex2Dfetch( samplerDS_1_Min, int4( x, y, 0, 0 )).xyz;

@@ -223,39 +223,51 @@ namespace pd80_conbrisat
         return dot( x, float3( 0.212656, 0.715158, 0.072186 ));
     }
 
+    // Collected from: https://gist.github.com/yiwenl
     float3 HUEToRGB( float H )
     {
-        float R          = abs(H * 6.0f - 3.0f) - 1.0f;
-        float G          = 2.0f - abs(H * 6.0f - 2.0f);
-        float B          = 2.0f - abs(H * 6.0f - 4.0f);
-        return saturate( float3( R,G,B ));
-    }
-
-    float3 RGBToHCV( float3 RGB )
-    {
-        // Based on work by Sam Hocevar and Emil Persson
-        float4 P         = ( RGB.g < RGB.b ) ? float4( RGB.bg, -1.0f, 2.0f/3.0f ) : float4( RGB.gb, 0.0f, -1.0f/3.0f );
-        float4 Q1        = ( RGB.r < P.x ) ? float4( P.xyw, RGB.r ) : float4( RGB.r, P.yzx );
-        float C          = Q1.x - min( Q1.w, Q1.y );
-        float H          = abs(( Q1.w - Q1.y ) / ( 6.0f * C + 0.000001f ) + Q1.z );
-        return float3( H, C, Q1.x );
+        return saturate( float3( abs( H * 6.0f - 3.0f ) - 1.0f,
+                                 2.0f - abs( H * 6.0f - 2.0f ),
+                                 2.0f - abs( H * 6.0f - 4.0f )));
     }
 
     float3 RGBToHSL( float3 RGB )
     {
-        RGB.xyz          = max( RGB.xyz, 0.000001f );
-        float3 HCV       = RGBToHCV( RGB.xyz );
-        float L          = HCV.z - HCV.y * 0.5f;
-        float S          = HCV.y / ( 1.0f - abs( L * 2.0f - 1.0f ) + 0.000001f );
-        return float3( HCV.x, S, L );
+        float cMin  = min( min( RGB.x, RGB.y ), RGB.z );
+        float cMax  = max( max( RGB.x, RGB.y ), RGB.z );
+        float delta = cMax - cMin;
+        float3 deltaRGB = 0.0f;
+        float3 hsl  = float3( 0.0f, 0.0f, 0.5f * ( cMax + cMin ));
+        if( delta != 0.0f )
+        {
+            hsl.y       = ( hsl.z < 0.5f ) ? delta / ( cMax + cMin ) :
+                                             delta / ( 2.0f - delta );
+            deltaRGB    = (((cMax - RGB.xyz ) / 6.0f ) + ( delta * 0.5f )) / delta;
+            if( RGB.x == cMax )
+                hsl.x   = deltaRGB.z - deltaRGB.y;
+            else if( RGB.y == cMax )
+                hsl.x   = 1.0f / 3.0f + deltaRGB.x - deltaRGB.z;
+            else
+                hsl.x   = 2.0f / 3.0f + deltaRGB.y - deltaRGB.x;
+            hsl.x       = frac( hsl.x );
+        }
+        return hsl;
     }
 
     float3 HSLToRGB( float3 HSL )
     {
-        float3 RGB       = HUEToRGB( HSL.x );
-        float C          = ( 1.0f - abs( 2.0f * HSL.z - 1.0f )) * HSL.y;
-        return ( RGB - 0.5f ) * C + HSL.z;
+        if( HSL.y <= 0.0f )
+            return float3( HSL.zzz );
+        else
+        {
+            float a; float b;
+            b   = ( HSL.z < 0.5f ) ? HSL.z * ( 1.0f + HSL.y ) :
+                                     HSL.z + HSL.y - HSL.y * HSL.z;
+            a   = 2.0f * HSL.z - b;
+            return a + HUEToRGB( HSL.x ) * ( b - a );
+        }
     }
+    // ----
 
     float curve( float x )
     {
