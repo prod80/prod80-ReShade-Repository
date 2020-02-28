@@ -1,8 +1,13 @@
 /*
-    Description : PD80 04 Color Isolation for Reshade https://reshade.me/
+    Description : PD80 04 Color Temperature for Reshade https://reshade.me/
     Author      : prod80 (Bas Veth)
     License     : MIT, Copyright (c) 2020 prod80
 
+    Additional credits
+    - Taller Helland
+      http://www.tannerhelland.com/4435/convert-temperature-rgb-algorithm-code/
+    - Renaud Bédard https://www.shadertoy.com/view/lsSXW1
+      License: https://creativecommons.org/licenses/by/3.0/
 
     MIT License
 
@@ -25,56 +30,65 @@
     SOFTWARE.
     
 */
-
 #include "ReShade.fxh"
 #include "ReShadeUI.fxh"
 
-namespace pd80_ColorIsolation
+namespace pd80_colortemp
 {
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
-    uniform float hueMid <
-        ui_label = "Hue Selection (Middle)";
-        ui_category = "Color Isolation";
-        ui_tooltip = "0 = Red, 0.167 = Yellow, 0.333 = Green, 0.5 = Cyan, 0.666 = Blue, 0.833 = Magenta";
-        ui_type = "slider";
-        ui_min = 0.0;
-        ui_max = 1.0;
-        > = 0.0;
-    uniform float hueRange <
-        ui_label = "Hue Range Selection";
-        ui_category = "Color Isolation";
-        ui_type = "slider";
-        ui_min = 0.0;
-        ui_max = 1.0;
-        > = 0.167;
-    uniform float satLimit <
-        ui_label = "Saturation Output";
-        ui_category = "Color Isolation";
-        ui_type = "slider";
-        ui_min = 0.0;
-        ui_max = 1.0;
-        > = 1.0;
-    uniform float fxcolorMix <
-        ui_label = "Mix with Original";
-        ui_category = "Color Isolation";
-        ui_type = "slider";
-        ui_min = 0.0;
-        ui_max = 1.0;
-        > = 1.0;
+    uniform uint Kelvin <
+    ui_label = "Color Temp (K)";
+    ui_category = "Kelvin";
+    ui_type = "slider";
+    ui_min = 1000;
+    ui_max = 40000;
+    > = 6500;
+
+    uniform float LumPreservation <
+    ui_label = "Luminance Preservation";
+    ui_category = "Kelvin";
+    ui_type = "slider";
+    ui_min = 0.0;
+    ui_max = 1.0;
+    > = 1.0;
+
+    uniform float kMix <
+    ui_label = "Mix with Original";
+    ui_category = "Kelvin";
+    ui_type = "slider";
+    ui_min = 0.0;
+    ui_max = 1.0;
+    > = 1.0;
 
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
-
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerColor { Texture = texColorBuffer; };
-
     //// DEFINES ////////////////////////////////////////////////////////////////////
-    #define LumCoeff float3(0.212656, 0.715158, 0.072186)
 
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
-    float getLuminance( in float3 x )
+    float3 KelvinToRGB( in float k )
     {
-        return dot( x, LumCoeff );
+        float3 ret;
+        float kelvin     = clamp( k, 1000.0f, 40000.0f ) / 100.0f;
+        if( kelvin <= 66.0f )
+        {
+            ret.r        = 1.0f;
+            ret.g        = saturate( 0.39008157876901960784f * log( kelvin ) - 0.63184144378862745098f );
+        }
+        else
+        {
+            float t      = kelvin - 60.0f;
+            ret.r        = saturate( 1.29293618606274509804f * pow( t, -0.1332047592f ));
+            ret.g        = saturate( 1.12989086089529411765f * pow( t, -0.0755148492f ));
+        }
+        if( kelvin >= 66.0f )
+            ret.b        = 1.0f;
+        else if( kelvin < 19.0f )
+            ret.b        = 0.0f;
+        else
+            ret.b        = saturate( 0.54320678911019607843f * log( kelvin - 10.0f ) - 1.19625408914f );
+        return ret;
     }
 
     // Collected from: https://gist.github.com/yiwenl
@@ -116,39 +130,26 @@ namespace pd80_ColorIsolation
         return ( RGB - 0.5f ) * C + HSL.z;
     }
 
-    float smootherstep( float x )
-    {
-        return x * x * x * ( x * ( x * 6.0f - 15.0f ) + 10.0f );
-    }
-
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
-    float4 PS_ColorIso(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
+    float4 PS_ColorTemp(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color     = tex2D( samplerColor, texcoord );
-        color.xyz        = saturate( color.xyz ); //Can't work with HDR
-        
-        float grey       = getLuminance( color.xyz );
-        float hue        = RGBToHSL( color.xyz ).x;
-        
-        float r          = rcp( hueRange );
-        float3 w         = max( 1.0f - abs(( hue - hueMid        ) * r ), 0.0f );
-        w.y              = max( 1.0f - abs(( hue + 1.0f - hueMid ) * r ), 0.0f );
-        w.z              = max( 1.0f - abs(( hue - 1.0f - hueMid ) * r ), 0.0f );
-        float weight     = dot( w.xyz, 1.0f );
-        
-        float3 newc      = lerp( grey, color.xyz, smootherstep( weight ) * satLimit );
-        color.xyz        = lerp( color.xyz, newc.xyz, fxcolorMix );
-
+        float3 kColor    = KelvinToRGB( Kelvin );
+        float3 oLum      = RGBToHSL( color.xyz );
+        float3 blended   = lerp( color.xyz, color.xyz * kColor.xyz, kMix );
+        float3 resHSL    = RGBToHSL( blended.xyz );
+        float3 resRGB    = HSLToRGB( float3( resHSL.xy, oLum.z ));
+        color.xyz        = lerp( blended.xyz, resRGB.xyz, LumPreservation );
         return float4( color.xyz, 1.0f );
     }
 
     //// TECHNIQUES /////////////////////////////////////////////////////////////////
-    technique prod80_04_ColorIsolation
+    technique prod80_04_ColorTemperature
     {
-        pass ColorIso
+        pass ColorTemp
         {
             VertexShader   = PostProcessVS;
-            PixelShader    = PS_ColorIso;
+            PixelShader    = PS_ColorTemp;
         }
     }
 }

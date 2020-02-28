@@ -253,7 +253,7 @@ namespace pd80_SMH
         if( delta != 0.0f )
         {
             hsl.y       = ( hsl.z < 0.5f ) ? delta / ( cMax + cMin ) :
-                                             delta / ( 2.0f - delta );
+                                             delta / ( 2.0f - cMax - cMin );
             deltaRGB    = (((cMax - RGB.xyz ) / 6.0f ) + ( delta * 0.5f )) / delta;
             if( RGB.x == cMax )
                 hsl.x   = deltaRGB.z - deltaRGB.y;
@@ -265,21 +265,14 @@ namespace pd80_SMH
         }
         return hsl;
     }
-
-    float3 HSLToRGB( float3 HSL )
-    {
-        if( HSL.y <= 0.0f )
-            return float3( HSL.zzz );
-        else
-        {
-            float a; float b;
-            b   = ( HSL.z < 0.5f ) ? HSL.z * ( 1.0f + HSL.y ) :
-                                     HSL.z + HSL.y - HSL.y * HSL.z;
-            a   = 2.0f * HSL.z - b;
-            return a + HUEToRGB( HSL.x ) * ( b - a );
-        }
-    }
     // ----
+    
+    float3 HSLToRGB( in float3 HSL )
+    {
+        float3 RGB       = HUEToRGB( HSL.x );
+        float C          = ( 1.0f - abs( 2.0f * HSL.z - 1.0f )) * HSL.y;
+        return ( RGB - 0.5f ) * C + HSL.z;
+    }
 
     float3 darken(float3 c, float3 b)       { return min(c,b);}
     float3 multiply(float3 c, float3 b) 	{ return c*b;}
