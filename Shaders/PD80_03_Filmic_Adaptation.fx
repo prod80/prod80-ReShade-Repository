@@ -83,17 +83,6 @@ namespace pd80_filmicadaptation
         return dot( x, LumCoeff );
     }
 
-    float3 softlight(float3 c, float3 b) 	{ return b<0.5f ? (2.0f*c*b+c*c*(1.0f-2.0f*b)):(sqrt(c)*(2.0f*b-1.0f)+2.0f*c*(1.0f-b));}
-
-    float3 con( float3 res, float x )
-    {
-        //softlight
-        float3 c = softlight( res.xyz, res.xyz );
-        float c1 = 0.0f;
-        c1 = x < 0.0f ? c1 = x * 0.5f : c1 = x;
-        return lerp( res.xyz, c.xyz, c1 );
-    }
-
     float3 Filmic( in float3 Fc, in float FA, in float FB, in float FC, in float FD, in float FE, in float FF, in float FWhite )
     {
         float3 num       = (( Fc * ( FA * Fc + FC * FB ) + FD * FE ) / ( Fc * ( FA * Fc + FB ) + FD * FF )) - FE / FF;

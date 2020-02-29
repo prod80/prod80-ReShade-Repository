@@ -323,46 +323,24 @@ namespace pd80_hqbloom
         return dot( x, LumCoeff );
     }
 
-    // Collected RGBToHSL from: https://gist.github.com/yiwenl
-    // Adjusted a bunch of things
-    // Credits belong elsewhere, no note, possible here:
-    // http://www.niwa.nu/2013/05/math-behind-colorspace-conversions-rgb-hsl/
-    // HUEToRGB and HSLToRGB is from chilliant
-    float3 HUEToRGB( float H )
+    // Collected from
+    // http://lolengine.net/blog/2013/07/27/rgb-to-hsv-in-glsl
+    float3 RGBToHSV(float3 c)
     {
-        return saturate( float3( abs( H * 6.0f - 3.0f ) - 1.0f,
-                                 2.0f - abs( H * 6.0f - 2.0f ),
-                                 2.0f - abs( H * 6.0f - 4.0f )));
+        float4 K = float4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
+        float4 p = c.g < c.b ? float4(c.bg, K.wz) : float4(c.gb, K.xy);
+        float4 q = c.r < p.x ? float4(p.xyw, c.r) : float4(c.r, p.yzx);
+
+        float d = q.x - min(q.w, q.y);
+        float e = 1.0e-10;
+        return float3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
     }
 
-    float3 RGBToHSL( float3 RGB )
+    float3 HSVToRGB(float3 c)
     {
-        float cMin  = min( min( RGB.x, RGB.y ), RGB.z );
-        float cMax  = max( max( RGB.x, RGB.y ), RGB.z );
-        float delta = saturate( cMax - cMin );
-        float3 deltaRGB = 0.0f;
-        float3 hsl  = float3( 0.0f, 0.0f, 0.5f * ( cMax + cMin ));
-		if( delta > 0.0f )
-		{
-            hsl.y       = ( hsl.z < 0.5f ) ? delta / ( cMax + cMin ) :
-                                             delta / ( 2.0f - cMax - cMin );
-            deltaRGB    = saturate((((cMax - RGB.xyz ) / 6.0f ) + ( delta * 0.5f )) / delta );
-            if( RGB.x == cMax )
-                hsl.x   = deltaRGB.z - deltaRGB.y;
-            else if( RGB.y == cMax )
-                hsl.x   = 1.0f / 3.0f + deltaRGB.x - deltaRGB.z;
-            else
-                hsl.x   = 2.0f / 3.0f + deltaRGB.y - deltaRGB.x;
-        }
-        return hsl;
-    }
-    // ----
-
-    float3 HSLToRGB( in float3 HSL )
-    {
-        float3 RGB      = HUEToRGB( HSL.x );
-        float C         = ( 1.0f - abs( 2.0f * HSL.z - 1.0f )) * HSL.y;
-        return ( RGB - 0.5f ) * C + HSL.z;
+        float4 K = float4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+        float3 p = abs(frac(c.xxx + K.xyz) * 6.0 - K.www);
+        return c.z * lerp(K.xxx, saturate(p - K.xxx), c.y);
     }
 
     float Log2Exposure( in float avgLuminance, in float GreyValue )
@@ -718,9 +696,9 @@ namespace pd80_hqbloom
         if( enableBKelvin )
         {
             float3 K       = KelvinToRGB( BKelvin );
-            float3 bLum    = RGBToHSL( bloom.xyz );
-            float3 retHSL  = RGBToHSL( bloom.xyz * K.xyz );
-            bloom.xyz      = HSLToRGB( float3( retHSL.xy, bLum.z ));
+            float3 bLum    = RGBToHSV( bloom.xyz );
+            float3 retHSV  = RGBToHSV( bloom.xyz * K.xyz );
+            bloom.xyz      = HSVToRGB( float3( retHSV.xy, bLum.z ));
         }
         #endif
         float3 bcolor    = screen( color.xyz, bloom.xyz );

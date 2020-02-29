@@ -118,45 +118,36 @@ namespace pd80_blackandwhite
 
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
     
-    // Collected RGBToHSL from: https://gist.github.com/yiwenl
-    // Adjusted a bunch of things
-    // Credits belong elsewhere, no note, possible here:
-    // http://www.niwa.nu/2013/05/math-behind-colorspace-conversions-rgb-hsl/
-    // HUEToRGB and HSLToRGB is from chilliant
-    float3 HUEToRGB( float H )
+    float3 HUEToRGB( in float H )
     {
         return saturate( float3( abs( H * 6.0f - 3.0f ) - 1.0f,
                                  2.0f - abs( H * 6.0f - 2.0f ),
                                  2.0f - abs( H * 6.0f - 4.0f )));
     }
 
-    float3 RGBToHSL( float3 RGB )
+    float3 RGBToHCV( in float3 RGB )
     {
-        float cMin  = min( min( RGB.x, RGB.y ), RGB.z );
-        float cMax  = max( max( RGB.x, RGB.y ), RGB.z );
-        float delta = saturate( cMax - cMin );
-        float3 deltaRGB = 0.0f;
-        float3 hsl  = float3( 0.0f, 0.0f, 0.5f * ( cMax + cMin ));
-		if( delta > 0.0f )
-		{
-            hsl.y       = ( hsl.z < 0.5f ) ? delta / ( cMax + cMin ) :
-                                             delta / ( 2.0f - cMax - cMin );
-            deltaRGB    = saturate((((cMax - RGB.xyz ) / 6.0f ) + ( delta * 0.5f )) / delta );
-            if( RGB.x == cMax )
-                hsl.x   = deltaRGB.z - deltaRGB.y;
-            else if( RGB.y == cMax )
-                hsl.x   = 1.0f / 3.0f + deltaRGB.x - deltaRGB.z;
-            else
-                hsl.x   = 2.0f / 3.0f + deltaRGB.y - deltaRGB.x;
-        }
-        return hsl;
+        // Based on work by Sam Hocevar and Emil Persson
+        float4 P         = ( RGB.g < RGB.b ) ? float4( RGB.bg, -1.0f, 2.0f/3.0f ) : float4( RGB.gb, 0.0f, -1.0f/3.0f );
+        float4 Q1        = ( RGB.r < P.x ) ? float4( P.xyw, RGB.r ) : float4( RGB.r, P.yzx );
+        float C          = Q1.x - min( Q1.w, Q1.y );
+        float H          = abs(( Q1.w - Q1.y ) / ( 6.0f * C + 0.000001f ) + Q1.z );
+        return float3( H, C, Q1.x );
     }
-    // ----
+
+    float3 RGBToHSL( in float3 RGB )
+    {
+        RGB.xyz          = max( RGB.xyz, 0.000001f );
+        float3 HCV       = RGBToHCV(RGB);
+        float L          = HCV.z - HCV.y * 0.5f;
+        float S          = HCV.y / ( 1.0f - abs( L * 2.0f - 1.0f ) + 0.000001f);
+        return float3( HCV.x, S, L );
+    }
 
     float3 HSLToRGB( in float3 HSL )
     {
-        float3 RGB      = HUEToRGB( HSL.x );
-        float C         = ( 1.0f - abs( 2.0f * HSL.z - 1.0f )) * HSL.y;
+        float3 RGB       = HUEToRGB(HSL.x);
+        float C          = (1.0f - abs(2.0f * HSL.z - 1.0f)) * HSL.y;
         return ( RGB - 0.5f ) * C + HSL.z;
     }
 
