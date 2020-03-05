@@ -55,6 +55,11 @@ namespace pd80_filmgrain
         ui_min = 1;
         ui_max = 24;
         > = 1;
+    uniform int grainOrigColor < __UNIFORM_COMBO_INT1
+        ui_label = "Use Original Color";
+        ui_category = "Film Grain (simplex)";
+        ui_items = "Use Random Color\0Use Original Color\0";
+        > = 1;
     uniform float grainColor <
         ui_type = "slider";
         ui_label = "Grain Color Amount";
@@ -145,6 +150,39 @@ namespace pd80_filmgrain
         return dot( x, LumCoeff );
     }
 
+    float3 HUEToRGB( in float H )
+    {
+        return saturate( float3( abs( H * 6.0f - 3.0f ) - 1.0f,
+                                 2.0f - abs( H * 6.0f - 2.0f ),
+                                 2.0f - abs( H * 6.0f - 4.0f )));
+    }
+
+    float3 RGBToHCV( in float3 RGB )
+    {
+        // Based on work by Sam Hocevar and Emil Persson
+        float4 P         = ( RGB.g < RGB.b ) ? float4( RGB.bg, -1.0f, 2.0f/3.0f ) : float4( RGB.gb, 0.0f, -1.0f/3.0f );
+        float4 Q1        = ( RGB.r < P.x ) ? float4( P.xyw, RGB.r ) : float4( RGB.r, P.yzx );
+        float C          = Q1.x - min( Q1.w, Q1.y );
+        float H          = abs(( Q1.w - Q1.y ) / ( 6.0f * C + 0.000001f ) + Q1.z );
+        return float3( H, C, Q1.x );
+    }
+
+    float3 RGBToHSL( in float3 RGB )
+    {
+        RGB.xyz          = max( RGB.xyz, 0.000001f );
+        float3 HCV       = RGBToHCV(RGB);
+        float L          = HCV.z - HCV.y * 0.5f;
+        float S          = HCV.y / ( 1.0f - abs( L * 2.0f - 1.0f ) + 0.000001f);
+        return float3( HCV.x, S, L );
+    }
+
+    float3 HSLToRGB( in float3 HSL )
+    {
+        float3 RGB       = HUEToRGB(HSL.x);
+        float C          = (1.0f - abs(2.0f * HSL.z - 1.0f)) * HSL.y;
+        return ( RGB - 0.5f ) * C + HSL.z;
+    }
+
     float4 rnm( float2 tc, float t ) 
     {
         float noise       = sin( dot( tc, float2( 12.9898, 78.233 ))) * ( 43758.5453 + t );
@@ -158,6 +196,11 @@ namespace pd80_filmgrain
     float fade( float t )
     {
         return t * t * t * ( t * ( t * 6.0 - 15.0 ) + 10.0 );
+    }
+
+    float curve( float x )
+    {
+        return x * x * ( 3.0 - 2.0 * x );
     }
 
     float pnoise3D( float3 p, float t )
@@ -205,12 +248,13 @@ namespace pd80_filmgrain
     float4 PS_FilmGrain(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color      = tex2D( samplerColor, texcoord );
-        float depth      = ReShade::GetLinearizedDepth( texcoord ).x;
-        depth            = smoothstep( depthStart, depthEnd, depth );
-        depth            = pow( depth, depthCurve );
-        float d          = 1.0f;
+        float3 origHSL    = RGBToHSL( color.xyz ); // For later
+        float depth       = ReShade::GetLinearizedDepth( texcoord ).x;
+        depth             = smoothstep( depthStart, depthEnd, depth );
+        depth             = pow( depth, depthCurve );
+        float d           = 1.0f;
         if( enable_depth )
-            d            = depth;
+            d             = depth;
         float timer       = 1.0f;
         if( grainMotion )
             timer         = Timer % 1000.0f;
@@ -218,7 +262,7 @@ namespace pd80_filmgrain
         float3 noise      = pnoise3D( float3( uv.xy, 1 ), timer );
         noise.y           = pnoise3D( float3( uv.xy, 2 ), timer );
         noise.z           = pnoise3D( float3( uv.xy, 3 ), timer );
-        		
+
         // Old, practically does the same as grainAmount below
         // Added back on request
         noise.xyz         *= grainIntensity;
@@ -232,7 +276,31 @@ namespace pd80_filmgrain
         // Mixing options
         float lum         = dot( color.xyz, 0.333333f ); // Just using average here
         noise.xyz         = lerp( noise.xyz * grainIntLow, noise.xyz * grainIntHigh, fade( lum )); // Noise adjustments based on average intensity
-        color.xyz         = lerp( color.xyz, color.xyz + ( noise.xyz * d ), grainAmount );
+        
+        // Noise coloring
+        // Issue, when changing hue to original R, B channels work fine, but humans more sensitive to G
+        // Have to adjust G channel to make it better looking
+        // In perceived luminosity R and B channel are very close, will assume they are equal
+        // When H is Green ( 0.333.. around )
+        // And S is high ( 1 is highest, 0 is greyscale )
+        // ** Not using ** And L is strongest ( strongest coloring at L value 0.5 )
+        float weight      = curve( max( 1.0f - abs(( origHSL.x - 0.333333f ) * 3.0f ), 0.0f ));
+        // Account for saturation
+        weight            *= origHSL.y;
+        // Account for lightness, not using this right now
+        // weight            *= ( 1.0f - abs( origHSL.z * 2.0f - 1.0f ));
+        // Make a float to adjust noise intensity
+        float adjNoise    = lerp( 1.0f, 0.3f, grainOrigColor * weight ); // 0.3 is not arbitrary, it's the scaled inverse of 0.715158. the exact value is 0.307003
+
+        color.xyz         = lerp( color.xyz, color.xyz + ( noise.xyz * adjNoise * d ), grainAmount );
+        color.xyz         = saturate( color.xyz );
+        
+        // Use original color hue
+        float3 col        = color.xyz;
+        col.xyz           = RGBToHSL( col.xyz );
+        col.xyz           = HSLToRGB( float3( origHSL.xy, col.z ));
+        color.xyz         = grainOrigColor ? col.xyz : color.xyz;
+
         color.xyz         = display_depth ? depth.xxx : color.xyz;
         return float4( color.xyz, 1.0f );
     }

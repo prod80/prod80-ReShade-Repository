@@ -150,6 +150,8 @@ namespace pd80_lumasharpen
         float3 HSLBlend  = RGBToHSL( blend );
         return HSLToRGB( float3( HSLBase.xy, HSLBlend.z ));
     }
+
+    float3 screen(float3 c, float3 b) 		{ return 1.0f-(1.0f-c)*(1.0f-b);}
     
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float4 PS_GaussianH(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
@@ -235,7 +237,7 @@ namespace pd80_lumasharpen
         float3 oInvGauss = saturate( orig.xyz + invGauss.xyz );
         float3 invOGauss = max( saturate( 1.0f - oInvGauss.xyz ) - Threshold, 0.0f );
         edges            = max(( saturate( Sharpening * edges.xyz )) - ( saturate( Sharpening * invOGauss.xyz )), 0.0f );
-        float3 blend     = saturate( orig.xyz + lerp( min( edges.xyz, limiter ), 0.0f, enable_depth * depth ));
+        float3 blend     = screen( orig.xyz, lerp( min( edges.xyz, limiter ), 0.0f, enable_depth * depth ));
         float3 color     = BlendLuma( orig.xyz, blend.xyz );
         color.xyz        = enableShowEdges ? lerp( min( edges.xyz, limiter ), min( edges.xyz, limiter ) * depth, enable_depth ) : color.xyz;
         color.xyz        = display_depth ? depth.xxx : color.xyz;

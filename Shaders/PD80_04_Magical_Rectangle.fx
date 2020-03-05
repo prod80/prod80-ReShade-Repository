@@ -288,8 +288,8 @@ namespace pd80_magicalrectangle
     }
     float3 blendsaturation(float3 c, float3 b)
     {
-        float3 hsv = RGBToHSV( c.xyz );
-        return HSVToRGB( float3( hsv.x, RGBToHSV( b.xyz ).y, hsv.z ));
+        float3 hsl = RGBToHSL( c.xyz );
+        return HSLToRGB( float3( hsl.x, RGBToHSL( b.xyz ).y, hsl.z ));
     }
     float3 blendcolor(float3 c, float3 b)
     {
@@ -479,13 +479,13 @@ namespace pd80_magicalrectangle
     {
         float4 orig       = tex2D( samplerColor, texcoord );
         float3 color;
-        float4 layer_1    = tex2D( samplerMagicRectangle, texcoord );
-        orig.xyz          = exposure( orig.xyz, mr_exposure, saturate( layer_1.w ));
-        orig.xyz          = con( orig.xyz, mr_contrast * saturate( layer_1.w ));
-        orig.xyz          = bri( orig.xyz, mr_brightness * saturate( layer_1.w ));
-        orig.xyz          = hue( orig.xyz, mr_hue, saturate( layer_1.w ));
-        orig.xyz          = sat( orig.xyz, mr_saturation * saturate( layer_1.w ));
-        orig.xyz          = vib( orig.xyz, mr_vibrance * saturate( layer_1.w ));
+        float4 layer_1    = saturate( tex2D( samplerMagicRectangle, texcoord ));
+        orig.xyz          = exposure( orig.xyz, mr_exposure, layer_1.w );
+        orig.xyz          = con( orig.xyz, mr_contrast * layer_1.w );
+        orig.xyz          = bri( orig.xyz, mr_brightness * layer_1.w );
+        orig.xyz          = hue( orig.xyz, mr_hue, layer_1.w );
+        orig.xyz          = sat( orig.xyz, mr_saturation * layer_1.w );
+        orig.xyz          = vib( orig.xyz, mr_vibrance * layer_1.w );
         orig.xyz          = saturate( orig.xyz );
         // Doing some HSL color space conversions to colorize
         layer_1.xyz       = saturate( layer_1.xyz * intensity_boost );
