@@ -73,7 +73,7 @@ namespace pd80_filmgrain
         ui_category = "Film Grain (simplex)";
         ui_min = 0.0f;
         ui_max = 1.0f;
-        > = 0.14;
+        > = 0.3;
     uniform float grainIntensity <
         ui_type = "slider";
         ui_label = "Grain Intensity";
@@ -280,10 +280,7 @@ namespace pd80_filmgrain
         // Noise coloring
         // Issue, when changing hue to original R, B channels work fine, but humans more sensitive to G
         // Have to adjust G channel to make it better looking
-        // In perceived luminosity R and B channel are very close, will assume they are equal
-        // When H is Green ( 0.333.. around )
-        // And S is high ( 1 is highest, 0 is greyscale )
-        // ** Not using ** And L is strongest ( strongest coloring at L value 0.5 )
+        // In perceived luminosity R and B channel are very close, will assume they are equal as they are close enough
         float weight      = curve( max( 1.0f - abs(( origHSL.x - 0.333333f ) * 3.0f ), 0.0f ));
         // Account for saturation
         weight            *= origHSL.y;
