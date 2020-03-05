@@ -183,6 +183,24 @@ namespace pd80_filmgrain
         return ( RGB - 0.5f ) * C + HSL.z;
     }
 
+    float3 RGBToHSV(float3 c)
+    {
+        float4 K = float4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
+        float4 p = c.g < c.b ? float4(c.bg, K.wz) : float4(c.gb, K.xy);
+        float4 q = c.r < p.x ? float4(p.xyw, c.r) : float4(c.r, p.yzx);
+
+        float d = q.x - min(q.w, q.y);
+        float e = 1.0e-10;
+        return float3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
+    }
+
+    float3 HSVToRGB(float3 c)
+    {
+        float4 K = float4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+        float3 p = abs(frac(c.xxx + K.xyz) * 6.0 - K.www);
+        return c.z * lerp(K.xxx, saturate(p - K.xxx), c.y);
+    }
+
     float4 rnm( float2 tc, float t ) 
     {
         float noise       = sin( dot( tc, float2( 12.9898, 78.233 ))) * ( 43758.5453 + t );
@@ -249,6 +267,7 @@ namespace pd80_filmgrain
     {
         float4 color      = tex2D( samplerColor, texcoord );
         float3 origHSL    = RGBToHSL( color.xyz ); // For later
+        float3 origHSV    = RGBToHSV( color.xyz );
         float depth       = ReShade::GetLinearizedDepth( texcoord ).x;
         depth             = smoothstep( depthStart, depthEnd, depth );
         depth             = pow( depth, depthCurve );
@@ -294,8 +313,8 @@ namespace pd80_filmgrain
         
         // Use original color hue
         float3 col        = color.xyz;
-        col.xyz           = RGBToHSL( col.xyz );
-        col.xyz           = HSLToRGB( float3( origHSL.xy, col.z ));
+        col.xyz           = RGBToHSV( col.xyz );
+        col.xyz           = HSVToRGB( float3( origHSV.xy, col.z ));
         color.xyz         = grainOrigColor ? col.xyz : color.xyz;
 
         color.xyz         = display_depth ? depth.xxx : color.xyz;
