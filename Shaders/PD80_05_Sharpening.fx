@@ -144,7 +144,7 @@ namespace pd80_lumasharpen
         return ClipColor( col.xyz );
     }
 
-    float3 screen(float3 c, float3 b) 		{ return 1.0f-(1.0f-c)*(1.0f-b);}
+    float3 screen(float3 c, float3 b) { return 1.0f-(1.0f-c)*(1.0f-b);}
     
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float4 PS_GaussianH(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
