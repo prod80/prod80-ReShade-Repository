@@ -116,17 +116,20 @@ namespace pd80_lumasharpen
         return dot( x, float3( 0.212656, 0.715158, 0.072186 ));
     }
 
+    float getAvgColor( float3 col )
+    {
+        return dot( col.xyz, float3( 0.333333f, 0.333334f, 0.333333f ));
+    }
+
     // nVidia blend modes
     // Source: https://www.khronos.org/registry/OpenGL/extensions/NV/NV_blend_equation_advanced.txt
     float3 ClipColor( float3 color )
     {
-        float lum         = getLuminance( color.xyz );
+        float lum         = getAvgColor( color.xyz );
         float mincol      = min( min( color.x, color.y ), color.z );
         float maxcol      = max( max( color.x, color.y ), color.z );
-        if ( mincol < 0.0f )
-            color.xyz     = lum + (( color.xyz - lum ) * lum ) / ( lum - mincol );
-        if ( maxcol > 1.0f )
-            color.xyz     = lum + (( color.xyz - lum ) * ( 1.0f - lum )) / ( maxcol - lum );
+        color.xyz         = ( mincol < 0.0f ) ? lum + (( color.xyz - lum ) * lum ) / ( lum - mincol ) : color.xyz;
+        color.xyz         = ( maxcol > 1.0f ) ? lum + (( color.xyz - lum ) * ( 1.0f - lum )) / ( maxcol - lum ) : color.xyz;
         return color;
     }
     
@@ -134,8 +137,8 @@ namespace pd80_lumasharpen
     // Color: blend, base
     float3 blendLuma( float3 base, float3 blend )
     {
-        float lumbase     = getLuminance( base.xyz );
-        float lumblend    = getLuminance( blend.xyz );
+        float lumbase     = getAvgColor( base.xyz );
+        float lumblend    = getAvgColor( blend.xyz );
         float ldiff       = lumblend - lumbase;
         float3 col        = base.xyz + ldiff;
         return ClipColor( col.xyz );

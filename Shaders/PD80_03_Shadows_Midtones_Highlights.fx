@@ -235,17 +235,20 @@ namespace pd80_SMH
         return dot( x, float3( 0.212656, 0.715158, 0.072186 ));
     }
 
+    float getAvgColor( float3 col )
+    {
+        return dot( col.xyz, float3( 0.333333f, 0.333334f, 0.333333f ));
+    }
+
     // nVidia blend modes
     // Source: https://www.khronos.org/registry/OpenGL/extensions/NV/NV_blend_equation_advanced.txt
     float3 ClipColor( float3 color )
     {
-        float lum         = getLuminance( color.xyz );
+        float lum         = getAvgColor( color.xyz );
         float mincol      = min( min( color.x, color.y ), color.z );
         float maxcol      = max( max( color.x, color.y ), color.z );
-        if ( mincol < 0.0f )
-            color.xyz     = lum + (( color.xyz - lum ) * lum ) / ( lum - mincol );
-        if ( maxcol > 1.0f )
-            color.xyz     = lum + (( color.xyz - lum ) * ( 1.0f - lum )) / ( maxcol - lum );
+        color.xyz         = ( mincol < 0.0f ) ? lum + (( color.xyz - lum ) * lum ) / ( lum - mincol ) : color.xyz;
+        color.xyz         = ( maxcol > 1.0f ) ? lum + (( color.xyz - lum ) * ( 1.0f - lum )) / ( maxcol - lum ) : color.xyz;
         return color;
     }
     
@@ -253,15 +256,15 @@ namespace pd80_SMH
     // Color: blend, base
     float3 blendLuma( float3 base, float3 blend )
     {
-        float lumbase     = getLuminance( base.xyz );
-        float lumblend    = getLuminance( blend.xyz );
+        float lumbase     = getAvgColor( base.xyz );
+        float lumblend    = getAvgColor( blend.xyz );
         float ldiff       = lumblend - lumbase;
         float3 col        = base.xyz + ldiff;
         return ClipColor( col.xyz );
     }
 
-    // Hue
-    // Saturation
+    // Hue: blend, base, base
+    // Saturation: base, blend, base
     float3 blendColor( float3 base, float3 blend, float3 lum )
     {
         float minbase     = min( min( base.x, base.y ), base.z );
@@ -270,11 +273,7 @@ namespace pd80_SMH
         float minblend    = min( min( blend.x, blend.y ), blend.z );
         float maxblend    = max( max( blend.x, blend.y ), blend.z );
         float satblend    = maxblend - minblend;
-        float3 color;
-        if( satbase > 0.0f )
-            color.xyz     = ( base.xyz - minbase ) * satblend / satbase;
-        else
-            color.xyz     = 0.0f;
+        float3 color      = ( satbase > 0.0f ) ? ( base.xyz - minbase ) * satblend / satbase : 0.0f;
         return blendLuma( color.xyz, lum.xyz );
     }
 
