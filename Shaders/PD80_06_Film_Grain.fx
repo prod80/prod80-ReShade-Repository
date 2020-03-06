@@ -73,7 +73,7 @@ namespace pd80_filmgrain
         ui_category = "Film Grain (simplex)";
         ui_min = 0.0f;
         ui_max = 1.0f;
-        > = 0.3;
+        > = 0.2;
     uniform float grainIntensity <
         ui_type = "slider";
         ui_label = "Grain Intensity";
@@ -262,12 +262,40 @@ namespace pd80_filmgrain
         return n_xyz;
     }
 
+    // nVidia Luminosity blend mode
+    // Source: https://www.khronos.org/registry/OpenGL/extensions/NV/NV_blend_equation_advanced.txt
+    float3 ClipColor( float3 color )
+    {
+        float lum         = getLuminance( color.xyz );
+        float mincol      = min( min( color.x, color.y ), color.z );
+        float maxcol      = max( max( color.x, color.y ), color.z );
+        if ( mincol < 0.0f )
+            color.xyz     = lum + (( color.xyz - lum ) * lum ) / ( lum - mincol );
+        if ( maxcol > 1.0f )
+            color.xyz     = lum + (( color.xyz - lum ) * ( 1.0f - lum )) / ( maxcol - lum );
+        return color;
+    }
+    
+    float3 blendLuma( float3 base, float3 blend )
+    {
+        float lumbase     = getLuminance( base.xyz );
+        float lumblend    = getLuminance( blend.xyz );
+        float ldiff       = lumblend - lumbase;
+        float3 col        = base.xyz + ldiff;
+        return ClipColor( col.xyz );
+    }
+
+
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float4 PS_FilmGrain(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
+        /*
+        TODO: There's a small region of brightness where the shift from neg+pos to only neg noise seems to have less density
+              -- Regarless of szizzling the components, there are still values being partially cancelled out
+        */
         float4 color      = tex2D( samplerColor, texcoord );
-        float3 origHSL    = RGBToHSL( color.xyz ); // For later
         float3 origHSV    = RGBToHSV( color.xyz );
+        float3 orig       = color.xyz;
         float depth       = ReShade::GetLinearizedDepth( texcoord ).x;
         depth             = smoothstep( depthStart, depthEnd, depth );
         depth             = pow( depth, depthCurve );
@@ -286,8 +314,8 @@ namespace pd80_filmgrain
         // Added back on request
         noise.xyz         *= grainIntensity;
 
-		// Noise saturation
-        noise.xyz         = lerp( dot( noise.xyz, 1.0f ), noise.xyz, grainColor );
+		// Noise color
+        noise.xyz         = lerp( noise.xxx, noise.xyz, grainColor );
 		
 		// Control noise density
         noise.xyz         = pow( abs( noise.xyz ), max( 11.0f - grainDensity, 0.1f )) * sign( noise.xyz );
@@ -295,26 +323,36 @@ namespace pd80_filmgrain
         // Mixing options
         float lum         = dot( color.xyz, 0.333333f ); // Just using average here
         noise.xyz         = lerp( noise.xyz * grainIntLow, noise.xyz * grainIntHigh, fade( lum )); // Noise adjustments based on average intensity
-        
-        // Noise coloring
-        // Issue, when changing hue to original R, B channels work fine, but humans more sensitive to G
-        // Have to adjust G channel to make it better looking
-        // In perceived luminosity R and B channel are very close, will assume they are equal as they are close enough
-        float weight      = curve( max( 1.0f - abs(( origHSL.x - 0.333333f ) * 3.0f ), 0.0f ));
-        // Account for saturation
-        weight            *= origHSL.y;
-        // Account for lightness, not using this right now
-        // weight            *= ( 1.0f - abs( origHSL.z * 2.0f - 1.0f ));
-        // Make a float to adjust noise intensity
-        float adjNoise    = lerp( 1.0f, 0.3f, grainOrigColor * weight ); // 0.3 is not arbitrary, it's the scaled inverse of 0.715158. the exact value is 0.307003
+        float3 negnoise   = -abs( noise.xyz );
+        lum               *= lum;
+        // Apply only negative noise in highlights/whites as positive will be clipped out
+        // Swizzle the components of negnoise to avoid middle intensity regions of no noise ( x - x = 0 )
+        noise.xyz         = lerp( noise.xyz, negnoise.zxy, lum * lum );
 
-        color.xyz         = lerp( color.xyz, color.xyz + ( noise.xyz * adjNoise * d ), grainAmount );
+        // Noise coloring
+        // Issue, when changing hue to original Red, Bblue channels work fine, but humans more sensitive to Yellow/Green
+        // In perceived luminosity R and B channel are very close, will assume they are equal as they are close enough
+        // "weight" is my poor attemp to match human vision, bit heavier on the yellow-green than green
+        float factor      = 1.2f;
+        float weight      = max( 1.0f - abs(( origHSV.x - 0.166667f ) * 6.0f ), 0.0f ) * factor;
+        weight            += max( 1.0f - abs(( origHSV.x - 0.333333f ) * 6.0f ), 0.0f ) / factor;
+        weight            = saturate( curve( weight / factor ));
+         // Avoid NaN/Inf. on blacks which may have a minimal weight ( Hue for black is red which is very close to the border of yellow )
+        float maxc        = max( max( color.x, color.y ), color.z ) + 1.0e-10;
+        float minc        = min( min( color.x, color.y ), color.z );
+        // Account for saturation
+        weight            = weight * saturate(( maxc - minc ) / maxc );
+        
+        // Create a factor to adjust noise intensity
+        // 0.307003 is not arbitrary, it's the scaled inverse of 0.715158
+        float adjNoise    = lerp( 1.0f, 0.307003f, grainOrigColor * weight );
+
+        color.xyz         = lerp( color.xyz, color.xyz + ( noise.xyz * d ), grainAmount * adjNoise );
         color.xyz         = saturate( color.xyz );
         
-        // Use original color hue
-        float3 col        = color.xyz;
-        col.xyz           = RGBToHSV( col.xyz );
-        col.xyz           = HSVToRGB( float3( origHSV.xy, col.z ));
+        // Use original hue and saturation mixed with lightness channel of noise
+        float3 col        = blendLuma( orig.xyz, color.xyz );
+
         color.xyz         = grainOrigColor ? col.xyz : color.xyz;
 
         color.xyz         = display_depth ? depth.xxx : color.xyz;
