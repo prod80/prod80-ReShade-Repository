@@ -105,6 +105,11 @@ namespace pd80_depthslicer
 
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
     
+    float getLuminance( in float3 x )
+    {
+        return dot( x, float3( 0.212656, 0.715158, 0.072186 ));
+    }
+
     // Collected from
     // http://lolengine.net/blog/2013/07/27/rgb-to-hsv-in-glsl
     float3 RGBToHSV(float3 c)
@@ -125,6 +130,49 @@ namespace pd80_depthslicer
         return c.z * lerp(K.xxx, saturate(p - K.xxx), c.y);
     }
 
+    // nVidia blend modes
+    // Source: https://www.khronos.org/registry/OpenGL/extensions/NV/NV_blend_equation_advanced.txt
+    float3 ClipColor( float3 color )
+    {
+        float lum         = getLuminance( color.xyz );
+        float mincol      = min( min( color.x, color.y ), color.z );
+        float maxcol      = max( max( color.x, color.y ), color.z );
+        if ( mincol < 0.0f )
+            color.xyz     = lum + (( color.xyz - lum ) * lum ) / ( lum - mincol );
+        if ( maxcol > 1.0f )
+            color.xyz     = lum + (( color.xyz - lum ) * ( 1.0f - lum )) / ( maxcol - lum );
+        return color;
+    }
+    
+    // Luminosity: base, blend
+    // Color: blend, base
+    float3 blendLuma( float3 base, float3 blend )
+    {
+        float lumbase     = getLuminance( base.xyz );
+        float lumblend    = getLuminance( blend.xyz );
+        float ldiff       = lumblend - lumbase;
+        float3 col        = base.xyz + ldiff;
+        return ClipColor( col.xyz );
+    }
+
+    // Hue
+    // Saturation
+    float3 blendColor( float3 base, float3 blend, float3 lum )
+    {
+        float minbase     = min( min( base.x, base.y ), base.z );
+        float maxbase     = max( max( base.x, base.y ), base.z );
+        float satbase     = saturate( maxbase - minbase );
+        float minblend    = min( min( blend.x, blend.y ), blend.z );
+        float maxblend    = max( max( blend.x, blend.y ), blend.z );
+        float satblend    = saturate( maxblend - minblend );
+        float3 color;
+        if( satbase > 0.0f )
+            color.xyz     = ( base.xyz - minbase ) * satblend / satbase;
+        else
+            color.xyz     = 0.0f;
+        return blendLuma( color.xyz, lum.xyz );
+    }
+
     float3 darken(float3 c, float3 b)       { return min(c,b);}
     float3 multiply(float3 c, float3 b) 	{ return c*b;}
     float3 linearburn(float3 c, float3 b) 	{ return max(c+b-1.0f, 0.0f);}
@@ -141,26 +189,10 @@ namespace pd80_depthslicer
     float3 hardmix(float3 c, float3 b)      { return vividlight(c,b)<0.5f ? 0.0 : 1.0;}
     float3 reflect(float3 c, float3 b)      { return b>=0.999999f ? b:saturate(c*c/(1.0f-b));}
     float3 glow(float3 c, float3 b)         { return reflect(b, c);}
-    float3 blendhue(float3 c, float3 b)
-    {
-        float3 hsv = RGBToHSV( c.xyz );
-        return HSVToRGB( float3( RGBToHSV( b.xyz ).x, hsv.yz ));
-    }
-    float3 blendsaturation(float3 c, float3 b)
-    {
-        float3 hsv = RGBToHSV( c.xyz );
-        return HSVToRGB( float3( hsv.x, RGBToHSV( b.xyz ).y, hsv.z ));
-    }
-    float3 blendcolor(float3 c, float3 b)
-    {
-        float3 hsv = RGBToHSV( b.xyz );
-        return HSVToRGB( float3( hsv.xy, RGBToHSV( c.xyz ).z ));
-    }
-    float3 blendluminosity(float3 c, float3 b)
-    {
-        float3 hsv = RGBToHSV( c.xyz );
-        return HSVToRGB( float3( hsv.xy, RGBToHSV( b.xyz ).z ));
-    }
+    float3 blendhue(float3 c, float3 b)         { return blendColor( b, c, c ); }
+    float3 blendsaturation(float3 c, float3 b)  { return blendColor( c, b, c ); }
+    float3 blendcolor(float3 c, float3 b)       { return blendLuma( b, c ); }
+    float3 blendluminosity(float3 c, float3 b)  { return blendLuma( c, b ); }
 
     float3 blendmode( float3 c, float3 b, int mode )
     {
