@@ -53,8 +53,15 @@ namespace pd80_filmgrain
         ui_label = "Grain Size";
         ui_category = "Film Grain (simplex)";
         ui_min = 1;
-        ui_max = 24;
+        ui_max = 4;
         > = 1;
+    uniform float grainBlur <
+        ui_type = "slider";
+        ui_label = "Grain Smoothness";
+        ui_category = "Film Grain (simplex)";
+        ui_min = 0.005f;
+        ui_max = 0.7f;
+        > = 0.5;
     uniform int grainOrigColor < __UNIFORM_COMBO_INT1
         ui_label = "Use Original Color";
         ui_category = "Film Grain (simplex)";
@@ -73,7 +80,7 @@ namespace pd80_filmgrain
         ui_category = "Film Grain (simplex)";
         ui_min = 0.0f;
         ui_max = 1.0f;
-        > = 0.2;
+        > = 0.333;
     uniform float grainIntensity <
         ui_type = "slider";
         ui_label = "Grain Intensity";
@@ -94,7 +101,7 @@ namespace pd80_filmgrain
         ui_category = "Film Grain (simplex)";
         ui_min = 0.0f;
         ui_max = 1.0f;
-        > = 0.7;
+        > = 1.0;
     uniform float grainIntLow <
         ui_type = "slider";
         ui_label = "Grain Intensity Shadows";
@@ -134,9 +141,17 @@ namespace pd80_filmgrain
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
     texture texPerm < source = "permtexture.png"; > { Width = 256; Height = 256; Format = RGBA8; };
+    texture texNoise { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
+    texture texNoiseH { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
+    texture texNoiseV { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
+
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerColor { Texture = texColorBuffer; };
     sampler samplerPermTex { Texture = texPerm; };
+    sampler samplerNoise { Texture = texNoise; };
+    sampler samplerNoiseH { Texture = texNoiseH; };
+    sampler samplerNoiseV { Texture = texNoiseV; };
+
     //// DEFINES ////////////////////////////////////////////////////////////////////
     #define LumCoeff float3(0.212656, 0.715158, 0.072186)
     #define permTexSize 256
@@ -289,19 +304,7 @@ namespace pd80_filmgrain
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float4 PS_FilmGrain(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
-        /*
-        TODO: There's a small region of brightness where the shift from neg+pos to only neg noise seems to have less density
-              -- Regarless of szizzling the components, there are still values being partially cancelled out
-        */
-        float4 color      = tex2D( samplerColor, texcoord );
-        float3 origHSV    = RGBToHSV( color.xyz );
-        float3 orig       = color.xyz;
-        float depth       = ReShade::GetLinearizedDepth( texcoord ).x;
-        depth             = smoothstep( depthStart, depthEnd, depth );
-        depth             = pow( depth, depthCurve );
-        float d           = 1.0f;
-        if( enable_depth )
-            d             = depth;
+        // Noise
         float timer       = 1.0f;
         if( grainMotion )
             timer         = Timer % 1000.0f;
@@ -310,8 +313,7 @@ namespace pd80_filmgrain
         noise.y           = pnoise3D( float3( uv.xy, 2 ), timer );
         noise.z           = pnoise3D( float3( uv.xy, 3 ), timer );
 
-        // Old, practically does the same as grainAmount below
-        // Added back on request
+        // Intensity
         noise.xyz         *= grainIntensity;
 
 		// Noise color
@@ -319,6 +321,91 @@ namespace pd80_filmgrain
 		
 		// Control noise density
         noise.xyz         = pow( abs( noise.xyz ), max( 11.0f - grainDensity, 0.1f )) * sign( noise.xyz );
+
+        // Pack noise that has range -1..0..1 into 0..1 range for blurring passes
+        // After blurring passes unpack again noise * 2 - 1
+        noise.xyz         = saturate(( noise.xyz + 1.0f ) * 0.5f );
+
+        return float4( noise.xyz, 1.0f );
+    }
+
+    float4 PS_BlurH(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
+    {
+        float4 noise      = tex2D( samplerNoise, texcoord );
+        // Blur
+        float SigmaSum    = 0.0f;
+        float pxlOffset   = 1.0f;
+        float Blur        = grainBlur * grainSize;
+        float3 Sigma;
+        Sigma.x           = 1.0f / ( sqrt( 6.283184f ) * Blur );
+        Sigma.y           = exp( -0.5f / ( Blur * Blur ));
+        Sigma.z           = Sigma.y * Sigma.y;
+        noise.xyz         *= Sigma.x;
+        SigmaSum          += Sigma.x;
+        Sigma.xy          *= Sigma.yz;
+        float px          = BUFFER_RCP_WIDTH;
+
+        [unroll]
+        for( int i = 0; i < 16 && SigmaSum < 0.985f; ++i )
+        {
+            noise         += tex2D( samplerNoise, texcoord.xy + float2( pxlOffset * px, 0.0f )) * Sigma.x;
+            noise         += tex2D( samplerNoise, texcoord.xy - float2( pxlOffset * px, 0.0f )) * Sigma.x;
+            SigmaSum      += ( 2.0f * Sigma.x );
+            pxlOffset     += 1.0f;
+            Sigma.xy      *= Sigma.yz;
+        }
+
+        noise.xyz         /= SigmaSum;
+        return float4( noise.xyz, 1.0f );
+    }
+
+    float4 PS_BlurV(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
+    {
+        float4 noise      = tex2D( samplerNoiseH, texcoord );
+        // Blur
+        float SigmaSum    = 0.0f;
+        float pxlOffset   = 1.0f;
+        float Blur        = grainBlur * grainSize;
+        float3 Sigma;
+        Sigma.x           = 1.0f / ( sqrt( 6.283184f ) * Blur );
+        Sigma.y           = exp( -0.5f / ( Blur * Blur ));
+        Sigma.z           = Sigma.y * Sigma.y;
+        noise.xyz         *= Sigma.x;
+        SigmaSum          += Sigma.x;
+        Sigma.xy          *= Sigma.yz;
+        float py          = BUFFER_RCP_HEIGHT;
+
+        [loop]
+        for( int i = 0; i < 16 && SigmaSum < 0.985f; ++i )
+        {
+            noise         += tex2D( samplerNoiseH, texcoord.xy + float2( 0.0f, pxlOffset * py )) * Sigma.x;
+            noise         += tex2D( samplerNoiseH, texcoord.xy - float2( 0.0f, pxlOffset * py )) * Sigma.x;
+            SigmaSum      += ( 2.0f * Sigma.x );
+            pxlOffset     += 1.0f;
+            Sigma.xy      *= Sigma.yz;
+        }
+
+        noise.xyz         /= SigmaSum;
+        return float4( noise.xyz, 1.0f );   
+    }
+
+    float4 PS_MergeNoise(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
+    {
+        float4 noise      = tex2D( samplerNoiseV, texcoord );
+        float4 color      = tex2D( samplerColor, texcoord );
+
+        // Unpack noise
+        noise.xyz         = noise.xyz * 2.0f - 1.0f;
+        
+        // Depth
+        float depth       = ReShade::GetLinearizedDepth( texcoord ).x;
+        depth             = smoothstep( depthStart, depthEnd, depth );
+        depth             = pow( depth, depthCurve );
+        float d           = enable_depth ? depth : 1.0f;
+
+        // Store some values
+        float3 origHSV    = RGBToHSV( color.xyz );
+        float3 orig       = color.xyz;
 
         // Mixing options
         float lum         = dot( color.xyz, 0.333333f ); // Just using average here
@@ -352,7 +439,6 @@ namespace pd80_filmgrain
         
         // Use original hue and saturation mixed with lightness channel of noise
         float3 col        = blendLuma( orig.xyz, color.xyz );
-
         color.xyz         = grainOrigColor ? col.xyz : color.xyz;
 
         color.xyz         = display_depth ? depth.xxx : color.xyz;
@@ -362,10 +448,28 @@ namespace pd80_filmgrain
     //// TECHNIQUES /////////////////////////////////////////////////////////////////
     technique prod80_06_FilmGrain
     {
-        pass prod80_AfterFX2
+        pass prod80_WriteNoise
         {
             VertexShader  = PostProcessVS;
             PixelShader   = PS_FilmGrain;
+            RenderTarget  = texNoise;
+        }
+        pass prod80_BlurH
+        {
+            VertexShader  = PostProcessVS;
+            PixelShader   = PS_BlurH;
+            RenderTarget  = texNoiseH;
+        }
+        pass prod80_BlurV
+        {
+            VertexShader  = PostProcessVS;
+            PixelShader   = PS_BlurV;
+            RenderTarget  = texNoiseV;
+        }
+        pass prod80_MixNoise
+        {
+            VertexShader  = PostProcessVS;
+            PixelShader   = PS_MergeNoise;
         }
     }
 }
