@@ -33,6 +33,10 @@
 #include "ReShade.fxh"
 #include "ReShadeUI.fxh"
 
+#ifndef FG_GRAIN_SMOOTHING
+    #define FG_GRAIN_SMOOTHING      0
+#endif
+
 namespace pd80_filmgrain
 {
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
@@ -55,6 +59,7 @@ namespace pd80_filmgrain
         ui_min = 1;
         ui_max = 4;
         > = 1;
+#if( FG_GRAIN_SMOOTHING )
     uniform float grainBlur <
         ui_type = "slider";
         ui_label = "Grain Smoothness";
@@ -62,6 +67,7 @@ namespace pd80_filmgrain
         ui_min = 0.005f;
         ui_max = 0.7f;
         > = 0.5;
+#endif
     uniform int grainOrigColor < __UNIFORM_COMBO_INT1
         ui_label = "Use Original Color";
         ui_category = "Film Grain (simplex)";
@@ -142,15 +148,19 @@ namespace pd80_filmgrain
     texture texColorBuffer : COLOR;
     texture texPerm < source = "permtexture.png"; > { Width = 256; Height = 256; Format = RGBA8; };
     texture texNoise { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
+#if( FG_GRAIN_SMOOTHING )
     texture texNoiseH { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
     texture texNoiseV { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
+#endif
 
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerColor { Texture = texColorBuffer; };
     sampler samplerPermTex { Texture = texPerm; };
     sampler samplerNoise { Texture = texNoise; };
+#if( FG_GRAIN_SMOOTHING )
     sampler samplerNoiseH { Texture = texNoiseH; };
     sampler samplerNoiseV { Texture = texNoiseV; };
+#endif
 
     //// DEFINES ////////////////////////////////////////////////////////////////////
     #define LumCoeff float3(0.212656, 0.715158, 0.072186)
@@ -328,7 +338,7 @@ namespace pd80_filmgrain
 
         return float4( noise.xyz, 1.0f );
     }
-
+#if( FG_GRAIN_SMOOTHING )
     float4 PS_BlurH(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 noise      = tex2D( samplerNoise, texcoord );
@@ -345,8 +355,8 @@ namespace pd80_filmgrain
         Sigma.xy          *= Sigma.yz;
         float px          = BUFFER_RCP_WIDTH;
 
-        [unroll]
-        for( int i = 0; i < 16 && SigmaSum < 0.985f; ++i )
+        [loop]
+        for( int i = 0; i < 5 && Sigma.x > 0.001f ; ++i )
         {
             noise         += tex2D( samplerNoise, texcoord.xy + float2( pxlOffset * px, 0.0f )) * Sigma.x;
             noise         += tex2D( samplerNoise, texcoord.xy - float2( pxlOffset * px, 0.0f )) * Sigma.x;
@@ -376,7 +386,7 @@ namespace pd80_filmgrain
         float py          = BUFFER_RCP_HEIGHT;
 
         [loop]
-        for( int i = 0; i < 16 && SigmaSum < 0.985f; ++i )
+        for( int i = 0; i < 5 && Sigma.x > 0.001f ; ++i )
         {
             noise         += tex2D( samplerNoiseH, texcoord.xy + float2( 0.0f, pxlOffset * py )) * Sigma.x;
             noise         += tex2D( samplerNoiseH, texcoord.xy - float2( 0.0f, pxlOffset * py )) * Sigma.x;
@@ -388,10 +398,14 @@ namespace pd80_filmgrain
         noise.xyz         /= SigmaSum;
         return float4( noise.xyz, 1.0f );   
     }
-
+#endif
     float4 PS_MergeNoise(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
+#if( FG_GRAIN_SMOOTHING )
         float4 noise      = tex2D( samplerNoiseV, texcoord );
+#else
+        float4 noise      = tex2D( samplerNoise, texcoord );
+#endif
         float4 color      = tex2D( samplerColor, texcoord );
 
         // Unpack noise
@@ -454,6 +468,7 @@ namespace pd80_filmgrain
             PixelShader   = PS_FilmGrain;
             RenderTarget  = texNoise;
         }
+#if( FG_GRAIN_SMOOTHING )
         pass prod80_BlurH
         {
             VertexShader  = PostProcessVS;
@@ -466,6 +481,7 @@ namespace pd80_filmgrain
             PixelShader   = PS_BlurV;
             RenderTarget  = texNoiseV;
         }
+#endif
         pass prod80_MixNoise
         {
             VertexShader  = PostProcessVS;
