@@ -356,10 +356,10 @@ namespace pd80_filmgrain
         float px          = BUFFER_RCP_WIDTH;
 
         [loop]
-        for( int i = 0; i < 5 && Sigma.x > 0.001f ; ++i )
+        for( int i = 0; i < 5 && Sigma.x > 0.001f; ++i )
         {
-            noise         += tex2D( samplerNoise, texcoord.xy + float2( pxlOffset * px, 0.0f )) * Sigma.x;
-            noise         += tex2D( samplerNoise, texcoord.xy - float2( pxlOffset * px, 0.0f )) * Sigma.x;
+            noise         += tex2Dlod( samplerNoise, float4( texcoord.xy + float2( pxlOffset * px, 0.0f ), 0.0, 0.0 )) * Sigma.x;
+            noise         += tex2Dlod( samplerNoise, float4( texcoord.xy - float2( pxlOffset * px, 0.0f ), 0.0, 0.0 )) * Sigma.x;
             SigmaSum      += ( 2.0f * Sigma.x );
             pxlOffset     += 1.0f;
             Sigma.xy      *= Sigma.yz;
@@ -386,10 +386,10 @@ namespace pd80_filmgrain
         float py          = BUFFER_RCP_HEIGHT;
 
         [loop]
-        for( int i = 0; i < 5 && Sigma.x > 0.001f ; ++i )
+        for( int i = 0; i < 5 && Sigma.x > 0.001f; ++i )
         {
-            noise         += tex2D( samplerNoiseH, texcoord.xy + float2( 0.0f, pxlOffset * py )) * Sigma.x;
-            noise         += tex2D( samplerNoiseH, texcoord.xy - float2( 0.0f, pxlOffset * py )) * Sigma.x;
+            noise         += tex2Dlod( samplerNoiseH, float4( texcoord.xy + float2( 0.0f, pxlOffset * py ), 0.0, 0.0 )) * Sigma.x;
+            noise         += tex2Dlod( samplerNoiseH, float4( texcoord.xy - float2( 0.0f, pxlOffset * py ), 0.0, 0.0 )) * Sigma.x;
             SigmaSum      += ( 2.0f * Sigma.x );
             pxlOffset     += 1.0f;
             Sigma.xy      *= Sigma.yz;
