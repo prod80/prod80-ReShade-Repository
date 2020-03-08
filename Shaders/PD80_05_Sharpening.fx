@@ -102,13 +102,15 @@ namespace pd80_lumasharpen
     texture texColorBuffer : COLOR;
     texture texGaussianH { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; }; 
     texture texGaussian { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
+
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerColor { Texture = texColorBuffer; };
     sampler samplerGaussianH { Texture = texGaussianH; };
     sampler samplerGaussian { Texture = texGaussian; };
+
     //// DEFINES ////////////////////////////////////////////////////////////////////
     #define PI 3.141592f
-    #define LOOPS ( BUFFER_WIDTH / 1920 * 4 ) // Scalar
+
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
 
     float getLuminance( in float3 x )
@@ -150,13 +152,14 @@ namespace pd80_lumasharpen
     float4 PS_GaussianH(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color     = tex2D( samplerColor, texcoord );
-        float px         = 1.0f / BUFFER_WIDTH;
+        float px         = BUFFER_RCP_WIDTH;
         float SigmaSum   = 0.0f;
         float pxlOffset  = 1.0f;
+        float loops      = max( BUFFER_WIDTH, BUFFER_HEIGHT ) / 1920.0f * 4.0f;
 
         //Gaussian Math
         float3 Sigma;
-        float bSigma     = BlurSigma * ( BUFFER_WIDTH / 1920.0f ); // Scalar
+        float bSigma     = BlurSigma * ( max( BUFFER_WIDTH, BUFFER_HEIGHT ) / 1920.0f ); // Scalar
         Sigma.x          = 1.0f / ( sqrt( 2.0f * PI ) * bSigma );
         Sigma.y          = exp( -0.5f / ( bSigma * bSigma ));
         Sigma.z          = Sigma.y * Sigma.y;
@@ -168,10 +171,11 @@ namespace pd80_lumasharpen
         //Setup next weight
         Sigma.xy         *= Sigma.yz;
 
-        for( int i = 0; i < LOOPS; ++i )
+        [loop]
+        for( int i = 0; i < loops; ++i )
         {
-            color        += tex2D( samplerColor, texcoord.xy + float2( pxlOffset*px, 0.0f )) * Sigma.x;
-            color        += tex2D( samplerColor, texcoord.xy - float2( pxlOffset*px, 0.0f )) * Sigma.x;
+            color        += tex2Dlod( samplerColor, float4( texcoord.xy + float2( pxlOffset*px, 0.0f ), 0.0, 0.0 )) * Sigma.x;
+            color        += tex2Dlod( samplerColor, float4( texcoord.xy - float2( pxlOffset*px, 0.0f ), 0.0, 0.0 )) * Sigma.x;
             SigmaSum     += ( 2.0f * Sigma.x );
             pxlOffset    += 1.0f;
             Sigma.xy     *= Sigma.yz;
@@ -184,13 +188,14 @@ namespace pd80_lumasharpen
     float4 PS_GaussianV(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color     = tex2D( samplerGaussianH, texcoord );
-        float py         = 1.0f / BUFFER_HEIGHT;
+        float py         = BUFFER_RCP_HEIGHT;
         float SigmaSum   = 0.0f;
         float pxlOffset  = 1.0f;
+        float loops      = max( BUFFER_WIDTH, BUFFER_HEIGHT ) / 1920.0f * 4.0f;
 
         //Gaussian Math
         float3 Sigma;
-        float bSigma     = BlurSigma * ( BUFFER_WIDTH / 1920.0f ); // Scalar
+        float bSigma     = BlurSigma * ( max( BUFFER_WIDTH, BUFFER_HEIGHT ) / 1920.0f ); // Scalar
         Sigma.x          = 1.0f / ( sqrt( 2.0f * PI ) * bSigma );
         Sigma.y          = exp( -0.5f / ( bSigma * bSigma ));
         Sigma.z          = Sigma.y * Sigma.y;
@@ -202,10 +207,11 @@ namespace pd80_lumasharpen
         //Setup next weight
         Sigma.xy         *= Sigma.yz;
 
-        for( int i = 0; i < LOOPS; ++i )
+        [loop]
+        for( int i = 0; i < loops; ++i )
         {
-            color        += tex2D( samplerGaussianH, texcoord.xy + float2( 0.0f, pxlOffset*py )) * Sigma.x;
-            color        += tex2D( samplerGaussianH, texcoord.xy - float2( 0.0f, pxlOffset*py )) * Sigma.x;
+            color        += tex2Dlod( samplerGaussianH, float4( texcoord.xy + float2( 0.0f, pxlOffset*py ), 0.0, 0.0 )) * Sigma.x;
+            color        += tex2Dlod( samplerGaussianH, float4( texcoord.xy - float2( 0.0f, pxlOffset*py ), 0.0, 0.0 )) * Sigma.x;
             SigmaSum     += ( 2.0f * Sigma.x );
             pxlOffset    += 1.0f;
             Sigma.xy     *= Sigma.yz;
