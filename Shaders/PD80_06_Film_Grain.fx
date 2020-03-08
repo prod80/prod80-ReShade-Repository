@@ -73,6 +73,10 @@ namespace pd80_filmgrain
         ui_category = "Film Grain (simplex)";
         ui_items = "Use Random Color\0Use Original Color\0";
         > = 1;
+    uniform bool use_negnoise <
+        ui_label = "Use Negative Noise (highlights)";
+        ui_category = "Film Grain (simplex)";
+        > = false;
     uniform float grainColor <
         ui_type = "slider";
         ui_label = "Grain Color Amount";
@@ -432,7 +436,8 @@ namespace pd80_filmgrain
         lum               *= lum;
         // Apply only negative noise in highlights/whites as positive will be clipped out
         // Swizzle the components of negnoise to avoid middle intensity regions of no noise ( x - x = 0 )
-        noise.xyz         = lerp( noise.xyz, negnoise.zxy, lum * lum );
+        negnoise.xyz      = lerp( noise.xyz, negnoise.zxy * 0.5f, lum );
+        noise.xyz         = use_negnoise ? negnoise.xyz : noise.xyz;
 
         // Noise coloring
         // Issue, when changing hue to original Red, Bblue channels work fine, but humans more sensitive to Yellow/Green
