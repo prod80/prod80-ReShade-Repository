@@ -202,28 +202,28 @@ namespace pd80_hqbloom
     texture texBAvgLuma { Format = R16F; };
     texture texBPrevAvgLuma { Format = R16F; };
     #if( BLOOM_ENABLE_CA == 1 )
-    texture texCABloom { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
+    texture texCABloom { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
     #endif
     #if( BLOOM_QUALITY == 0 )
-        texture texBloomIn { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; }; 
-        texture texBloomH { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
-        texture texBloom { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
+        texture texBloomIn { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
+        texture texBloomH { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
+        texture texBloom { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
         #define SWIDTH   BUFFER_WIDTH
         #define SHEIGHT  BUFFER_HEIGHT
     #endif
     #if( BLOOM_QUALITY == 1 )
         #define SWIDTH   ( BUFFER_WIDTH / 4 * 3 )
         #define SHEIGHT  ( BUFFER_HEIGHT / 4 * 3 )
-        texture texBloomIn { Width = SWIDTH; Height = SHEIGHT; }; 
-        texture texBloomH { Width = SWIDTH; Height = SHEIGHT; };
-        texture texBloom { Width = SWIDTH; Height = SHEIGHT; };
+        texture texBloomIn { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
+        texture texBloomH { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
+        texture texBloom { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
     #endif
     #if( BLOOM_QUALITY == 2 )
         #define SWIDTH   ( BUFFER_WIDTH / 2 )
         #define SHEIGHT  ( BUFFER_HEIGHT / 2 )
-        texture texBloomIn { Width = SWIDTH; Height = SHEIGHT; }; 
-        texture texBloomH { Width = SWIDTH; Height = SHEIGHT; };
-        texture texBloom { Width = SWIDTH; Height = SHEIGHT; };
+        texture texBloomIn { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
+        texture texBloomH { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
+        texture texBloom { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
     #endif
 
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
@@ -242,9 +242,8 @@ namespace pd80_hqbloom
     uniform float Frametime < source = "frametime"; >;
     uniform int drandom < source = "random"; min = 0; max = 32767; >;
     #define LumCoeff float3(0.212656, 0.715158, 0.072186)
-    #define Q 0.985f
     #define PI 3.141592f
-    #define LOOPCOUNT 150f
+    #define LOOPCOUNT 150
     #define aspect float( BUFFER_WIDTH * BUFFER_RCP_HEIGHT )
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
     #if( BLOOM_ENABLE_DEBAND == 1 )
@@ -442,12 +441,12 @@ namespace pd80_hqbloom
         Sigma.xy         *= Sigma.yz;
 
         [loop]
-        for( int i = 0; i < LOOPCOUNT && SigmaSum < Q; ++i )
+        for( int i = 0; i < LOOPCOUNT && Sigma.x > 0.001f; ++i )
         {
             buffSigma.x  = Sigma.x * Sigma.y;
             buffSigma.y  = Sigma.x + buffSigma.x;
-            color        += tex2D( samplerBloomIn, texcoord.xy + float2( pxlOffset * px, 0.0f )) * buffSigma.y;
-            color        += tex2D( samplerBloomIn, texcoord.xy - float2( pxlOffset * px, 0.0f )) * buffSigma.y;
+            color        += tex2Dlod( samplerBloomIn, float4( texcoord.xy + float2( pxlOffset * px, 0.0f ), 0.0, 0.0 )) * buffSigma.y;
+            color        += tex2Dlod( samplerBloomIn, float4( texcoord.xy - float2( pxlOffset * px, 0.0f ), 0.0, 0.0 )) * buffSigma.y;
             SigmaSum     += ( 2.0f * Sigma.x + 2.0f * buffSigma.x );
             pxlOffset    += 2.0f;
             Sigma.xy     *= Sigma.yz;
@@ -488,12 +487,12 @@ namespace pd80_hqbloom
         Sigma.xy         *= Sigma.yz;
 
         [loop]
-        for( int i = 0; i < LOOPCOUNT && SigmaSum < Q; ++i )
+        for( int i = 0; i < LOOPCOUNT && Sigma.x > 0.001f; ++i )
         {
             buffSigma.x  = Sigma.x * Sigma.y;
             buffSigma.y  = Sigma.x + buffSigma.x;
-            color        += tex2D( samplerBloomH, texcoord.xy + float2( 0.0f, pxlOffset * py )) * buffSigma.y;
-            color        += tex2D( samplerBloomH, texcoord.xy - float2( 0.0f, pxlOffset * py )) * buffSigma.y;
+            color        += tex2Dlod( samplerBloomH, float4( texcoord.xy + float2( 0.0f, pxlOffset * py ), 0.0, 0.0 )) * buffSigma.y;
+            color        += tex2Dlod( samplerBloomH, float4( texcoord.xy - float2( 0.0f, pxlOffset * py ), 0.0, 0.0 )) * buffSigma.y;
             SigmaSum     += ( 2.0f * Sigma.x + 2.0f * buffSigma.x );
             pxlOffset    += 2.0f;
             Sigma.xy     *= Sigma.yz;
@@ -570,11 +569,11 @@ namespace pd80_hqbloom
         float offsetX     = px * c * caintensity.x;
         float offsetY     = py * s * caintensity.x;
 
-        for( float i = 0; i < 8.0f; i++ )
+        for( float i = 0; i < 8; ++i )
         {
             huecolor.xyz  = HUEToRGB( i / 8.0f );
             o2            = lerp( -caWidth, caWidth, i / o1 );
-            temp.xyz      = tex2D( samplerBloom, texcoord.xy + float2( o2 * offsetX, o2 * offsetY )).xyz;
+            temp.xyz      = tex2Dlod( samplerBloom, float4( texcoord.xy + float2( o2 * offsetX, o2 * offsetY ), 0.0, 0.0 )).xyz;
             color.xyz     += temp.xyz * huecolor.xyz;
             d.xyz         += huecolor.xyz;
         }
