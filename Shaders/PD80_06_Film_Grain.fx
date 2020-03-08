@@ -40,6 +40,10 @@
 namespace pd80_filmgrain
 {
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
+    uniform bool enable_test <
+        ui_label = "Enable Setup Mode";
+        ui_category = "Film Grain (simplex)";
+        > = false;
     uniform int grainMotion < __UNIFORM_COMBO_INT1
         ui_label = "Grain Motion";
         ui_category = "Film Grain (simplex)";
@@ -425,12 +429,19 @@ namespace pd80_filmgrain
         depth             = pow( depth, depthCurve );
         float d           = enable_depth ? depth : 1.0f;
 
+        // Test setup
+        float3 testenv    = ( texcoord.y < 0.25f ) ? texcoord.xxx : ( texcoord.y < 0.5f ) ? float3( texcoord.x, 0.0f, 0.0f ) :
+                            ( texcoord.y < 0.75f ) ? float3( 0.0f, texcoord.x, 0.0f ) : float3( 0.0f, 0.0f, texcoord.x );
+        color.xyz         = enable_test ? testenv.xyz : color.xyz;
+
         // Store some values
         float3 origHSV    = RGBToHSV( color.xyz );
         float3 orig       = color.xyz;
+        float maxc        = max( max( color.x, color.y ), color.z );
+        float minc        = min( min( color.x, color.y ), color.z );
 
         // Mixing options
-        float lum         = dot( color.xyz, 0.333333f ); // Just using average here
+        float lum         = maxc;
         noise.xyz         = lerp( noise.xyz * grainIntLow, noise.xyz * grainIntHigh, fade( lum )); // Noise adjustments based on average intensity
         float3 negnoise   = -abs( noise.xyz );
         lum               *= lum;
@@ -447,15 +458,17 @@ namespace pd80_filmgrain
         float weight      = max( 1.0f - abs(( origHSV.x - 0.166667f ) * 6.0f ), 0.0f ) * factor;
         weight            += max( 1.0f - abs(( origHSV.x - 0.333333f ) * 6.0f ), 0.0f ) / factor;
         weight            = saturate( curve( weight / factor ));
-         // Avoid NaN/Inf. on blacks which may have a minimal weight ( Hue for black is red which is very close to the border of yellow )
-        float maxc        = max( max( color.x, color.y ), color.z ) + 1.0e-10;
-        float minc        = min( min( color.x, color.y ), color.z );
+    
         // Account for saturation
-        weight            = weight * saturate(( maxc - minc ) / maxc );
+        weight            *= saturate(( maxc + 1.0e-10 - minc ) / maxc + 1.0e-10 );
+        // Account for intensity. Highest reduction at 0.2 intensity
+        // No change in blacks and brights
+        float adj         = saturate(( maxc - 0.2f ) * 1.25f ) + saturate( 1.0f - maxc * 5.0f );
+        adj               = 1.0f - curve( adj );
+        weight            *= adj;
         
-        // Create a factor to adjust noise intensity
-        // 0.307003 is not arbitrary, it's the scaled inverse of 0.715158
-        float adjNoise    = lerp( 1.0f, 0.307003f, grainOrigColor * weight );
+        // Create a factor to adjust noise intensity based on weight
+        float adjNoise    = lerp( 1.0f, 0.5f, grainOrigColor * weight );
 
         color.xyz         = lerp( color.xyz, color.xyz + ( noise.xyz * d ), grainAmount * adjNoise );
         color.xyz         = saturate( color.xyz );
