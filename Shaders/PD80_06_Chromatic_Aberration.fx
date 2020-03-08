@@ -158,9 +158,7 @@ namespace pd80_ca
     sampler samplerColor { Texture = texColorBuffer; };
     
     //// DEFINES ////////////////////////////////////////////////////////////////////
-    #define px          BUFFER_RCP_WIDTH
-    #define py          BUFFER_RCP_HEIGHT
-    #define aspect      float( BUFFER_WIDTH * BUFFER_RCP_HEIGHT )
+
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
     float3 HUEToRGB( float H )
     {
@@ -173,6 +171,9 @@ namespace pd80_ca
     float4 PS_CA(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color      = 0.0f;
+        float px          = BUFFER_RCP_WIDTH;
+        float py          = BUFFER_RCP_HEIGHT;
+        float aspect      = float( BUFFER_WIDTH * BUFFER_RCP_HEIGHT );
         float3 orig       = tex2D( samplerColor, texcoord ).xyz;
         float depth       = ReShade::GetLinearizedDepth( texcoord ).x;
         depth             = smoothstep( depthStart, depthEnd, depth );
