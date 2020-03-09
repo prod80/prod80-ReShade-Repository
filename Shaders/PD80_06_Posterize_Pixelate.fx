@@ -46,7 +46,7 @@ namespace pd80_posterizepixelate
         ui_category = "Pixelate";
         ui_type = "slider";
         ui_min = 1;
-        ui_max = 100;
+        ui_max = 9;
         > = 1;
     uniform float effect_strength <
         ui_type = "slider";
@@ -64,36 +64,39 @@ namespace pd80_posterizepixelate
         > = 0.0;
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
+    texture texMipMe { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; MipLevels = 9; };
     
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerColor { Texture = texColorBuffer; };
+    sampler samplerMipMe
+    {
+        Texture = texMipMe;
+        MipFilter = POINT;
+        MinFilter = POINT;
+        MagFilter = POINT;
+    };
 
     //// DEFINES ////////////////////////////////////////////////////////////////////
     #define aspect      float( BUFFER_WIDTH * BUFFER_RCP_HEIGHT )
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
 
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
+    float4 PS_MipMe(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
+    {
+        return tex2D( samplerColor, texcoord );
+    }
+
     float4 PS_Posterize(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
-        float3 orig       = tex2D( samplerColor, texcoord.xy ).xyz; 
-        float sigma       = 0.0f;
-        float3 color      = 0.0f;
-        float3 temp       = 0.0f;
-        float2 uv         = texcoord.xy * float2( BUFFER_WIDTH, BUFFER_HEIGHT );
-        float2 qualifier  = floor( uv.xy );
-        uv.xy             = floor( uv.xy / pixel_size ) * pixel_size;
-        for( int y = uv.y; y < uv.y + pixel_size && y < BUFFER_HEIGHT; ++y )
-        {
-            for( int x = uv.x; x < uv.x + pixel_size && x < BUFFER_WIDTH; ++x )
-            {
-                temp.xyz  = tex2Dfetch( samplerColor, int4( x, y, 0, 0 )).xyz;
-                color.xyz += lerp( temp.xyz * ( 1.0f - border_str ), temp.xyz, saturate( qualifier.x - uv.x ));
-                color.xyz += lerp( temp.xyz * ( 1.0f - border_str ), temp.xyz, saturate( qualifier.y - uv.y ));
-                sigma     += 2.0f;
-            }
-        }
-        color.xyz         /= sigma;
+        float3 color      = tex2Dlod( samplerMipMe, float4( texcoord.xy, 0.0f, pixel_size - 1 )).xyz;
+        float3 orig       = color.xyz;
         color.xyz         = floor( color.xyz * number_of_levels ) / ( number_of_levels - 1 );
+        float exp         = exp2( pixel_size - 1 );
+        float rcp_exp     = rcp( exp ) - 0.00001f; //  - 0.00001f because fp precision comes into play
+        float2 uv         = frac( texcoord.xy * float2( floor( BUFFER_WIDTH / exp ), floor( BUFFER_HEIGHT / exp )));
+        float grade       = ( uv.x <= rcp_exp ) ? 1.0 : 0.0; 
+        grade            += ( uv.y <= rcp_exp ) ? 1.0 : 0.0;
+        color.xyz         = lerp( color.xyz, lerp( color.xyz, 0.0f, border_str ), saturate( grade ));
         color.xyz         = lerp( orig.xyz, color.xyz, effect_strength );
         return float4( color.xyz, 1.0f );
     }
@@ -104,9 +107,13 @@ namespace pd80_posterizepixelate
         pass prod80_pass0
         {
             VertexShader   = PostProcessVS;
+            PixelShader    = PS_MipMe;
+            RenderTarget   = texMipMe;
+        }
+        pass prod80_pass1
+        {
+            VertexShader   = PostProcessVS;
             PixelShader    = PS_Posterize;
         }
     }
 }
-
-
