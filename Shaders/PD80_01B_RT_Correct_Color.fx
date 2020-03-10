@@ -59,15 +59,27 @@ namespace pd80_correctcolor
         ui_label = "Enable Time Based Fade";
         ui_category = "Global: Remove Tint";
         > = true;
+    uniform float transition_speed <
+        ui_type = "slider";
+        ui_label = "Time Based Fade Speed";
+        ui_category = "Global: Remove Tint";
+        ui_min = 0.0f;
+        ui_max = 1.0f;
+        > = 0.5;
     uniform bool freeze <
         ui_label = "Freeze Correction";
         ui_category = "Global: Remove Tint";
         > = false;
+    uniform bool reject_color <
+        ui_label = "Correction Method when min >= max";
+        ui_category = "Global: Remove Tint";
+        ui_tooltip = "When min >= max value you can either reject max (enabled) or reject min (disabled) value.\nDefault is reject max as that preserves contrast.";
+        > = true;
     uniform bool rt_enable_whitepoint_correction <
         ui_text = "----------------------------------------------";
         ui_label = "Enable Whitepoint Correction";
         ui_category = "Whitepoint: Remove Tint";
-        > = false;
+        > = true;
     uniform bool rt_whitepoint_respect_luma <
         ui_label = "Respect Luma";
         ui_category = "Whitepoint: Remove Tint";
@@ -123,15 +135,15 @@ namespace pd80_correctcolor
         ui_text = "----------------------------------------------";
         ui_label = "Enable Midtone Correction";
         ui_category = "Midtone: Remove Tint";
-        > = false;
+        > = true;
     uniform bool rt_midpoint_respect_luma <
         ui_label = "Respect Luma";
         ui_category = "Midtone: Remove Tint";
-        > = false;
+        > = true;
     uniform bool mid_use_alt_method <
         ui_label = "Use average Dark-Light as Mid";
         ui_category = "Midtone: Remove Tint";
-        > = false;
+        > = true;
     uniform float midCC_scale <
         ui_type = "slider";
         ui_label = "Midtone Correction Scale";
@@ -143,21 +155,32 @@ namespace pd80_correctcolor
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
     texture texColor { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; MipLevels = 5; };
-    texture texDS_1_Max { Width = BUFFER_WIDTH/32; Height = BUFFER_HEIGHT/32; Format = RGBA16F; };
-    texture texDS_1_Min { Width = BUFFER_WIDTH/32; Height = BUFFER_HEIGHT/32; Format = RGBA16F; };
-    texture texDS_1_Mid { Width = BUFFER_WIDTH/32; Height = BUFFER_HEIGHT/32; Format = RGBA16F; };
-    texture texPrevious { Width = 6; Height = 2; Format = RGBA16F; };
+    texture texDS_1_Max { Width = 32; Height = 32; Format = RGBA16F; };
+    texture texDS_1_Min { Width = 32; Height = 32; Format = RGBA16F; };
+    texture texDS_1_Mid { Width = 32; Height = 32; Format = RGBA16F; };
     texture texDS_1x1 { Width = 6; Height = 2; Format = RGBA16F; };
+    texture texPrevious { Width = 6; Height = 2; Format = RGBA16F; };
 
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerColorBuffer { Texture = texColorBuffer; };
     sampler samplerColor { Texture = texColor; };
-    sampler samplerDS_1_Max { Texture = texDS_1_Max; };
-    sampler samplerDS_1_Min { Texture = texDS_1_Min; };
-    sampler samplerDS_1_Mid { Texture = texDS_1_Mid; };
-    sampler samplerPrevious
+    sampler samplerDS_1_Max
     { 
-        Texture   = texPrevious;
+        Texture = texDS_1_Max;
+        MipFilter = POINT;
+        MinFilter = POINT;
+        MagFilter = POINT;
+    };
+    sampler samplerDS_1_Min
+    {
+        Texture = texDS_1_Min;
+        MipFilter = POINT;
+        MinFilter = POINT;
+        MagFilter = POINT;
+    };
+    sampler samplerDS_1_Mid
+    {
+        Texture = texDS_1_Mid;
         MipFilter = POINT;
         MinFilter = POINT;
         MagFilter = POINT;
@@ -169,15 +192,27 @@ namespace pd80_correctcolor
         MinFilter = POINT;
         MagFilter = POINT;
     };
+    sampler samplerPrevious
+    { 
+        Texture   = texPrevious;
+        MipFilter = POINT;
+        MinFilter = POINT;
+        MagFilter = POINT;
+    };
 
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
     uniform float frametime < source = "frametime"; >;
 
+    float3 interpolate( float3 o, float3 n, float factor, float ft )
+    {
+        float time = ft / 1000.0f; // Need time in seconds, not ms
+        return lerp( o.xyz, n.xyz, 1.0f - exp( -factor * time ));
+    }
+
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float4 PS_WriteColor(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
-        float4 color      = tex2D( samplerColorBuffer, texcoord );
-        return float4( color.xyz, 1.0f );
+        return tex2D( samplerColorBuffer, texcoord );
     }
     //Downscale to 32x32 min/max color matrix
     void PS_MinMax_1( float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 minValue : SV_Target0, out float4 maxValue : SV_Target1, out float4 midValue : SV_Target2 )
@@ -193,8 +228,8 @@ namespace pd80_correctcolor
         float getMin;   float getMin2;
         float getMax;   float getMax2;
 
-        float3 prevMin     = tex2D( samplerPrevious, float2((texcoord.x + 0.0) / 6.0, texcoord.y)).xyz;
-        float3 prevMax     = tex2D( samplerPrevious, float2((texcoord.x + 4.0) / 6.0, texcoord.y)).xyz;
+        float3 prevMin     = tex2D( samplerPrevious, float2( texcoord.x / 6.0f, texcoord.y )).xyz;
+        float3 prevMax     = tex2D( samplerPrevious, float2(( texcoord.x + 4.0f ) / 6.0f, texcoord.y )).xyz;
         float middle       = dot( float2( dot( prevMin.xyz, 0.333333f ), dot( prevMax.xyz, 0.333333f )), 0.5f );
         middle             = ( mid_use_alt_method ) ? middle : 0.5f;
 
@@ -202,21 +237,23 @@ namespace pd80_correctcolor
         float2 Range       = float2( BUFFER_WIDTH, BUFFER_HEIGHT ) / ( 32.0f * RT_RES );
 
         //Current block
-        float2 uv          = texcoord.xy * float2( BUFFER_WIDTH/RT_RES, BUFFER_HEIGHT/RT_RES );  //Current position
-        uv.xy              = floor( uv.xy / Range );                                             //Block position
-        uv.xy              *= Range;                                                             //Block start position
+        float2 blocksize   = float2( BUFFER_WIDTH/RT_RES, BUFFER_HEIGHT/RT_RES );
+        float2 uv          = texcoord.xy * blocksize.xy;   // Current position
+        uv.xy              = floor( uv.xy / Range );       // Block position
+        uv.xy              *= Range;                       // Block start position
 
-        for( int y = uv.y; y < uv.y + Range.y && y < BUFFER_HEIGHT/RT_RES; ++y )
+        [loop]
+        for( int y = uv.y; y < uv.y + Range.y && y < blocksize.y; ++y )
         {
-            for( int x = uv.x; x < uv.x + Range.x && x < BUFFER_WIDTH/RT_RES; ++x )
+            for( int x = uv.x; x < uv.x + Range.x && x < blocksize.x; ++x )
             {
                 currColor      = tex2Dfetch( samplerColor, int4( x, y, 0, RT_MIPLVL )).xyz;
                 // Dark color detection methods
                 // Per channel
-                minMethod0.xyz = ( minMethod0.xyz >= currColor.xyz ) ? currColor.xyz : minMethod0.xyz;
+                minMethod0.xyz = min( minMethod0.xyz, currColor.xyz );
                 // By color
-                getMin         = max( max( currColor.x, currColor.y ), currColor.z );
-                getMin2        = max( max( minMethod1.x, minMethod1.y ), minMethod1.z );
+                getMin         = max( max( currColor.x, currColor.y ), currColor.z ) + dot( currColor.xyz, 1.0f );
+                getMin2        = max( max( minMethod1.x, minMethod1.y ), minMethod1.z ) + dot( minMethod1.xyz, 1.0f );
                 minMethod1.xyz = ( getMin2 >= getMin ) ? currColor.xyz : minMethod1.xyz;
                 // Mid point detection
                 getMid         = dot( abs( currColor.xyz - middle ), 1.0f );
@@ -224,10 +261,10 @@ namespace pd80_correctcolor
                 midValue.xyz   = ( getMid2 >= getMid ) ? currColor.xyz : midValue.xyz;
                 // Light color detection methods
                 // Per channel
-                maxMethod0.xyz = ( currColor.xyz >= maxMethod0.xyz ) ? currColor.xyz : maxMethod0.xyz;
+                maxMethod0.xyz = max( currColor.xyz, maxMethod0.xyz );
                 // By color
-                getMax         = min( min( currColor.x, currColor.y ), currColor.z );
-                getMax2        = min( min( maxMethod1.x, maxMethod1.y ), maxMethod1.z );
+                getMax         = dot( currColor.xyz, 1.0f );
+                getMax2        = dot( maxMethod1.xyz, 1.0f );
                 maxMethod1.xyz = ( getMax >= getMax2 ) ? currColor.xyz : maxMethod1.xyz;
             }
         }
@@ -263,10 +300,10 @@ namespace pd80_correctcolor
                 // Dark color detection methods
                 minColor       = tex2Dfetch( samplerDS_1_Min, int4( x, y, 0, 0 )).xyz;
                 // Per channel
-                minMethod0.xyz = ( minMethod0.xyz >= minColor.xyz ) ? minColor.xyz : minMethod0.xyz;
+                minMethod0.xyz = min( minMethod0.xyz, minColor.xyz );
                 // By color
-                getMin         = max( max( minColor.x, minColor.y ), minColor.z );
-                getMin2        = max( max( minMethod1.x, minMethod1.y ), minMethod1.z );
+                getMin         = max( max( minColor.x, minColor.y ), minColor.z ) + dot( minColor.xyz, 1.0f );
+                getMin2        = max( max( minMethod1.x, minMethod1.y ), minMethod1.z ) + dot( minMethod1.xyz, 1.0f );
                 minMethod1.xyz = ( getMin2 >= getMin ) ? minColor.xyz : minMethod1.xyz;
                 // Mid point detection
                 midColor       += tex2Dfetch( samplerDS_1_Mid, int4( x, y, 0, 0 )).xyz;
@@ -274,10 +311,10 @@ namespace pd80_correctcolor
                 // Light color detection methods
                 maxColor       = tex2Dfetch( samplerDS_1_Max, int4( x, y, 0, 0 )).xyz;
                 // Per channel
-                maxMethod0.xyz = ( maxColor.xyz >= maxMethod0.xyz ) ? maxColor.xyz : maxMethod0.xyz;
+                maxMethod0.xyz = max( maxColor.xyz, maxMethod0.xyz );
                 // By color
-                getMax         = min( min( maxColor.x, maxColor.y ), maxColor.z );
-                getMax2        = min( min( maxMethod1.x, maxMethod1.y ), maxMethod1.z );
+                getMax         = dot( maxColor.xyz, 1.0f );
+                getMax2        = dot( maxMethod1.xyz, 1.0f );
                 maxMethod1.xyz = ( getMax >= getMax2 ) ? maxColor.xyz : maxMethod1.xyz;
             }
         }
@@ -285,20 +322,31 @@ namespace pd80_correctcolor
         minValue.xyz       = rt_blackpoint_method ? minMethod1.xyz : minMethod0.xyz;
         maxValue.xyz       = rt_whitepoint_method ? maxMethod1.xyz : maxMethod0.xyz;
         midValue.xyz       = midColor.xyz / Sigma;
-        //Try and avoid some flickering
-        //Not really working, too radical changes in min values sometimes
-        float3 prevMin     = tex2D( samplerPrevious, float2((texcoord.x + 0.0) / 6.0, texcoord.y)).xyz;
-        float3 prevMid     = tex2D( samplerPrevious, float2((texcoord.x + 2.0) / 6.0, texcoord.y)).xyz;
-        float3 prevMax     = tex2D( samplerPrevious, float2((texcoord.x + 4.0) / 6.0, texcoord.y)).xyz;
-        float f            = enable_fade ? saturate( frametime * 0.006f ) : 1.0f;
-        minValue.xyz       = lerp( prevMin.xyz, minValue.xyz, f );
-        maxValue.xyz       = lerp( prevMax.xyz, maxValue.xyz, f );
-        midValue.xyz       = lerp( prevMid.xyz, midValue.xyz, f );
+        // When minValue > maxValue means the entire color is thrown out with correction
+        // This is correct behavior because this means that color component has the same fixed value on ALL pixels
+        // No game developer should ever make a coloring like that, but, you never know
+        // Lets give an option to throw out or keep
+        if( reject_color )
+            maxValue.xyz   = ( minValue.xyz >= maxValue.xyz ) ? float3( 1.0f, 1.0f, 1.0f ) : maxValue.xyz;
+        else
+            minValue.xyz   = ( minValue.xyz >= maxValue.xyz ) ? float3( 0.0f, 0.0f, 0.0f ) : minValue.xyz;
+        // Try and avoid some flickering
+        // Not really working consistently, too radical changes in min values sometimes
+        float3 prevMin     = tex2D( samplerPrevious, float2( texcoord.x / 6.0f, texcoord.y )).xyz;
+        float3 prevMid     = tex2D( samplerPrevious, float2(( texcoord.x + 2.0f ) / 6.0f, texcoord.y )).xyz;
+        float3 prevMax     = tex2D( samplerPrevious, float2(( texcoord.x + 4.0f ) / 6.0f, texcoord.y )).xyz;
+        if( enable_fade )
+        {
+            float smoothf  = transition_speed * 4.0f + 0.5f;
+            maxValue.xyz   = interpolate( prevMax.xyz, maxValue.xyz, smoothf, frametime );
+            minValue.xyz   = interpolate( prevMin.xyz, minValue.xyz, smoothf, frametime );
+            midValue.xyz   = interpolate( prevMid.xyz, midValue.xyz, smoothf, frametime );
+        }
         // Freeze Correction
         if( freeze )
         {
-            minValue.xyz   = prevMin.xyz;
             maxValue.xyz   = prevMax.xyz;
+            minValue.xyz   = prevMin.xyz;
             midValue.xyz   = prevMid.xyz;
         }
         // Return
@@ -313,9 +361,9 @@ namespace pd80_correctcolor
     float4 PS_RemoveTint(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color       = tex2D( samplerColor, texcoord );
-        float3 minValue    = tex2D( samplerDS_1x1, float2((texcoord.x + 0.0) / 6.0, texcoord.y)).xyz;
-        float3 midValue    = tex2D( samplerDS_1x1, float2((texcoord.x + 2.0) / 6.0, texcoord.y)).xyz;
-        float3 maxValue    = tex2D( samplerDS_1x1, float2((texcoord.x + 4.0) / 6.0, texcoord.y)).xyz;
+        float3 minValue    = tex2D( samplerDS_1x1, float2( texcoord.x / 6.0f, texcoord.y )).xyz;
+        float3 midValue    = tex2D( samplerDS_1x1, float2(( texcoord.x + 2.0f ) / 6.0f, texcoord.y )).xyz;
+        float3 maxValue    = tex2D( samplerDS_1x1, float2(( texcoord.x + 4.0f ) / 6.0f, texcoord.y )).xyz;
         // Get middle correction method
         float middle       = dot( float2( dot( minValue.xyz, 0.333333f ), dot( maxValue.xyz, 0.333333f )), 0.5f );
         middle             = mid_use_alt_method ? middle : 0.5f;
@@ -324,15 +372,13 @@ namespace pd80_correctcolor
         minValue.xyz       = rt_enable_blackpoint_correction ? minValue.xyz : 0.0f;
         // Set max value
         maxValue.xyz       = lerp( 1.0f, maxValue.xyz, rt_wp_str );
-        // Avoid DIV/0
-        maxValue.xyz       = ( minValue.xyz >= maxValue.xyz ) ? minValue.xyz + 0.001f : maxValue.xyz;
         maxValue.xyz       = rt_enable_whitepoint_correction ? maxValue.xyz : 1.0f;
         // Set mid value
         midValue.xyz       = midValue.xyz - middle;
         midValue.xyz       *= midCC_scale;
         midValue.xyz       = rt_enable_midpoint_correction ? midValue.xyz : 0.0f;
         // Main color correction
-        color.xyz          = saturate( color.xyz - minValue.xyz ) / saturate( maxValue.xyz - minValue.xyz );
+        color.xyz          = saturate( color.xyz - minValue.xyz ) / ( maxValue.xyz - minValue.xyz );
         // White Point luma preservation
         float avgMax       = dot( maxValue.xyz, 0.333333f );
         color.xyz          = lerp( color.xyz, color.xyz * avgMax, rt_whitepoint_respect_luma * rt_wp_rl_str );
@@ -344,15 +390,17 @@ namespace pd80_correctcolor
         float avgMid       = dot( midValue.xyz, 0.333333f );
         avgCol             = ( avgCol >= 0.5f ) ? abs( avgCol * 2.0f - 2.0f ) : avgCol * 2.0f;
         color.xyz          = saturate( color.xyz - midValue.xyz * avgCol + avgMid * avgCol * rt_midpoint_respect_luma );
-
+        //color.xyz          = tex2D( samplerDS_1_Max, texcoord ).xyz; // Debug
+        //color.xyz          = tex2D( samplerDS_1_Mid, texcoord ).xyz; 
+        //color.xyz          = tex2D( samplerDS_1_Min, texcoord ).xyz; 
         return float4( color.xyz, 1.0f );
     }
 
     float4 PS_StorePrev( float4 pos : SV_Position, float2 texcoord : TEXCOORD ) : SV_Target
     {
-        float3 minValue    = tex2D( samplerDS_1x1, float2((texcoord.x + 0.0) / 6.0, texcoord.y)).xyz;
-        float3 midValue    = tex2D( samplerDS_1x1, float2((texcoord.x + 2.0) / 6.0, texcoord.y)).xyz;
-        float3 maxValue    = tex2D( samplerDS_1x1, float2((texcoord.x + 4.0) / 6.0, texcoord.y)).xyz;
+        float3 minValue    = tex2D( samplerDS_1x1, float2( texcoord.x / 6.0f, texcoord.y )).xyz;
+        float3 midValue    = tex2D( samplerDS_1x1, float2(( texcoord.x + 2.0f ) / 6.0f, texcoord.y )).xyz;
+        float3 maxValue    = tex2D( samplerDS_1x1, float2(( texcoord.x + 4.0f ) / 6.0f, texcoord.y )).xyz;
         if( pos.x < 2 )
             return float4( minValue.xyz, 1.0f );
         else if( pos.x >= 2 && pos.x < 4 )
