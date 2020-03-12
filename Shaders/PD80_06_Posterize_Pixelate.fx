@@ -92,11 +92,11 @@ namespace pd80_posterizepixelate
         float3 orig       = color.xyz;
         color.xyz         = floor( color.xyz * number_of_levels ) / ( number_of_levels - 1 );
         float exp         = exp2( pixel_size - 1 );
-        float rcp_exp     = rcp( exp ) - 0.00001f; //  - 0.00001f because fp precision comes into play
+        float rcp_exp     = max( rcp( exp ) - 0.00001f, 0.0f ); //  - 0.00001f because fp precision comes into play
         float2 uv         = frac( texcoord.xy * float2( floor( BUFFER_WIDTH / exp ), floor( BUFFER_HEIGHT / exp )));
         float grade       = ( uv.x <= rcp_exp ) ? 1.0 : 0.0; 
         grade            += ( uv.y <= rcp_exp ) ? 1.0 : 0.0;
-        color.xyz         = lerp( color.xyz, lerp( color.xyz, 0.0f, border_str ), saturate( grade ));
+        color.xyz         = lerp( color.xyz, lerp( color.xyz, 0.0f, border_str * saturate( pixel_size - 1 )), saturate( grade ));
         color.xyz         = lerp( orig.xyz, color.xyz, effect_strength );
         return float4( color.xyz, 1.0f );
     }
