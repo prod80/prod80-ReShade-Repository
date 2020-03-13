@@ -37,27 +37,32 @@ namespace pd80_correctcontrast
     uniform bool enable_fade <
         ui_text = "----------------------------------------------";
         ui_label = "Enable Time Based Fade";
+        ui_tooltip = "Enable Time Based Fade";
         ui_category = "Global: Correct Contrasts";
         > = true;
     uniform float transition_speed <
         ui_type = "slider";
         ui_label = "Time Based Fade Speed";
+        ui_tooltip = "Time Based Fade Speed";
         ui_category = "Global: Remove Tint";
         ui_min = 0.0f;
         ui_max = 1.0f;
         > = 0.5;
     uniform bool freeze <
         ui_label = "Freeze Correction";
+        ui_tooltip = "Freeze Correction";
         ui_category = "Global: Correct Contrasts";
         > = false;
     uniform bool rt_enable_whitepoint_correction <
         ui_text = "----------------------------------------------";
         ui_label = "Enable Whitepoint Correction";
+        ui_tooltip = "Enable Whitepoint Correction";
         ui_category = "Whitepoint Correction";
         > = false;
     uniform float rt_wp_str <
         ui_type = "slider";
         ui_label = "White Point Correction Strength";
+        ui_tooltip = "White Point Correction Strength";
         ui_category = "Whitepoint Correction";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -65,11 +70,13 @@ namespace pd80_correctcontrast
     uniform bool rt_enable_blackpoint_correction <
         ui_text = "----------------------------------------------";
         ui_label = "Enable Blackpoint Correction";
+        ui_tooltip = "Enable Blackpoint Correction";
         ui_category = "Blackpoint Correction";
         > = true;
     uniform float rt_bp_str <
         ui_type = "slider";
         ui_label = "Black Point Correction Strength";
+        ui_tooltip = "Black Point Correction Strength";
         ui_category = "Blackpoint Correction";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -118,9 +125,9 @@ namespace pd80_correctcontrast
 
     float3 interpolate( float3 o, float3 n, float factor, float ft )
     {
-        float time = ft / 1000.0f; // Need time in seconds, not ms
-        return lerp( o.xyz, n.xyz, 1.0f - exp( -factor * time ));
+        return lerp( o.xyz, n.xyz, 1.0f - exp( -factor * ft ));
     }
+
 
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     //Downscale to 32x32 min/max color matrix
@@ -130,17 +137,18 @@ namespace pd80_correctcontrast
         minValue.xyz       = 1.0f;
         maxValue.xyz       = 0.0f;
 
-        //Downsample
-        float2 Range       = float2( BUFFER_WIDTH, BUFFER_HEIGHT ) / 32.0f;
+        // RenderTarget size is 32x32
+        float pst          = 0.03125f;    // rcp( 32 )
+        float hst          = 0.5f * pst;  // half size
 
-        //Current block
-        float2 uv          = texcoord.xy * float2( BUFFER_WIDTH, BUFFER_HEIGHT );  //Current position
-        uv.xy              = floor( uv.xy / Range );                               //Block position
-        uv.xy              *= Range;                                               //Block start position
+        // Sample texture
+        float2 stexSize    = float2( BUFFER_WIDTH, BUFFER_HEIGHT );
+        float2 start       = floor(( texcoord.xy - hst ) * stexSize.xy );    // sample block start position
+        float2 stop        = floor(( texcoord.xy + hst ) * stexSize.xy );    // ... end position
 
-        for( int y = uv.y; y < uv.y + Range.y && y < BUFFER_HEIGHT; ++y )
+        for( int y = start.y; y < stop.y; ++y )
         {
-            for( int x = uv.x; x < uv.x + Range.x && x < BUFFER_WIDTH; ++x )
+            for( int x = start.x; x < stop.x; ++x )
             {
                 currColor    = tex2Dfetch( samplerColorBuffer, int4( x, y, 0, 0 )).xyz;
                 // Dark color detection methods
@@ -161,12 +169,12 @@ namespace pd80_correctcontrast
         float3 minValue    = 1.0f;
         float3 maxValue    = 0.0f;
         //Get texture resolution
-        int2 SampleRes     = tex2Dsize( samplerDS_1_Max, 0 );
+        uint SampleRes     = 32;
         float Sigma        = 0.0f;
 
-        for( int y = 0; y < SampleRes.y; ++y )
+        for( int y = 0; y < SampleRes; ++y )
         {
-            for( int x = 0; x < SampleRes.x; ++x )
+            for( int x = 0; x < SampleRes; ++x )
             {   
                 // Dark color detection methods
                 minColor     = tex2Dfetch( samplerDS_1_Min, int4( x, y, 0, 0 )).xyz;
@@ -181,18 +189,13 @@ namespace pd80_correctcontrast
         //Not really working, too radical changes in min values sometimes
         float3 prevMin     = tex2D( samplerPrevious, float2( texcoord.x / 4.0f, texcoord.y )).xyz;
         float3 prevMax     = tex2D( samplerPrevious, float2(( texcoord.x + 2.0f ) / 4.0, texcoord.y )).xyz;
-        if( enable_fade )
-        {
-            float smoothf  = transition_speed * 4.0f + 0.5f;
-            maxValue.xyz   = interpolate( prevMax.xyz, maxValue.xyz, smoothf, frametime );
-            minValue.xyz   = interpolate( prevMin.xyz, minValue.xyz, smoothf, frametime );
-        }
+        float smoothf      = transition_speed * 4.0f + 0.5f;
+        float time         = frametime * 0.001f;
+        maxValue.xyz       = enable_fade ? interpolate( prevMax.xyz, maxValue.xyz, smoothf, time ) : maxValue.xyz;
+        minValue.xyz       = enable_fade ? interpolate( prevMin.xyz, minValue.xyz, smoothf, time ) : minValue.xyz;
         // Freeze Correction
-        if( freeze )
-        {
-            minValue.xyz   = prevMin.xyz;
-            maxValue.xyz   = prevMax.xyz;
-        }
+        maxValue.xyz       = freeze ? prevMax.xyz : maxValue.xyz;
+        minValue.xyz       = freeze ? prevMin.xyz : minValue.xyz;
         // Return
         if( pos.x < 2 )
             return float4( minValue.xyz, 1.0f );

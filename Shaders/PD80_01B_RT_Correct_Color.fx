@@ -36,6 +36,18 @@ namespace pd80_correctcolor
         #define RT_PRECISION_LEVEL_0_TO_4       0
     #endif
 
+    #ifndef RT_ENABLE_HIGH_PERF_MODE
+        #define RT_ENABLE_HIGH_PERF_MODE        0
+    #endif
+
+    #if( RT_ENABLE_HIGH_PERF_MODE > 1 || RT_ENABLE_HIGH_PERF_MODE < 0 )
+        #error "RT_ENABLE_HIGH_PERF_MODE has a range of 0 to 1"
+    #endif
+
+    #if( RT_PRECISION_LEVEL_0_TO_4 > 4 || RT_ENABLE_HIGH_PERF_MODE < 0 )
+        #error "RT_PRECISION_LEVEL_0_TO_4 has a range of 0 to 4"
+    #endif
+
     //// DEFINES ////////////////////////////////////////////////////////////////////
 #if( RT_PRECISION_LEVEL_0_TO_4 == 0 )
     #define RT_RES      1
@@ -54,44 +66,53 @@ namespace pd80_correctcolor
     #define RT_MIPLVL   4
 #endif
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
+    /*
+    uniform int debug_mode < __UNIFORM_COMBO_INT1
+        ui_label = "Debug Mode";
+        ui_tooltip = "Debug Mode";
+        ui_category = "Debug Mode";
+        ui_items = "Default\0Min Color Texture\0Max Color Texture\0Mid Color Texture\0";
+        > = 0;
+    */
     uniform bool enable_fade <
         ui_text = "----------------------------------------------";
         ui_label = "Enable Time Based Fade";
+        ui_tooltip = "Enable Time Based Fade";
         ui_category = "Global: Remove Tint";
         > = true;
     uniform float transition_speed <
         ui_type = "slider";
         ui_label = "Time Based Fade Speed";
+        ui_tooltip = "Time Based Fade Speed";
         ui_category = "Global: Remove Tint";
         ui_min = 0.0f;
         ui_max = 1.0f;
         > = 0.5;
     uniform bool freeze <
         ui_label = "Freeze Correction";
+        ui_tooltip = "Freeze Correction";
         ui_category = "Global: Remove Tint";
         > = false;
-    uniform bool reject_color <
-        ui_label = "Correction Method when min >= max";
-        ui_category = "Global: Remove Tint";
-        ui_tooltip = "When min >= max value you can either reject max (enabled) or reject min (disabled) value.\nDefault is reject max as that preserves contrast.";
-        > = true;
     uniform bool rt_enable_whitepoint_correction <
         ui_text = "----------------------------------------------";
         ui_label = "Enable Whitepoint Correction";
+        ui_tooltip = "Enable Whitepoint Correction";
         ui_category = "Whitepoint: Remove Tint";
         > = true;
     uniform bool rt_whitepoint_respect_luma <
         ui_label = "Respect Luma";
+        ui_tooltip = "Whitepoint: Respect Luma";
         ui_category = "Whitepoint: Remove Tint";
         > = true;
     uniform int rt_whitepoint_method < __UNIFORM_COMBO_INT1
         ui_label = "Color Detection Method";
         ui_category = "Whitepoint: Remove Tint";
         ui_items = "By Color Channel (auto-color)\0Find Light Color (auto-tone)\0";
-        > = 1;
+        > = 0;
     uniform float rt_wp_str <
         ui_type = "slider";
         ui_label = "White Point Correction Strength";
+        ui_tooltip = "Whitepoint: White Point Correction Strength";
         ui_category = "Whitepoint: Remove Tint";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -99,6 +120,7 @@ namespace pd80_correctcolor
     uniform float rt_wp_rl_str <
         ui_type = "slider";
         ui_label = "White Point Respect Luma Strength";
+        ui_tooltip = "Whitepoint: White Point Respect Luma Strength";
         ui_category = "Whitepoint: Remove Tint";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -106,10 +128,12 @@ namespace pd80_correctcolor
     uniform bool rt_enable_blackpoint_correction <
         ui_text = "----------------------------------------------";
         ui_label = "Enable Blackpoint Correction";
+        ui_tooltip = "Enable Blackpoint Correction";
         ui_category = "Blackpoint: Remove Tint";
         > = true;
     uniform bool rt_blackpoint_respect_luma <
         ui_label = "Respect Luma";
+        ui_tooltip = "Blackpoint: Respect Luma";
         ui_category = "Blackpoint: Remove Tint";
         > = false;
     uniform int rt_blackpoint_method < __UNIFORM_COMBO_INT1
@@ -120,6 +144,7 @@ namespace pd80_correctcolor
     uniform float rt_bp_str <
         ui_type = "slider";
         ui_label = "Black Point Correction Strength";
+        ui_tooltip = "Blackpoint: Black Point Correction Strength";
         ui_category = "Blackpoint: Remove Tint";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -127,6 +152,7 @@ namespace pd80_correctcolor
     uniform float rt_bp_rl_str <
         ui_type = "slider";
         ui_label = "Black Point Respect Luma Strength";
+        ui_tooltip = "Blackpoint: Black Point Respect Luma Strength";
         ui_category = "Blackpoint: Remove Tint";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -134,19 +160,23 @@ namespace pd80_correctcolor
     uniform bool rt_enable_midpoint_correction <
         ui_text = "----------------------------------------------";
         ui_label = "Enable Midtone Correction";
+        ui_tooltip = "Enable Midtone Correction";
         ui_category = "Midtone: Remove Tint";
         > = true;
     uniform bool rt_midpoint_respect_luma <
         ui_label = "Respect Luma";
+        ui_tooltip = "Midtone: Respect Luma";
         ui_category = "Midtone: Remove Tint";
         > = true;
     uniform bool mid_use_alt_method <
         ui_label = "Use average Dark-Light as Mid";
+        ui_tooltip = "Midtone: Use average Dark-Light as Mid";
         ui_category = "Midtone: Remove Tint";
         > = true;
     uniform float midCC_scale <
         ui_type = "slider";
         ui_label = "Midtone Correction Scale";
+        ui_tooltip = "Midtone: Midtone Correction Scale";
         ui_category = "Midtone: Remove Tint";
         ui_min = 0.0f;
         ui_max = 5.0f;
@@ -205,8 +235,7 @@ namespace pd80_correctcolor
 
     float3 interpolate( float3 o, float3 n, float factor, float ft )
     {
-        float time = ft / 1000.0f; // Need time in seconds, not ms
-        return lerp( o.xyz, n.xyz, 1.0f - exp( -factor * time ));
+        return lerp( o.xyz, n.xyz, 1.0f - exp( -factor * ft ));
     }
 
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
@@ -233,19 +262,20 @@ namespace pd80_correctcolor
         float middle       = dot( float2( dot( prevMin.xyz, 0.333333f ), dot( prevMax.xyz, 0.333333f )), 0.5f );
         middle             = ( mid_use_alt_method ) ? middle : 0.5f;
 
-        //Downsample
-        float2 Range       = float2( BUFFER_WIDTH, BUFFER_HEIGHT ) / ( 32.0f * RT_RES );
+        // RenderTarget size is 32x32
+        float pst          = 0.03125f;    // rcp( 32 )
+        float hst          = 0.5f * pst;  // half size
 
-        //Current block
-        float2 blocksize   = float2( BUFFER_WIDTH/RT_RES, BUFFER_HEIGHT/RT_RES );
-        float2 uv          = texcoord.xy * blocksize.xy;   // Current position
-        uv.xy              = floor( uv.xy / Range );       // Block position
-        uv.xy              *= Range;                       // Block start position
+        // Sample texture
+        float2 stexSize    = float2( BUFFER_WIDTH/RT_RES, BUFFER_HEIGHT/RT_RES );
+        uint OFFSET        = 1 + RT_ENABLE_HIGH_PERF_MODE * 3;
+        float2 start       = floor(( texcoord.xy - hst ) * stexSize.xy );    // sample block start position
+        float2 stop        = floor(( texcoord.xy + hst ) * stexSize.xy );    // ... end position
 
         [loop]
-        for( int y = uv.y; y < uv.y + Range.y && y < blocksize.y; ++y )
+        for( int y = start.y; y < stop.y; y += OFFSET )
         {
-            for( int x = uv.x; x < uv.x + Range.x && x < blocksize.x; ++x )
+            for( int x = start.x; x < stop.x; x += OFFSET )
             {
                 currColor      = tex2Dfetch( samplerColor, int4( x, y, 0, RT_MIPLVL )).xyz;
                 // Dark color detection methods
@@ -290,7 +320,7 @@ namespace pd80_correctcolor
         float3 maxMethod1  = 0.0f;
         midValue           = 0.0f;
         //Get texture resolution
-        int2 SampleRes     = tex2Dsize( samplerDS_1_Max, 0 );
+        int2 SampleRes     = 32;
         float Sigma        = 0.0f;
 
         for( int y = 0; y < SampleRes.y; ++y )
@@ -322,33 +352,24 @@ namespace pd80_correctcolor
         minValue.xyz       = rt_blackpoint_method ? minMethod1.xyz : minMethod0.xyz;
         maxValue.xyz       = rt_whitepoint_method ? maxMethod1.xyz : maxMethod0.xyz;
         midValue.xyz       = midColor.xyz / Sigma;
-        // When minValue > maxValue means the entire color is thrown out with correction
+        // When minValue = maxValue means the entire color is thrown out with correction
         // This is correct behavior because this means that color component has the same fixed value on ALL pixels
         // No game developer should ever make a coloring like that, but, you never know
-        // Lets give an option to throw out or keep
-        if( reject_color )
-            maxValue.xyz   = ( minValue.xyz >= maxValue.xyz ) ? float3( 1.0f, 1.0f, 1.0f ) : maxValue.xyz;
-        else
-            minValue.xyz   = ( minValue.xyz >= maxValue.xyz ) ? float3( 0.0f, 0.0f, 0.0f ) : minValue.xyz;
+        maxValue.xyz       = ( minValue.xyz >= maxValue.xyz ) ? float3( 1.0f, 1.0f, 1.0f ) : maxValue.xyz;
         // Try and avoid some flickering
         // Not really working consistently, too radical changes in min values sometimes
         float3 prevMin     = tex2D( samplerPrevious, float2( texcoord.x / 6.0f, texcoord.y )).xyz;
         float3 prevMid     = tex2D( samplerPrevious, float2(( texcoord.x + 2.0f ) / 6.0f, texcoord.y )).xyz;
         float3 prevMax     = tex2D( samplerPrevious, float2(( texcoord.x + 4.0f ) / 6.0f, texcoord.y )).xyz;
-        if( enable_fade )
-        {
-            float smoothf  = transition_speed * 4.0f + 0.5f;
-            maxValue.xyz   = interpolate( prevMax.xyz, maxValue.xyz, smoothf, frametime );
-            minValue.xyz   = interpolate( prevMin.xyz, minValue.xyz, smoothf, frametime );
-            midValue.xyz   = interpolate( prevMid.xyz, midValue.xyz, smoothf, frametime );
-        }
+        float smoothf      = transition_speed * 4.0f + 1.0f;
+        float time         = frametime * 0.001f;
+        maxValue.xyz       = enable_fade ? interpolate( prevMax.xyz, maxValue.xyz, smoothf, time ) : maxValue.xyz;
+        minValue.xyz       = enable_fade ? interpolate( prevMin.xyz, minValue.xyz, smoothf, time ) : minValue.xyz;
+        midValue.xyz       = enable_fade ? interpolate( prevMid.xyz, midValue.xyz, smoothf, time ) : midValue.xyz;
         // Freeze Correction
-        if( freeze )
-        {
-            maxValue.xyz   = prevMax.xyz;
-            minValue.xyz   = prevMin.xyz;
-            midValue.xyz   = prevMid.xyz;
-        }
+        maxValue.xyz       = freeze ? prevMax.xyz : maxValue.xyz;
+        minValue.xyz       = freeze ? prevMin.xyz : minValue.xyz;
+        midValue.xyz       = freeze ? prevMid.xyz : midValue.xyz;
         // Return
         if( pos.x < 2 )
             return float4( minValue.xyz, 1.0f );
@@ -356,6 +377,7 @@ namespace pd80_correctcolor
             return float4( midValue.xyz, 1.0f );
         else
             return float4( maxValue.xyz, 1.0f );
+        return float4( 0.5, 0.5, 0.5, 1.0 );
     }
 
     float4 PS_RemoveTint(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
@@ -388,11 +410,18 @@ namespace pd80_correctcolor
         // Mid Point correction
         float avgCol       = dot( color.xyz, 0.333333f ); // Avg after main correction
         float avgMid       = dot( midValue.xyz, 0.333333f );
-        avgCol             = ( avgCol >= 0.5f ) ? abs( avgCol * 2.0f - 2.0f ) : avgCol * 2.0f;
+        avgCol             = 1.0f - abs( avgCol * 2.0f - 1.0f );
         color.xyz          = saturate( color.xyz - midValue.xyz * avgCol + avgMid * avgCol * rt_midpoint_respect_luma );
-        //color.xyz          = tex2D( samplerDS_1_Max, texcoord ).xyz; // Debug
-        //color.xyz          = tex2D( samplerDS_1_Mid, texcoord ).xyz; 
-        //color.xyz          = tex2D( samplerDS_1_Min, texcoord ).xyz; 
+        // Debug
+        /*
+        switch( debug_mode )
+        {
+            case 0: { color.xyz = color.xyz; } break;
+            case 1: { color.xyz = tex2D( samplerDS_1_Min, texcoord ).xyz; } break;
+            case 2: { color.xyz = tex2D( samplerDS_1_Max, texcoord ).xyz; } break;
+            case 3: { color.xyz = tex2D( samplerDS_1_Mid, texcoord ).xyz; } break;
+        }
+        */
         return float4( color.xyz, 1.0f );
     }
 
