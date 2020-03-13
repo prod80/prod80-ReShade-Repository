@@ -36,10 +36,6 @@
 namespace pd80_hqbloom
 {
     //// PREPROCESSOR DEFINITIONS ///////////////////////////////////////////////////
-    // Debanding, default is OFF ( 0 ) due to performance impact
-    #ifndef BLOOM_ENABLE_DEBAND
-        #define BLOOM_ENABLE_DEBAND 0
-    #endif
 
     // Funky stuff
     #ifndef BLOOM_ENABLE_CA
@@ -153,61 +149,12 @@ namespace pd80_hqbloom
         ui_max = 5.0f;
         > = 0.5;
     #endif
-    #if( BLOOM_ENABLE_DEBAND == 1 )
-    uniform int threshold_preset < __UNIFORM_COMBO_INT1
-        ui_label = "Debanding strength";
-        ui_category = "Bloom Deband";
-        ui_items = "Low\0Medium\0High\0Custom\0";
-        ui_tooltip = "Debanding presets. Use Custom to be able to use custom thresholds in the advanced section.";
-        > = 2;
-    uniform float range < __UNIFORM_SLIDER_FLOAT1
-        ui_min = 1.0;
-        ui_max = 32.0;
-        ui_step = 1.0;
-        ui_label = "Initial radius";
-        ui_category = "Bloom Deband";
-        ui_tooltip = "The radius increases linearly for each iteration. A higher radius will find more gradients, but a lower radius will smooth more aggressively.";
-        > = 3.0;
-    uniform int iterations < __UNIFORM_SLIDER_INT1
-        ui_min = 1;
-        ui_max = 4;
-        ui_label = "Iterations";
-        ui_category = "Bloom Deband";
-        ui_tooltip = "The number of debanding steps to perform per sample. Each step reduces a bit more banding, but takes time to compute.";
-        > = 4;
-    uniform float custom_avgdiff < __UNIFORM_SLIDER_FLOAT1
-        ui_min = 0.0;
-        ui_max = 255.0;
-        ui_step = 0.1;
-        ui_label = "Average threshold";
-        ui_category = "Bloom Deband";
-        ui_tooltip = "Threshold for the difference between the average of reference pixel values and the original pixel value. Higher numbers increase the debanding strength but progressively diminish image details. In pixel shaders a 8-bit color step equals to 1.0/255.0";
-        ui_category = "Advanced";
-        > = 1.8;
-    uniform float custom_maxdiff < __UNIFORM_SLIDER_FLOAT1
-        ui_min = 0.0;
-        ui_max = 255.0;
-        ui_step = 0.1;
-        ui_label = "Maximum threshold";
-        ui_category = "Bloom Deband";
-        ui_tooltip = "Threshold for the difference between the maximum difference of one of the reference pixel values and the original pixel value. Higher numbers increase the debanding strength but progressively diminish image details. In pixel shaders a 8-bit color step equals to 1.0/255.0";
-        ui_category = "Advanced";
-        > = 4.0;
-    uniform float custom_middiff < __UNIFORM_SLIDER_FLOAT1
-        ui_min = 0.0;
-        ui_max = 255.0;
-        ui_step = 0.1;
-        ui_label = "Middle threshold";
-        ui_category = "Bloom Deband";
-        ui_tooltip = "Threshold for the difference between the average of diagonal reference pixel values and the original pixel value. Higher numbers increase the debanding strength but progressively diminish image details. In pixel shaders a 8-bit color step equals to 1.0/255.0";
-        ui_category = "Advanced";
-        > = 2.0;
-    #endif
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
     texture texBLuma { Width = 256; Height = 256; Format = R16F; MipLevels = 8; };
     texture texBAvgLuma { Format = R16F; };
     texture texBPrevAvgLuma { Format = R16F; };
+    texture texNoise < source = "monochrome_gaussnoise.png"; > { Width = 512; Height = 512; Format = RGBA8; };
     #if( BLOOM_ENABLE_CA == 1 )
     texture texCABloom { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
     #endif
@@ -241,6 +188,16 @@ namespace pd80_hqbloom
     sampler samplerBPrevAvgLuma { Texture = texBPrevAvgLuma; };
     sampler samplerBloomIn { Texture = texBloomIn; };
     sampler samplerBloomH { Texture = texBloomH; };
+    sampler samplerNoise
+    { 
+        Texture = texNoise;
+        MipFilter = POINT;
+        MinFilter = POINT;
+        MagFilter = POINT;
+        AddressU = WRAP;
+        AddressV = WRAP;
+        AddressW = WRAP;
+    };
     #if( BLOOM_ENABLE_CA == 1 )
     sampler samplerCABloom { Texture = texCABloom; };
     #endif
@@ -253,53 +210,6 @@ namespace pd80_hqbloom
     #define LOOPCOUNT 150
     #define aspect float( BUFFER_WIDTH * BUFFER_RCP_HEIGHT )
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
-    #if( BLOOM_ENABLE_DEBAND == 1 )
-    float rand( in float x )
-    {
-        return frac(x / 41.0f);
-    }
-
-    float permute( in float x )
-    {
-        return ((34.0f * x + 1.0f) * x) % 289.0f;
-    }
-
-    void analyze_pixels(float3 ori, sampler2D tex, float2 texcoord, float2 _range, float2 dir, out float3 ref_avg, out float3 ref_avg_diff, out float3 ref_max_diff, out float3 ref_mid_diff1, out float3 ref_mid_diff2)
-    {
-        // Sample at quarter-turn intervals around the source pixel
-
-        // South-east
-        float3 ref       = tex2Dlod( tex, float4( texcoord + _range * dir, 0.0f, 0.0f )).rgb;
-        float3 diff      = abs( ori - ref );
-        ref_max_diff     = diff;
-        ref_avg          = ref;
-        ref_mid_diff1    = ref;
-
-        // North-west
-        ref              = tex2Dlod( tex, float4( texcoord + _range * -dir, 0.0f, 0.0f )).rgb;
-        diff             = abs( ori - ref );
-        ref_max_diff     = max( ref_max_diff, diff );
-        ref_avg          += ref;
-        ref_mid_diff1    = abs((( ref_mid_diff1 + ref ) * 0.5f ) - ori );
-
-        // North-east
-        ref              = tex2Dlod( tex, float4( texcoord + _range * float2( -dir.y, dir.x ), 0.0f, 0.0f )).rgb;
-        diff             = abs( ori - ref );
-        ref_max_diff     = max( ref_max_diff, diff );
-        ref_avg          += ref;
-        ref_mid_diff2    = ref;
-
-        // South-west
-        ref              = tex2Dlod( tex, float4( texcoord + _range * float2( dir.y, -dir.x ), 0.0f, 0.0f )).rgb;
-        diff             = abs( ori - ref );
-        ref_max_diff     = max( ref_max_diff, diff );
-        ref_avg          += ref;
-        ref_mid_diff2    = abs((( ref_mid_diff2 + ref ) * 0.5f ) - ori );
-
-        ref_avg          *= 0.25f; // Normalize avg
-        ref_avg_diff     = abs( ori - ref_avg );
-    }
-    #endif
     float3 KelvinToRGB( in float k )
     {
         float3 ret;
@@ -600,117 +510,9 @@ namespace pd80_hqbloom
         float4 bloom     = tex2D( samplerCABloom, texcoord );
         #endif
         float4 color     = tex2D( samplerColor, texcoord );
+        float gNoise     = tex2D( samplerNoise, texcoord ).x;
+        bloom.xyz        += lerp( -0.5/255, 0.5/255, gNoise ); // Dither
 
-        #if( BLOOM_ENABLE_DEBAND == 1 )
-
-            float avgdiff;
-            float maxdiff;
-            float middiff;
-            if (threshold_preset == 0)
-            {
-                avgdiff      = 0.6f;
-                maxdiff      = 1.9f;
-                middiff      = 1.2f;
-            }
-            else if (threshold_preset == 1)
-            {
-                avgdiff      = 1.8f;
-                maxdiff      = 4.0f;
-                middiff      = 2.0f;
-            }
-            else if (threshold_preset == 2)
-            {
-                avgdiff      = 3.4f;
-                maxdiff      = 6.8f;
-                middiff      = 3.3f;
-            }
-            else if (threshold_preset == 3)
-            {
-                avgdiff      = custom_avgdiff;
-                maxdiff      = custom_maxdiff;
-                middiff      = custom_middiff;
-            }
-
-            // Normalize
-            avgdiff        /= 255.0f;
-            maxdiff        /= 255.0f;
-            middiff        /= 255.0f;
-
-            // Initialize the PRNG by hashing the position + a random uniform
-            float h        = permute( permute( permute( texcoord.x ) + texcoord.y ) + drandom / 32767.0f );
-
-            float3 ref_avg; // Average of 4 reference pixels
-            float3 ref_avg_diff; // The difference between the average of 4 reference pixels and the original pixel
-            float3 ref_max_diff; // The maximum difference between one of the 4 reference pixels and the original pixel
-            float3 ref_mid_diff1; // The difference between the average of SE and NW reference pixels and the original pixel
-            float3 ref_mid_diff2; // The difference between the average of NE and SW reference pixels and the original pixel
-
-            float3 ori = bloom.xyz; // Original pixel
-            float3 res; // Final pixel
-
-            // Compute a random angle
-            float dir  = rand( permute( h )) * 6.2831853f;
-            float2 o = float2( cos( dir ), sin( dir ));
-
-            for ( int i = 1; i <= iterations; ++i )
-            {
-                // Compute a random distance
-                float dist   = rand(h) * range * i;
-                float2 pt    = dist * ReShade::PixelSize;
-
-                #if( BLOOM_ENABLE_CA == 0 )
-                analyze_pixels(ori, samplerBloom, texcoord, pt, o,
-                ref_avg,
-                ref_avg_diff,
-                ref_max_diff,
-                ref_mid_diff1,
-                ref_mid_diff2);
-                #endif
-                #if( BLOOM_ENABLE_CA == 1 )
-                analyze_pixels(ori, samplerCABloom, texcoord, pt, o,
-                ref_avg,
-                ref_avg_diff,
-                ref_max_diff,
-                ref_mid_diff1,
-                ref_mid_diff2);
-                #endif
-
-                float3 ref_avg_diff_threshold = avgdiff * i;
-                float3 ref_max_diff_threshold = maxdiff * i;
-                float3 ref_mid_diff_threshold = middiff * i;
-
-                // Fuzzy logic based pixel selection
-                float3 factor = pow(saturate(3.0 * (1.0 - ref_avg_diff  / ref_avg_diff_threshold)) *
-                saturate(3.0 * (1.0 - ref_max_diff  / ref_max_diff_threshold)) *
-                saturate(3.0 * (1.0 - ref_mid_diff1 / ref_mid_diff_threshold)) *
-                saturate(3.0 * (1.0 - ref_mid_diff2 / ref_mid_diff_threshold)), 0.1);
-
-                res          = lerp(ori, ref_avg, factor);
-                h            = permute(h);
-            }
-
-            const float dither_bit = 8.0f; //Number of bits per channel. Should be 8 for most monitors.
-
-            /*------------------------.
-            | :: Ordered Dithering :: |
-            '------------------------*/
-            //Calculate grid position
-            float grid_position = frac(dot(texcoord, (ReShade::ScreenSize * float2(1.0 / 16.0, 10.0 / 36.0)) + 0.25));
-
-            //Calculate how big the shift should be
-            float dither_shift = 0.25 * (1.0 / (pow(2, dither_bit) - 1.0));
-
-            //Shift the individual colors differently, thus making it even harder to see the dithering pattern
-            float3 dither_shift_RGB = float3(dither_shift, -dither_shift, dither_shift); //subpixel dithering
-
-            //modify shift acording to grid position.
-            dither_shift_RGB = lerp(2.0 * dither_shift_RGB, -2.0 * dither_shift_RGB, grid_position); //shift acording to grid position.
-
-            //shift the color by dither_shift
-            res += dither_shift_RGB;
-
-            bloom.xyz = res.xyz;
-        #endif
         #if( BLOOM_ENABLE_CA == 0 )
         if( enableBKelvin )
         {
