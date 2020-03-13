@@ -34,10 +34,12 @@ namespace pd80_lumasharpen
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
     uniform bool enableShowEdges <
         ui_label = "Show only Sharpening Texture";
+        ui_tooltip = "Show only Sharpening Texture";
         ui_category = "Sharpening";
         > = false;
     uniform float BlurSigma <
         ui_label = "Sharpening Width";
+        ui_tooltip = "Sharpening Width";
         ui_category = "Sharpening";
         ui_type = "slider";
         ui_min = 0.3;
@@ -45,6 +47,7 @@ namespace pd80_lumasharpen
         > = 0.45;
     uniform float Sharpening <
         ui_label = "Sharpening Strength";
+        ui_tooltip = "Sharpening Strength";
         ui_category = "Sharpening";
         ui_type = "slider";
         ui_min = 0.0;
@@ -52,6 +55,7 @@ namespace pd80_lumasharpen
         > = 1.7;
     uniform float Threshold <
         ui_label = "Sharpening Threshold";
+        ui_tooltip = "Sharpening Threshold";
         ui_category = "Sharpening";
         ui_type = "slider";
         ui_min = 0.0;
@@ -59,6 +63,7 @@ namespace pd80_lumasharpen
         > = 0.0;
     uniform float limiter <
         ui_label = "Sharpening Highlight Limiter";
+        ui_tooltip = "Sharpening Highlight Limiter";
         ui_category = "Sharpening";
         ui_type = "slider";
         ui_min = 0.0;
@@ -66,19 +71,23 @@ namespace pd80_lumasharpen
         > = 0.03;
     uniform bool enable_depth <
         ui_label = "Enable depth based adjustments.\nMake sure you have setup your depth buffer correctly.";
+        ui_tooltip = "Enable depth based adjustments";
         ui_category = "Sharpening: Depth";
         > = false;
     uniform bool enable_reverse <
         ui_label = "Reverses the effect (sharpen close, or sharpen far)";
+        ui_tooltip = "Reverses the effect";
         ui_category = "Sharpening: Depth";
         > = false;
     uniform bool display_depth <
         ui_label = "Show depth texture";
+        ui_tooltip = "Show depth texture";
         ui_category = "Sharpening: Depth";
         > = false;
     uniform float depthStart <
         ui_type = "slider";
         ui_label = "Change Depth Start Plane";
+        ui_tooltip = "Change Depth Start Plane";
         ui_category = "Sharpening: Depth";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -86,12 +95,14 @@ namespace pd80_lumasharpen
     uniform float depthEnd <
         ui_type = "slider";
         ui_label = "Change Depth End Plane";
+        ui_tooltip = "Change Depth End Plane";
         ui_category = "Sharpening: Depth";
         ui_min = 0.0f;
         ui_max = 1.0f;
         > = 0.1;
     uniform float depthCurve <
         ui_label = "Depth Curve Adjustment";
+        ui_tooltip = "Depth Curve Adjustment";
         ui_category = "Sharpening: Depth";
         ui_type = "slider";
         ui_min = 0.05;

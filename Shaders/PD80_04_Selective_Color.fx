@@ -39,11 +39,13 @@ namespace pd80_selectivecolor
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
     uniform int corr_method < __UNIFORM_COMBO_INT1
         ui_label = "Correction Method";
+        ui_tooltip = "Correction Method";
         ui_category = "Selective Color";
         ui_items = "Absolute\0Relative\0"; //Do not change order; 0=Absolute, 1=Relative
         > = 1;
     uniform int corr_method2 < __UNIFORM_COMBO_INT1
         ui_label = "Correction Method Saturation";
+        ui_tooltip = "Correction Method Saturation";
         ui_category = "Selective Color";
         ui_items = "Absolute\0Relative\0"; //Do not change order; 0=Absolute, 1=Relative
         > = 1;
@@ -51,6 +53,7 @@ namespace pd80_selectivecolor
     uniform float r_adj_cya <
         ui_type = "slider";
         ui_label = "Cyan";
+        ui_tooltip = "Selective Color Reds: Cyan";
         ui_category = "Selective Color: Reds";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -58,6 +61,7 @@ namespace pd80_selectivecolor
     uniform float r_adj_mag <
         ui_type = "slider";
         ui_label = "Magenta";
+        ui_tooltip = "Selective Color Reds: Magenta";
         ui_category = "Selective Color: Reds";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -65,6 +69,7 @@ namespace pd80_selectivecolor
     uniform float r_adj_yel <
         ui_type = "slider";
         ui_label = "Yellow";
+        ui_tooltip = "Selective Color Reds: Yellow";
         ui_category = "Selective Color: Reds";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -72,6 +77,7 @@ namespace pd80_selectivecolor
     uniform float r_adj_bla <
         ui_type = "slider";
         ui_label = "Black";
+        ui_tooltip = "Selective Color Reds: Black";
         ui_category = "Selective Color: Reds";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -79,6 +85,7 @@ namespace pd80_selectivecolor
     uniform float r_adj_sat <
         ui_type = "slider";
         ui_label = "Saturation";
+        ui_tooltip = "Selective Color Reds: Saturation";
         ui_category = "Selective Color: Reds";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -86,6 +93,7 @@ namespace pd80_selectivecolor
     uniform float r_adj_vib <
         ui_type = "slider";
         ui_label = "Vibrance";
+        ui_tooltip = "Selective Color Reds: Vibrance";
         ui_category = "Selective Color: Reds";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -95,6 +103,7 @@ namespace pd80_selectivecolor
     uniform float y_adj_cya <
         ui_type = "slider";
         ui_label = "Cyan";
+        ui_tooltip = "Selective Color Yellows: Cyan";
         ui_category = "Selective Color: Yellows";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -102,6 +111,7 @@ namespace pd80_selectivecolor
     uniform float y_adj_mag <
         ui_type = "slider";
         ui_label = "Magenta";
+        ui_tooltip = "Selective Color Yellows: Magenta";
         ui_category = "Selective Color: Yellows";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -109,6 +119,7 @@ namespace pd80_selectivecolor
     uniform float y_adj_yel <
         ui_type = "slider";
         ui_label = "Yellow";
+        ui_tooltip = "Selective Color Yellows: Yellow";
         ui_category = "Selective Color: Yellows";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -116,6 +127,7 @@ namespace pd80_selectivecolor
     uniform float y_adj_bla <
         ui_type = "slider";
         ui_label = "Black";
+        ui_tooltip = "Selective Color Yellows: Black";
         ui_category = "Selective Color: Yellows";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -123,6 +135,7 @@ namespace pd80_selectivecolor
     uniform float y_adj_sat <
         ui_type = "slider";
         ui_label = "Saturation";
+        ui_tooltip = "Selective Color Yellows: Saturation";
         ui_category = "Selective Color: Yellows";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -130,6 +143,7 @@ namespace pd80_selectivecolor
     uniform float y_adj_vib <
         ui_type = "slider";
         ui_label = "Vibrance";
+        ui_tooltip = "Selective Color Yellows: Vibrance";
         ui_category = "Selective Color: Yellows";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -139,6 +153,7 @@ namespace pd80_selectivecolor
     uniform float g_adj_cya <
         ui_type = "slider";
         ui_label = "Cyan";
+        ui_tooltip = "Selective Color Greens: Cyan";
         ui_category = "Selective Color: Greens";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -146,6 +161,7 @@ namespace pd80_selectivecolor
     uniform float g_adj_mag <
         ui_type = "slider";
         ui_label = "Magenta";
+        ui_tooltip = "Selective Color Greens: Magenta";
         ui_category = "Selective Color: Greens";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -153,6 +169,7 @@ namespace pd80_selectivecolor
     uniform float g_adj_yel <
         ui_type = "slider";
         ui_label = "Yellow";
+        ui_tooltip = "Selective Color Greens: Yellow";
         ui_category = "Selective Color: Greens";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -160,6 +177,7 @@ namespace pd80_selectivecolor
     uniform float g_adj_bla <
         ui_type = "slider";
         ui_label = "Black";
+        ui_tooltip = "Selective Color Greens: Black";
         ui_category = "Selective Color: Greens";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -167,6 +185,7 @@ namespace pd80_selectivecolor
     uniform float g_adj_sat <
         ui_type = "slider";
         ui_label = "Saturation";
+        ui_tooltip = "Selective Color Greens: Saturation";
         ui_category = "Selective Color: Greens";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -174,6 +193,7 @@ namespace pd80_selectivecolor
     uniform float g_adj_vib <
         ui_type = "slider";
         ui_label = "Vibrance";
+        ui_tooltip = "Selective Color Greens: Vibrance";
         ui_category = "Selective Color: Greens";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -183,6 +203,7 @@ namespace pd80_selectivecolor
     uniform float c_adj_cya <
         ui_type = "slider";
         ui_label = "Cyan";
+        ui_tooltip = "Selective Color Cyans: Cyan";
         ui_category = "Selective Color: Cyans";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -190,6 +211,7 @@ namespace pd80_selectivecolor
     uniform float c_adj_mag <
         ui_type = "slider";
         ui_label = "Magenta";
+        ui_tooltip = "Selective Color Cyans: Magenta";
         ui_category = "Selective Color: Cyans";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -197,6 +219,7 @@ namespace pd80_selectivecolor
     uniform float c_adj_yel <
         ui_type = "slider";
         ui_label = "Yellow";
+        ui_tooltip = "Selective Color Cyans: Yellow";
         ui_category = "Selective Color: Cyans";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -204,6 +227,7 @@ namespace pd80_selectivecolor
     uniform float c_adj_bla <
         ui_type = "slider";
         ui_label = "Black";
+        ui_tooltip = "Selective Color Cyans: Black";
         ui_category = "Selective Color: Cyans";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -211,6 +235,7 @@ namespace pd80_selectivecolor
     uniform float c_adj_sat <
         ui_type = "slider";
         ui_label = "Saturation";
+        ui_tooltip = "Selective Color Cyans: Saturation";
         ui_category = "Selective Color: Cyans";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -218,6 +243,7 @@ namespace pd80_selectivecolor
     uniform float c_adj_vib <
         ui_type = "slider";
         ui_label = "Vibrance";
+        ui_tooltip = "Selective Color Cyans: Vibrance";
         ui_category = "Selective Color: Cyans";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -227,6 +253,7 @@ namespace pd80_selectivecolor
     uniform float b_adj_cya <
         ui_type = "slider";
         ui_label = "Cyan";
+        ui_tooltip = "Selective Color Blues: Cyan";
         ui_category = "Selective Color: Blues";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -234,6 +261,7 @@ namespace pd80_selectivecolor
     uniform float b_adj_mag <
         ui_type = "slider";
         ui_label = "Magenta";
+        ui_tooltip = "Selective Color Blues: Magenta";
         ui_category = "Selective Color: Blues";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -241,6 +269,7 @@ namespace pd80_selectivecolor
     uniform float b_adj_yel <
         ui_type = "slider";
         ui_label = "Yellow";
+        ui_tooltip = "Selective Color Blues: Yellow";
         ui_category = "Selective Color: Blues";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -248,6 +277,7 @@ namespace pd80_selectivecolor
     uniform float b_adj_bla <
         ui_type = "slider";
         ui_label = "Black";
+        ui_tooltip = "Selective Color Blues: Black";
         ui_category = "Selective Color: Blues";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -255,6 +285,7 @@ namespace pd80_selectivecolor
     uniform float b_adj_sat <
         ui_type = "slider";
         ui_label = "Saturation";
+        ui_tooltip = "Selective Color Blues: Saturation";
         ui_category = "Selective Color: Blues";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -262,6 +293,7 @@ namespace pd80_selectivecolor
     uniform float b_adj_vib <
         ui_type = "slider";
         ui_label = "Vibrance";
+        ui_tooltip = "Selective Color Blues: Vibrance";
         ui_category = "Selective Color: Blues";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -271,6 +303,7 @@ namespace pd80_selectivecolor
     uniform float m_adj_cya <
         ui_type = "slider";
         ui_label = "Cyan";
+        ui_tooltip = "Selective Color Magentas: Cyan";
         ui_category = "Selective Color: Magentas";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -278,6 +311,7 @@ namespace pd80_selectivecolor
     uniform float m_adj_mag <
         ui_type = "slider";
         ui_label = "Magenta";
+        ui_tooltip = "Selective Color Magentas: Magenta";
         ui_category = "Selective Color: Magentas";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -285,6 +319,7 @@ namespace pd80_selectivecolor
     uniform float m_adj_yel <
         ui_type = "slider";
         ui_label = "Yellow";
+        ui_tooltip = "Selective Color Magentas: Yellow";
         ui_category = "Selective Color: Magentas";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -292,6 +327,7 @@ namespace pd80_selectivecolor
     uniform float m_adj_bla <
         ui_type = "slider";
         ui_label = "Black";
+        ui_tooltip = "Selective Color Magentas: Black";
         ui_category = "Selective Color: Magentas";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -299,6 +335,7 @@ namespace pd80_selectivecolor
     uniform float m_adj_sat <
         ui_type = "slider";
         ui_label = "Saturation";
+        ui_tooltip = "Selective Color Magentas: Saturation";
         ui_category = "Selective Color: Magentas";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -306,6 +343,7 @@ namespace pd80_selectivecolor
     uniform float m_adj_vib <
         ui_type = "slider";
         ui_label = "Vibrance";
+        ui_tooltip = "Selective Color Magentas: Vibrance";
         ui_category = "Selective Color: Magentas";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -315,6 +353,7 @@ namespace pd80_selectivecolor
     uniform float w_adj_cya <
         ui_type = "slider";
         ui_label = "Cyan";
+        ui_tooltip = "Selective Color Whites: Cyan";
         ui_category = "Selective Color: Whites";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -322,6 +361,7 @@ namespace pd80_selectivecolor
     uniform float w_adj_mag <
         ui_type = "slider";
         ui_label = "Magenta";
+        ui_tooltip = "Selective Color Whites: Magenta";
         ui_category = "Selective Color: Whites";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -329,6 +369,7 @@ namespace pd80_selectivecolor
     uniform float w_adj_yel <
         ui_type = "slider";
         ui_label = "Yellow";
+        ui_tooltip = "Selective Color Whites: Yellow";
         ui_category = "Selective Color: Whites";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -336,6 +377,7 @@ namespace pd80_selectivecolor
     uniform float w_adj_bla <
         ui_type = "slider";
         ui_label = "Black";
+        ui_tooltip = "Selective Color Whites: Black";
         ui_category = "Selective Color: Whites";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -343,6 +385,7 @@ namespace pd80_selectivecolor
     uniform float w_adj_sat <
         ui_type = "slider";
         ui_label = "Saturation";
+        ui_tooltip = "Selective Color Whites: Saturation";
         ui_category = "Selective Color: Whites";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -350,6 +393,7 @@ namespace pd80_selectivecolor
     uniform float w_adj_vib <
         ui_type = "slider";
         ui_label = "Vibrance";
+        ui_tooltip = "Selective Color Whites: Vibrance";
         ui_category = "Selective Color: Whites";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -359,6 +403,7 @@ namespace pd80_selectivecolor
     uniform float n_adj_cya <
         ui_type = "slider";
         ui_label = "Cyan";
+        ui_tooltip = "Selective Color Neutrals: Cyan";
         ui_category = "Selective Color: Neutrals";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -366,6 +411,7 @@ namespace pd80_selectivecolor
     uniform float n_adj_mag <
         ui_type = "slider";
         ui_label = "Magenta";
+        ui_tooltip = "Selective Color Neutrals: Magenta";
         ui_category = "Selective Color: Neutrals";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -373,6 +419,7 @@ namespace pd80_selectivecolor
     uniform float n_adj_yel <
         ui_type = "slider";
         ui_label = "Yellow";
+        ui_tooltip = "Selective Color Neutrals: Yellow";
         ui_category = "Selective Color: Neutrals";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -380,6 +427,7 @@ namespace pd80_selectivecolor
     uniform float n_adj_bla <
         ui_type = "slider";
         ui_label = "Black";
+        ui_tooltip = "Selective Color Neutrals: Black";
         ui_category = "Selective Color: Neutrals";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -387,6 +435,7 @@ namespace pd80_selectivecolor
     uniform float n_adj_sat <
         ui_type = "slider";
         ui_label = "Saturation";
+        ui_tooltip = "Selective Color Neutrals: Saturation";
         ui_category = "Selective Color: Neutrals";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -394,6 +443,7 @@ namespace pd80_selectivecolor
     uniform float n_adj_vib <
         ui_type = "slider";
         ui_label = "Vibrance";
+        ui_tooltip = "Selective Color Neutrals: Vibrance";
         ui_category = "Selective Color: Neutrals";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -403,6 +453,7 @@ namespace pd80_selectivecolor
     uniform float bk_adj_cya <
         ui_type = "slider";
         ui_label = "Cyan";
+        ui_tooltip = "Selective Color Blacks: Cyan";
         ui_category = "Selective Color: Blacks";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -410,6 +461,7 @@ namespace pd80_selectivecolor
     uniform float bk_adj_mag <
         ui_type = "slider";
         ui_label = "Magenta";
+        ui_tooltip = "Selective Color Blacks: Magenta";
         ui_category = "Selective Color: Blacks";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -417,6 +469,7 @@ namespace pd80_selectivecolor
     uniform float bk_adj_yel <
         ui_type = "slider";
         ui_label = "Yellow";
+        ui_tooltip = "Selective Color Blacks: Yellow";
         ui_category = "Selective Color: Blacks";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -424,6 +477,7 @@ namespace pd80_selectivecolor
     uniform float bk_adj_bla <
         ui_type = "slider";
         ui_label = "Black";
+        ui_tooltip = "Selective Color Blacks: Black";
         ui_category = "Selective Color: Blacks";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -431,6 +485,7 @@ namespace pd80_selectivecolor
     uniform float bk_adj_sat <
         ui_type = "slider";
         ui_label = "Saturation";
+        ui_tooltip = "Selective Color Blacks: Saturation";
         ui_category = "Selective Color: Blacks";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -438,6 +493,7 @@ namespace pd80_selectivecolor
     uniform float bk_adj_vib <
         ui_type = "slider";
         ui_label = "Vibrance";
+        ui_tooltip = "Selective Color Blacks: Vibrance";
         ui_category = "Selective Color: Blacks";
         ui_min = -1.0f;
         ui_max = 1.0f;

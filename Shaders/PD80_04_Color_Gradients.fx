@@ -32,13 +32,21 @@
 namespace pd80_ColorGradients
 {
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
+    uniform int luma_mode < __UNIFORM_COMBO_INT1
+        ui_label = "Luma Mode";
+        ui_tooltip = "Luma Mode";
+        ui_category = "Luma Mode";
+        ui_items = "Use Average\0Use Perceived Luma\0Use Max Value\0";
+        > = 0;
     uniform int separation_mode < __UNIFORM_COMBO_INT1
         ui_label = "Luma Separation Mode";
-        ui_category = "Mixing Values";
+        ui_tooltip = "Luma Separation Mode";
+        ui_category = "Luma Mode";
         ui_items = "Harsh Separation\0Smooth Separation\0";
         > = 0;
     uniform float CGdesat <
         ui_label = "Desaturate Base Image";
+        ui_tooltip = "Desaturate Base Image";
         ui_category = "Mixing Values";
         ui_type = "slider";
         ui_min = 0.0;
@@ -46,6 +54,7 @@ namespace pd80_ColorGradients
         > = 0.0;
     uniform float finalmix <
         ui_label = "Mix with Original";
+        ui_tooltip = "Mix with Original";
         ui_category = "Mixing Values";
         ui_type = "slider";
         ui_min = 0.0;
@@ -55,15 +64,18 @@ namespace pd80_ColorGradients
     uniform float3 blendcolor_ls_m <
         ui_type = "color";
         ui_label = "Color";
+        ui_tooltip = "Light Scene: Midtone Color";
         ui_category = "Light Scene: Midtone Color";
         > = float3( 0.98, 0.588, 0.0 );
     uniform int blendmode_ls_m < __UNIFORM_COMBO_INT1
         ui_label = "Blendmode";
+        ui_tooltip = "Light Scene: Midtone Color Blendmode";
         ui_category = "Light Scene: Midtone Color";
         ui_items = "Default\0Darken\0Multiply\0Linearburn\0Colorburn\0Lighten\0Screen\0Colordodge\0Lineardodge\0Overlay\0Softlight\0Vividlight\0Linearlight\0Pinlight\0Hardmix\0Reflect\0Glow\0Hue\0Saturation\0Color\0Luminosity\0";
         > = 10;
     uniform float opacity_ls_m <
         ui_label = "Opacity";
+        ui_tooltip = "Light Scene: Midtone Color Opacity";
         ui_category = "Light Scene: Midtone Color";
         ui_type = "slider";
         ui_min = 0.0;
@@ -72,15 +84,17 @@ namespace pd80_ColorGradients
     uniform float3 blendcolor_ls_s <
         ui_type = "color";
         ui_label = "Color";
+        ui_tooltip = "Light Scene: Shadow Color";
         ui_category = "Light Scene: Shadow Color";
         > = float3( 0.0,  0.365, 1.0 );
     uniform int blendmode_ls_s < __UNIFORM_COMBO_INT1
         ui_label = "Blendmode";
-        ui_category = "Light Scene: Shadow Color";
+        ui_category = "Light Scene: Shadow Color Blendmode";
         ui_items = "Default\0Darken\0Multiply\0Linearburn\0Colorburn\0Lighten\0Screen\0Colordodge\0Lineardodge\0Overlay\0Softlight\0Vividlight\0Linearlight\0Pinlight\0Hardmix\0Reflect\0Glow\0Hue\0Saturation\0Color\0Luminosity\0";
         > = 5;
     uniform float opacity_ls_s <
         ui_label = "Opacity";
+        ui_tooltip = "Light Scene: Shadow Color Opacity";
         ui_category = "Light Scene: Shadow Color";
         ui_type = "slider";
         ui_min = 0.0;
@@ -94,20 +108,24 @@ namespace pd80_ColorGradients
                   "To simulate Day-Night color grading.\n"
                   "-------------------------------------";
         ui_label = "Enable Color Transitions";
+        ui_tooltip = "Enable Color Transitions";
         ui_category = "Enable Color Transitions";
         > = true;
     uniform float3 blendcolor_ds_m <
         ui_type = "color";
         ui_label = "Color";
+        ui_tooltip = "Dark Scene: Midtone Color";
         ui_category = "Dark Scene: Midtone Color";
         > = float3( 0.0,  0.365, 1.0 );
     uniform int blendmode_ds_m < __UNIFORM_COMBO_INT1
         ui_label = "Blendmode";
+        ui_tooltip = "Dark Scene: Midtone Color Blendmode";
         ui_category = "Dark Scene: Midtone Color";
         ui_items = "Default\0Darken\0Multiply\0Linearburn\0Colorburn\0Lighten\0Screen\0Colordodge\0Lineardodge\0Overlay\0Softlight\0Vividlight\0Linearlight\0Pinlight\0Hardmix\0Reflect\0Glow\0Hue\0Saturation\0Color\0Luminosity\0";
         > = 10;
     uniform float opacity_ds_m <
         ui_label = "Opacity";
+        ui_tooltip = "Dark Scene: Midtone Color Opacity";
         ui_category = "Dark Scene: Midtone Color";
         ui_type = "slider";
         ui_min = 0.0;
@@ -116,15 +134,18 @@ namespace pd80_ColorGradients
     uniform float3 blendcolor_ds_s <
         ui_type = "color";
         ui_label = "Color";
+        ui_tooltip = "Dark Scene: Shadow Color";
         ui_category = "Dark Scene: Shadow Color";
         > = float3( 0.0,  0.039, 0.588 );
     uniform int blendmode_ds_s < __UNIFORM_COMBO_INT1
         ui_label = "Blendmode";
+        ui_tooltip = "Dark Scene: Shadow Color Blendmode";
         ui_category = "Dark Scene: Shadow Color";
         ui_items = "Default\0Darken\0Multiply\0Linearburn\0Colorburn\0Lighten\0Screen\0Colordodge\0Lineardodge\0Overlay\0Softlight\0Vividlight\0Linearlight\0Pinlight\0Hardmix\0Reflect\0Glow\0Hue\0Saturation\0Color\0Luminosity\0";
         > = 10;
     uniform float opacity_ds_s <
         ui_label = "Opacity";
+        ui_tooltip = "Dark Scene: Shadow Color Opacity";
         ui_category = "Dark Scene: Shadow Color";
         ui_type = "slider";
         ui_min = 0.0;
@@ -132,6 +153,7 @@ namespace pd80_ColorGradients
         > = 1.0;
     uniform float minlevel <
         ui_label = "Pure Dark Scene Level";
+        ui_tooltip = "Pure Dark Scene Level";
         ui_category = "Scene Luminance Adaptation";
         ui_type = "slider";
         ui_min = 0.0;
@@ -139,6 +161,7 @@ namespace pd80_ColorGradients
         > = 0.125;
     uniform float maxlevel <
         ui_label = "Pure Light Scene Level";
+        ui_tooltip = "Pure Light Scene Level";
         ui_category = "Scene Luminance Adaptation";
         ui_type = "slider";
         ui_min = 0.0;
@@ -310,9 +333,27 @@ namespace pd80_ColorGradients
         color.xyz        = saturate( color.xyz );
         
         // Weights
-        float cWeight    = dot( color.xyz, 0.333333f );
-        float w_s; float w_h; float w_m;
+        float cWeight;
+        switch( luma_mode )
+        {
+            case 0: // Use average
+            {
+                cWeight = dot( color.xyz, float3( 0.333333f, 0.333334f, 0.333333f ));
+            }
+            break;
+            case 1: // Use perceived luma
+            {
+                cWeight = dot( color.xyz, float3( 0.212656f, 0.715158f, 0.072186f ));
+            }
+            break;
+            case 2: // Use max
+            {
+                cWeight = max( max( color.x, color.y ), color.z );
+            }
+            break;
+        }
 
+        float w_s; float w_h; float w_m;
         switch( separation_mode )
         {
             /*

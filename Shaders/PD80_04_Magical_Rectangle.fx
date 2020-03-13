@@ -35,16 +35,19 @@ namespace pd80_magicalrectangle
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
     uniform int shape < __UNIFORM_COMBO_INT1
         ui_label = "Shape";
+        ui_tooltip = "Shape";
         ui_category = "Shape Manipulation";
         ui_items = "Square\0Circle\0";
         > = 0;
     uniform bool invert_shape <
         ui_label = "Invert Shape";
+        ui_tooltip = "Invert Shape";
         ui_category = "Shape Manipulation";
         > = false;
     uniform uint rotation <
         ui_type = "slider";
         ui_label = "Rotation Factor";
+        ui_tooltip = "Rotation Factor";
         ui_category = "Shape Manipulation";
         ui_min = 0;
         ui_max = 360;
@@ -52,6 +55,7 @@ namespace pd80_magicalrectangle
     uniform float2 center <
         ui_type = "slider";
         ui_label = "Center";
+        ui_tooltip = "Center";
         ui_category = "Shape Manipulation";
         ui_min = 0.0;
         ui_max = 1.0;
@@ -59,6 +63,7 @@ namespace pd80_magicalrectangle
     uniform float ret_size_x <
         ui_type = "slider";
         ui_label = "Horizontal Size";
+        ui_tooltip = "Horizontal Size";
         ui_category = "Shape Manipulation";
         ui_min = 0.0;
         ui_max = 0.5;
@@ -66,6 +71,7 @@ namespace pd80_magicalrectangle
     uniform float ret_size_y <
         ui_type = "slider";
         ui_label = "Vertical Size";
+        ui_tooltip = "Vertical Size";
         ui_category = "Shape Manipulation";
         ui_min = 0.0;
         ui_max = 0.5;
@@ -73,6 +79,7 @@ namespace pd80_magicalrectangle
     uniform float depthpos <
         ui_type = "slider";
         ui_label = "Depth Position";
+        ui_tooltip = "Depth Position";
         ui_category = "Shape Manipulation";
         ui_min = 0.0;
         ui_max = 1.0;
@@ -80,6 +87,7 @@ namespace pd80_magicalrectangle
     uniform float smoothing <
         ui_type = "slider";
         ui_label = "Edge Smoothing";
+        ui_tooltip = "Edge Smoothing";
         ui_category = "Shape Manipulation";
         ui_min = 0.0;
         ui_max = 1.0;
@@ -87,6 +95,7 @@ namespace pd80_magicalrectangle
     uniform float depth_smoothing <
         ui_type = "slider";
         ui_label = "Depth Smoothing";
+        ui_tooltip = "Depth Smoothing";
         ui_category = "Shape Manipulation";
         ui_min = 0.0;
         ui_max = 1.0;
@@ -99,6 +108,7 @@ namespace pd80_magicalrectangle
                   "-------------------------------------";
         ui_type = "slider";
         ui_label = "Shape: Lightness";
+        ui_tooltip = "Shape: Lightness";
         ui_category = "Shape Coloration";
         ui_min = 0.0;
         ui_max = 1.0;
@@ -106,6 +116,7 @@ namespace pd80_magicalrectangle
     uniform float sh_hue <
         ui_type = "slider";
         ui_label = "Shape: Hue";
+        ui_tooltip = "Shape: Hue";
         ui_category = "Shape Coloration";
         ui_min = 0.0;
         ui_max = 1.0;
@@ -113,6 +124,7 @@ namespace pd80_magicalrectangle
     uniform float sh_saturation <
         ui_type = "slider";
         ui_label = "Shape: Saturation";
+        ui_tooltip = "Shape: Saturation";
         ui_category = "Shape Coloration";
         ui_min = 0.0;
         ui_max = 1.0;
@@ -120,6 +132,7 @@ namespace pd80_magicalrectangle
     uniform float mr_exposure <
         ui_type = "slider";
         ui_label = "Image: Exposure";
+        ui_tooltip = "Image: Exposure";
         ui_category = "Shape Coloration";
         ui_min = -4.0;
         ui_max = 4.0;
@@ -127,6 +140,7 @@ namespace pd80_magicalrectangle
     uniform float mr_contrast <
         ui_type = "slider";
         ui_label = "Image: Contrast";
+        ui_tooltip = "Image: Contrast";
         ui_category = "Shape Coloration";
         ui_min = -1.0;
         ui_max = 1.0;
@@ -134,6 +148,7 @@ namespace pd80_magicalrectangle
     uniform float mr_brightness <
         ui_type = "slider";
         ui_label = "Image: Brightness";
+        ui_tooltip = "Image: Brightness";
         ui_category = "Shape Coloration";
         ui_min = -1.0;
         ui_max = 1.0;
@@ -141,6 +156,7 @@ namespace pd80_magicalrectangle
     uniform float mr_hue <
         ui_type = "slider";
         ui_label = "Image: Hue";
+        ui_tooltip = "Image: Hue";
         ui_category = "Shape Coloration";
         ui_min = -1.0;
         ui_max = 1.0;
@@ -148,6 +164,7 @@ namespace pd80_magicalrectangle
     uniform float mr_saturation <
         ui_type = "slider";
         ui_label = "Image: Saturation";
+        ui_tooltip = "Image: Saturation";
         ui_category = "Shape Coloration";
         ui_min = -1.0;
         ui_max = 1.0;
@@ -155,21 +172,25 @@ namespace pd80_magicalrectangle
     uniform float mr_vibrance <
         ui_type = "slider";
         ui_label = "Image: Vibrance";
+        ui_tooltip = "Image: Vibrance";
         ui_category = "Shape Coloration";
         ui_min = -1.0;
         ui_max = 1.0;
         > = 0.0;
     uniform bool enable_gradient <
         ui_label = "Enable Gradient";
+        ui_tooltip = "Enable Gradient";
         ui_category = "Shape Gradient";
         > = false;
     uniform bool gradient_type <
         ui_label = "Gradient Type";
+        ui_tooltip = "Gradient Type";
         ui_category = "Shape Gradient";
         > = false;
     uniform float gradient_curve <
         ui_type = "slider";
         ui_label = "Gradient Curve";
+        ui_tooltip = "Gradient Curve";
         ui_category = "Shape Gradient";
         ui_min = 0.001;
         ui_max = 2.0;
@@ -177,18 +198,21 @@ namespace pd80_magicalrectangle
     uniform float intensity_boost <
         ui_type = "slider";
         ui_label = "Intensity Boost";
+        ui_tooltip = "Intensity Boost";
         ui_category = "Intensity Boost";
         ui_min = 1.0;
         ui_max = 4.0;
         > = 1.0;
     uniform int blendmode_1 < __UNIFORM_COMBO_INT1
         ui_label = "Blendmode";
+        ui_tooltip = "Blendmode";
         ui_category = "Shape Blending";
         ui_items = "Default\0Darken\0Multiply\0Linearburn\0Colorburn\0Lighten\0Screen\0Colordodge\0Lineardodge\0Overlay\0Softlight\0Vividlight\0Linearlight\0Pinlight\0Hardmix\0Reflect\0Glow\0Hue\0Saturation\0Color\0Luminosity\0";
         > = 0;
     uniform float opacity <
         ui_type = "slider";
         ui_label = "Opacity";
+        ui_tooltip = "Opacity";
         ui_category = "Shape Blending";
         ui_min = 0.0;
         ui_max = 1.0;

@@ -48,25 +48,30 @@ namespace pd80_levels
     uniform float3 ib <
         ui_type = "color";
         ui_label = "Black IN Level";
+        ui_tooltip = "Black IN Level";
         ui_category = "Levels";
         > = float3(0.0, 0.0, 0.0);
     uniform float3 iw <
         ui_type = "color";
         ui_label = "White IN Level";
+        ui_tooltip = "White IN Level";
         ui_category = "Levels";
         > = float3(1.0, 1.0, 1.0);
     uniform float3 ob <
         ui_type = "color";
         ui_label = "Black OUT Level";
+        ui_tooltip = "Black OUT Level";
         ui_category = "Levels";
         > = float3(0.0, 0.0, 0.0);
     uniform float3 ow <
         ui_type = "color";
         ui_label = "White OUT Level";
+        ui_tooltip = "White OUT Level";
         ui_category = "Levels";
         > = float3(1.0, 1.0, 1.0);
     uniform float ig <
         ui_label = "Gamma Adjustment";
+        ui_tooltip = "Gamma Adjustment";
         ui_category = "Levels";
         ui_type = "slider";
         ui_min = 0.05;
@@ -75,11 +80,13 @@ namespace pd80_levels
     #if( LEVELS_USE_DEPTH == 1 )
     uniform bool display_depth <
         ui_label = "Show depth texture.\nThe below adjustments only apply to white areas.\0Make sure you have your depth texture setup correctly.";
+        ui_tooltip = "Show depth texture";
         ui_category = "Levels: Depth";
         > = false;
     uniform float depthStart <
         ui_type = "slider";
         ui_label = "Change Depth Start Plane";
+        ui_tooltip = "Change Depth Start Plane";
         ui_category = "Levels: Depth";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -87,12 +94,14 @@ namespace pd80_levels
     uniform float depthEnd <
         ui_type = "slider";
         ui_label = "Change Depth End Plane";
+        ui_tooltip = "Change Depth End Plane";
         ui_category = "Levels: Depth";
         ui_min = 0.0f;
         ui_max = 1.0f;
         > = 0.1;
     uniform float depthCurve <
         ui_label = "Depth Curve Adjustment";
+        ui_tooltip = "Depth Curve Adjustment";
         ui_category = "Levels: Depth";
         ui_type = "slider";
         ui_min = 0.05;
@@ -101,25 +110,30 @@ namespace pd80_levels
     uniform float3 ibd <
         ui_type = "color";
         ui_label = "Black IN Level Far";
+        ui_tooltip = "Black IN Level Far";
         ui_category = "Levels: Far";
         > = float3(0.0, 0.0, 0.0);
     uniform float3 iwd <
         ui_type = "color";
         ui_label = "White IN Level Far";
+        ui_tooltip = "White IN Level Far";
         ui_category = "Levels: Far";
         > = float3(1.0, 1.0, 1.0);
     uniform float3 obd <
         ui_type = "color";
         ui_label = "Black OUT Level Far";
+        ui_tooltip = "Black OUT Level Far";
         ui_category = "Levels: Far";
         > = float3(0.0, 0.0, 0.0);
     uniform float3 owd <
         ui_type = "color";
         ui_label = "White OUT Level Far";
+        ui_tooltip = "White OUT Level Far";
         ui_category = "Levels: Far";
         > = float3(1.0, 1.0, 1.0);
     uniform float igd <
         ui_label = "Gamma Adjustment Far";
+        ui_tooltip = "Gamma Adjustment Far";
         ui_category = "Levels: Far";
         ui_type = "slider";
         ui_min = 0.05;

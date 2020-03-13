@@ -47,6 +47,7 @@ namespace pd80_curvedlevels
     uniform int black_in_grey <
         ui_type = "slider";
         ui_label = "Grey: Black Point";
+        ui_tooltip = "Grey: Black Point";
         ui_category = "Grey: Contrast Curves";
         ui_min = 0;
         ui_max = 255;
@@ -54,6 +55,7 @@ namespace pd80_curvedlevels
     uniform int white_in_grey <
         ui_type = "slider";
         ui_label = "Grey: White Point";
+        ui_tooltip = "Grey: White Point";
         ui_category = "Grey: Contrast Curves";
         ui_min = 0;
         ui_max = 255;
@@ -61,6 +63,7 @@ namespace pd80_curvedlevels
     uniform float pos0_shoulder_grey <
         ui_type = "slider";
         ui_label = "Grey: Shoulder Position X";
+        ui_tooltip = "Grey: Shoulder Position X";
         ui_category = "Grey: Contrast Curves";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -68,6 +71,7 @@ namespace pd80_curvedlevels
     uniform float pos1_shoulder_grey <
         ui_type = "slider";
         ui_label = "Grey: Shoulder Position Y";
+        ui_tooltip = "Grey: Shoulder Position Y";
         ui_category = "Grey: Contrast Curves";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -75,6 +79,7 @@ namespace pd80_curvedlevels
     uniform float pos0_toe_grey <
         ui_type = "slider";
         ui_label = "Grey: Toe Position X";
+        ui_tooltip = "Grey: Toe Position X";
         ui_category = "Grey: Contrast Curves";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -82,6 +87,7 @@ namespace pd80_curvedlevels
     uniform float pos1_toe_grey <
         ui_type = "slider";
         ui_label = "Grey: Toe Position Y";
+        ui_tooltip = "Grey: Toe Position Y";
         ui_category = "Grey: Contrast Curves";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -89,6 +95,7 @@ namespace pd80_curvedlevels
     uniform int black_out_grey <
         ui_type = "slider";
         ui_label = "Grey: Black Point Offset";
+        ui_tooltip = "Grey: Black Point Offset";
         ui_category = "Grey: Contrast Curves";
         ui_min = 0;
         ui_max = 255;
@@ -96,6 +103,7 @@ namespace pd80_curvedlevels
     uniform int white_out_grey <
         ui_type = "slider";
         ui_label = "Grey: White Point Offset";
+        ui_tooltip = "Grey: White Point Offset";
         ui_category = "Grey: Contrast Curves";
         ui_min = 0;
         ui_max = 255;
@@ -105,6 +113,7 @@ namespace pd80_curvedlevels
     uniform int black_in_red <
         ui_type = "slider";
         ui_label = "Red: Black Point";
+        ui_tooltip = "Red: Black Point";
         ui_category = "Red: Contrast Curves";
         ui_min = 0;
         ui_max = 255;
@@ -112,6 +121,7 @@ namespace pd80_curvedlevels
     uniform int white_in_red <
         ui_type = "slider";
         ui_label = "Red: White Point";
+        ui_tooltip = "Red: White Point";
         ui_category = "Red: Contrast Curves";
         ui_min = 0;
         ui_max = 255;
@@ -119,6 +129,7 @@ namespace pd80_curvedlevels
     uniform float pos0_shoulder_red <
         ui_type = "slider";
         ui_label = "Red: Shoulder Position X";
+        ui_tooltip = "Red: Shoulder Position X";
         ui_category = "Red: Contrast Curves";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -126,6 +137,7 @@ namespace pd80_curvedlevels
     uniform float pos1_shoulder_red <
         ui_type = "slider";
         ui_label = "Red: Shoulder Position Y";
+        ui_tooltip = "Red: Shoulder Position Y";
         ui_category = "Red: Contrast Curves";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -133,6 +145,7 @@ namespace pd80_curvedlevels
     uniform float pos0_toe_red <
         ui_type = "slider";
         ui_label = "Red: Toe Position X";
+        ui_tooltip = "Red: Toe Position X";
         ui_category = "Red: Contrast Curves";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -140,6 +153,7 @@ namespace pd80_curvedlevels
     uniform float pos1_toe_red <
         ui_type = "slider";
         ui_label = "Red: Toe Position Y";
+        ui_tooltip = "Red: Toe Position Y";
         ui_category = "Red: Contrast Curves";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -147,6 +161,7 @@ namespace pd80_curvedlevels
     uniform int black_out_red <
         ui_type = "slider";
         ui_label = "Red: Black Point Offset";
+        ui_tooltip = "Red: Black Point Offset";
         ui_category = "Red: Contrast Curves";
         ui_min = 0;
         ui_max = 255;
@@ -154,6 +169,7 @@ namespace pd80_curvedlevels
     uniform int white_out_red <
         ui_type = "slider";
         ui_label = "Red: White Point Offset";
+        ui_tooltip = "Red: White Point Offset";
         ui_category = "Red: Contrast Curves";
         ui_min = 0;
         ui_max = 255;
@@ -163,6 +179,7 @@ namespace pd80_curvedlevels
     uniform int black_in_green <
         ui_type = "slider";
         ui_label = "Green: Black Point";
+        ui_tooltip = "Green: Black Point";
         ui_category = "Green: Contrast Curves";
         ui_min = 0;
         ui_max = 255;
@@ -170,6 +187,7 @@ namespace pd80_curvedlevels
     uniform int white_in_green <
         ui_type = "slider";
         ui_label = "Green: White Point";
+        ui_tooltip = "Green: White Point";
         ui_category = "Green: Contrast Curves";
         ui_min = 0;
         ui_max = 255;
@@ -177,6 +195,7 @@ namespace pd80_curvedlevels
     uniform float pos0_shoulder_green <
         ui_type = "slider";
         ui_label = "Green: Shoulder Position X";
+        ui_tooltip = "Green: Shoulder Position X";
         ui_category = "Green: Contrast Curves";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -184,6 +203,7 @@ namespace pd80_curvedlevels
     uniform float pos1_shoulder_green <
         ui_type = "slider";
         ui_label = "Green: Shoulder Position Y";
+        ui_tooltip = "Green: Shoulder Position Y";
         ui_category = "Green: Contrast Curves";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -191,6 +211,7 @@ namespace pd80_curvedlevels
     uniform float pos0_toe_green <
         ui_type = "slider";
         ui_label = "Green: Toe Position X";
+        ui_tooltip = "Green: Toe Position X";
         ui_category = "Green: Contrast Curves";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -198,6 +219,7 @@ namespace pd80_curvedlevels
     uniform float pos1_toe_green <
         ui_type = "slider";
         ui_label = "Green: Toe Position Y";
+        ui_tooltip = "Green: Toe Position Y";
         ui_category = "Green: Contrast Curves";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -205,6 +227,7 @@ namespace pd80_curvedlevels
     uniform int black_out_green <
         ui_type = "slider";
         ui_label = "Green: Black Point Offset";
+        ui_tooltip = "Green: Black Point Offset";
         ui_category = "Green: Contrast Curves";
         ui_min = 0;
         ui_max = 255;
@@ -212,6 +235,7 @@ namespace pd80_curvedlevels
     uniform int white_out_green <
         ui_type = "slider";
         ui_label = "Green: White Point Offset";
+        ui_tooltip = "Green: White Point Offset";
         ui_category = "Green: Contrast Curves";
         ui_min = 0;
         ui_max = 255;
@@ -221,6 +245,7 @@ namespace pd80_curvedlevels
     uniform int black_in_blue <
         ui_type = "slider";
         ui_label = "Blue: Black Point";
+        ui_tooltip = "Blue: Black Point";
         ui_category = "Blue: Contrast Curves";
         ui_min = 0;
         ui_max = 255;
@@ -228,6 +253,7 @@ namespace pd80_curvedlevels
     uniform int white_in_blue <
         ui_type = "slider";
         ui_label = "Blue: White Point";
+        ui_tooltip = "Blue: White Point";
         ui_category = "Blue: Contrast Curves";
         ui_min = 0;
         ui_max = 255;
@@ -235,6 +261,7 @@ namespace pd80_curvedlevels
     uniform float pos0_shoulder_blue <
         ui_type = "slider";
         ui_label = "Blue: Shoulder Position X";
+        ui_tooltip = "Blue: Shoulder Position X";
         ui_category = "Blue: Contrast Curves";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -242,6 +269,7 @@ namespace pd80_curvedlevels
     uniform float pos1_shoulder_blue <
         ui_type = "slider";
         ui_label = "Blue: Shoulder Position Y";
+        ui_tooltip = "Blue: Shoulder Position Y";
         ui_category = "Blue: Contrast Curves";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -249,6 +277,7 @@ namespace pd80_curvedlevels
     uniform float pos0_toe_blue <
         ui_type = "slider";
         ui_label = "Blue: Toe Position X";
+        ui_tooltip = "Blue: Toe Position X";
         ui_category = "Blue: Contrast Curves";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -256,6 +285,7 @@ namespace pd80_curvedlevels
     uniform float pos1_toe_blue <
         ui_type = "slider";
         ui_label = "Blue: Toe Position Y";
+        ui_tooltip = "Blue: Toe Position Y";
         ui_category = "Blue: Contrast Curves";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -263,6 +293,7 @@ namespace pd80_curvedlevels
     uniform int black_out_blue <
         ui_type = "slider";
         ui_label = "Blue: Black Point Offset";
+        ui_tooltip = "Blue: Black Point Offset";
         ui_category = "Blue: Contrast Curves";
         ui_min = 0;
         ui_max = 255;
@@ -270,6 +301,7 @@ namespace pd80_curvedlevels
     uniform int white_out_blue <
         ui_type = "slider";
         ui_label = "Blue: White Point Offset";
+        ui_tooltip = "Blue: White Point Offset";
         ui_category = "Blue: Contrast Curves";
         ui_min = 0;
         ui_max = 255;

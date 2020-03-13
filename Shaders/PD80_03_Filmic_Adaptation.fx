@@ -43,6 +43,7 @@ namespace pd80_filmicadaptation
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
     uniform float adj_shoulder <
     	ui_label = "Adjust Highlights";
+        ui_tooltip = "Adjust Highlights";
         ui_category = "Tonemapping";
         ui_type = "slider";
         ui_min = 1.0;
@@ -50,6 +51,7 @@ namespace pd80_filmicadaptation
         > = 1.0;
     uniform float adj_linear <
     	ui_label = "Adjust Linearity";
+        ui_tooltip = "Adjust Linearity";
         ui_category = "Tonemapping";
         ui_type = "slider";
         ui_min = 1.0;
@@ -57,6 +59,7 @@ namespace pd80_filmicadaptation
         > = 1.0;
     uniform float adj_toe <
     	ui_label = "Adjust Shadows";
+        ui_tooltip = "Adjust Shadows";
         ui_category = "Tonemapping";
         ui_type = "slider";
         ui_min = 1.0;

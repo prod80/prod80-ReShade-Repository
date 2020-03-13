@@ -36,16 +36,19 @@ namespace pd80_SMH
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
     uniform int luma_mode < __UNIFORM_COMBO_INT1
         ui_label = "Luma Mode";
+        ui_tooltip = "Luma Mode";
         ui_category = "Luma Mode";
         ui_items = "Use Average\0Use Perceived Luma\0Use Max Value\0";
         > = 2;
     uniform int separation_mode < __UNIFORM_COMBO_INT1
         ui_label = "Luma Separation Mode";
+        ui_tooltip = "Luma Separation Mode";
         ui_category = "Luma Mode";
         ui_items = "Harsh Separation\0Smooth Separation\0";
         > = 0;
     uniform float exposure_s <
         ui_label = "Exposure";
+        ui_tooltip = "Shadow Exposure";
         ui_category = "Shadow Adjustments";
         ui_type = "slider";
         ui_min = -4.0;
@@ -53,6 +56,7 @@ namespace pd80_SMH
         > = 0.0;
     uniform float contrast_s <
         ui_label = "Contrast";
+        ui_tooltip = "Shadow Contrast";
         ui_category = "Shadow Adjustments";
         ui_type = "slider";
         ui_min = -1.0;
@@ -60,6 +64,7 @@ namespace pd80_SMH
         > = 0.0;
     uniform float brightness_s <
         ui_label = "Brightness";
+        ui_tooltip = "Shadow Brightness";
         ui_category = "Shadow Adjustments";
         ui_type = "slider";
         ui_min = -1.0;
@@ -68,15 +73,18 @@ namespace pd80_SMH
     uniform float3 blendcolor_s <
         ui_type = "color";
         ui_label = "Color";
+        ui_tooltip = "Shadow Color";
         ui_category = "Shadow Adjustments";
         > = float3( 0.0,  0.365, 1.0 );
     uniform int blendmode_s < __UNIFORM_COMBO_INT1
         ui_label = "Blendmode";
+        ui_tooltip = "Shadow Blendmode";
         ui_category = "Shadow Adjustments";
         ui_items = "Default\0Darken\0Multiply\0Linearburn\0Colorburn\0Lighten\0Screen\0Colordodge\0Lineardodge\0Overlay\0Softlight\0Vividlight\0Linearlight\0Pinlight\0Hardmix\0Reflect\0Glow\0Hue\0Saturation\0Color\0Luminosity\0";
         > = 0;
     uniform float opacity_s <
         ui_label = "Opacity";
+        ui_tooltip = "Shadow Opacity";
         ui_category = "Shadow Adjustments";
         ui_type = "slider";
         ui_min = 0.0;
@@ -84,6 +92,7 @@ namespace pd80_SMH
         > = 0.0;
     uniform float tint_s <
         ui_label = "Tint";
+        ui_tooltip = "Shadow Tint";
         ui_category = "Shadow Adjustments";
         ui_type = "slider";
         ui_min = -1.0;
@@ -91,6 +100,7 @@ namespace pd80_SMH
         > = 0.0;
     uniform float saturation_s <
         ui_label = "Saturation";
+        ui_tooltip = "Shadow Saturation";
         ui_category = "Shadow Adjustments";
         ui_type = "slider";
         ui_min = -1.0;
@@ -98,6 +108,7 @@ namespace pd80_SMH
         > = 0.0;
     uniform float vibrance_s <
         ui_label = "Vibrance";
+        ui_tooltip = "Shadow Vibrance";
         ui_category = "Shadow Adjustments";
         ui_type = "slider";
         ui_min = -1.0;
@@ -105,6 +116,7 @@ namespace pd80_SMH
         > = 0.0;
     uniform float exposure_m <
         ui_label = "Exposure";
+        ui_tooltip = "Midtone Exposure";
         ui_category = "Midtone Adjustments";
         ui_type = "slider";
         ui_min = -4.0;
@@ -112,6 +124,7 @@ namespace pd80_SMH
         > = 0.0;
     uniform float contrast_m <
         ui_label = "Contrast";
+        ui_tooltip = "Midtone Contrast";
         ui_category = "Midtone Adjustments";
         ui_type = "slider";
         ui_min = -1.0;
@@ -119,6 +132,7 @@ namespace pd80_SMH
         > = 0.0;
     uniform float brightness_m <
         ui_label = "Brightness";
+        ui_tooltip = "Midtone Brightness";
         ui_category = "Midtone Adjustments";
         ui_type = "slider";
         ui_min = -1.0;
@@ -127,15 +141,18 @@ namespace pd80_SMH
     uniform float3 blendcolor_m <
         ui_type = "color";
         ui_label = "Color";
+        ui_tooltip = "Midtone Color";
         ui_category = "Midtone Adjustments";
         > = float3( 0.98, 0.588, 0.0 );
     uniform int blendmode_m < __UNIFORM_COMBO_INT1
         ui_label = "Blendmode";
+        ui_tooltip = "Midtone Blendmode";
         ui_category = "Midtone Adjustments";
         ui_items = "Default\0Darken\0Multiply\0Linearburn\0Colorburn\0Lighten\0Screen\0Colordodge\0Lineardodge\0Overlay\0Softlight\0Vividlight\0Linearlight\0Pinlight\0Hardmix\0Reflect\0Glow\0Hue\0Saturation\0Color\0Luminosity\0";
         > = 0;
     uniform float opacity_m <
         ui_label = "Opacity";
+        ui_tooltip = "Midtone Opacity";
         ui_category = "Midtone Adjustments";
         ui_type = "slider";
         ui_min = 0.0;
@@ -143,6 +160,7 @@ namespace pd80_SMH
         > = 0.0;
     uniform float tint_m <
         ui_label = "Tint";
+        ui_tooltip = "Midtone Tint";
         ui_category = "Midtone Adjustments";
         ui_type = "slider";
         ui_min = -1.0;
@@ -150,6 +168,7 @@ namespace pd80_SMH
         > = 0.0;
     uniform float saturation_m <
         ui_label = "Saturation";
+        ui_tooltip = "Midtone Saturation";
         ui_category = "Midtone Adjustments";
         ui_type = "slider";
         ui_min = -1.0;
@@ -157,6 +176,7 @@ namespace pd80_SMH
         > = 0.0;
     uniform float vibrance_m <
         ui_label = "Vibrance";
+        ui_tooltip = "Midtone Vibrance";
         ui_category = "Midtone Adjustments";
         ui_type = "slider";
         ui_min = -1.0;
@@ -164,6 +184,7 @@ namespace pd80_SMH
         > = 0.0;
     uniform float exposure_h <
         ui_label = "Exposure";
+        ui_tooltip = "Highlight Exposure";
         ui_category = "Highlight Adjustments";
         ui_type = "slider";
         ui_min = -4.0;
@@ -171,6 +192,7 @@ namespace pd80_SMH
         > = 0.0;
     uniform float contrast_h <
         ui_label = "Contrast";
+        ui_tooltip = "Highlight Contrast";
         ui_category = "Highlight Adjustments";
         ui_type = "slider";
         ui_min = -1.0;
@@ -178,6 +200,7 @@ namespace pd80_SMH
         > = 0.0;
     uniform float brightness_h <
         ui_label = "Brightness";
+        ui_tooltip = "Highlight Brightness";
         ui_category = "Highlight Adjustments";
         ui_type = "slider";
         ui_min = -1.0;
@@ -186,15 +209,18 @@ namespace pd80_SMH
     uniform float3 blendcolor_h <
         ui_type = "color";
         ui_label = "Color";
+        ui_tooltip = "Highlight Color";
         ui_category = "Highlight Adjustments";
         > = float3( 1.0, 1.0, 1.0 );
     uniform int blendmode_h < __UNIFORM_COMBO_INT1
         ui_label = "Blendmode";
+        ui_tooltip = "Highlight Blendmode";
         ui_category = "Highlight Adjustments";
         ui_items = "Default\0Darken\0Multiply\0Linearburn\0Colorburn\0Lighten\0Screen\0Colordodge\0Lineardodge\0Overlay\0Softlight\0Vividlight\0Linearlight\0Pinlight\0Hardmix\0Reflect\0Glow\0Hue\0Saturation\0Color\0Luminosity\0";
         > = 0;
     uniform float opacity_h <
         ui_label = "Opacity";
+        ui_tooltip = "Highlight Opacity";
         ui_category = "Highlight Adjustments";
         ui_type = "slider";
         ui_min = 0.0;
@@ -202,6 +228,7 @@ namespace pd80_SMH
         > = 0.0;
     uniform float tint_h <
         ui_label = "Tint";
+        ui_tooltip = "Highlight Tint";
         ui_category = "Highlight Adjustments";
         ui_type = "slider";
         ui_min = -1.0;
@@ -209,6 +236,7 @@ namespace pd80_SMH
         > = 0.0;
     uniform float saturation_h <
         ui_label = "Saturation";
+        ui_tooltip = "Highlight Saturation";
         ui_category = "Highlight Adjustments";
         ui_type = "slider";
         ui_min = -1.0;
@@ -216,6 +244,7 @@ namespace pd80_SMH
         > = 0.0;
     uniform float vibrance_h <
         ui_label = "Vibrance";
+        ui_tooltip = "Highlight Vibrance";
         ui_category = "Highlight Adjustments";
         ui_type = "slider";
         ui_min = -1.0;

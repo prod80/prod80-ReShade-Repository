@@ -34,6 +34,7 @@ namespace pd80_conbrisat
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
     uniform float exposureN <
         ui_label = "Exposure";
+        ui_tooltip = "Exposure";
         ui_category = "Final Adjustments";
         ui_type = "slider";
         ui_min = -4.0;
@@ -41,6 +42,7 @@ namespace pd80_conbrisat
         > = 0.0;
     uniform float contrast <
         ui_label = "Contrast";
+        ui_tooltip = "Contrast";
         ui_category = "Final Adjustments";
         ui_type = "slider";
         ui_min = -1.0;
@@ -48,6 +50,7 @@ namespace pd80_conbrisat
         > = 0.0;
     uniform float brightness <
         ui_label = "Brightness";
+        ui_tooltip = "Brightness";
         ui_category = "Final Adjustments";
         ui_type = "slider";
         ui_min = -1.0;
@@ -55,6 +58,7 @@ namespace pd80_conbrisat
         > = 0.0;
     uniform float saturation <
         ui_label = "Saturation";
+        ui_tooltip = "Saturation";
         ui_category = "Final Adjustments";
         ui_type = "slider";
         ui_min = -1.0;
@@ -62,6 +66,7 @@ namespace pd80_conbrisat
         > = 0.0;
     uniform float vibrance <
         ui_label = "Vibrance";
+        ui_tooltip = "Vibrance";
         ui_category = "Final Adjustments";
         ui_type = "slider";
         ui_min = -1.0;
@@ -69,6 +74,7 @@ namespace pd80_conbrisat
         > = 0.0;
     uniform float huemid <
     	ui_label = "Color Hue";
+        ui_tooltip = "Custom Color Hue";
         ui_category = "Custom Saturation Adjustments";
         ui_type = "slider";
         ui_min = 0.0;
@@ -76,6 +82,7 @@ namespace pd80_conbrisat
         > = 0.0;
     uniform float huerange <
         ui_label = "Hue Range Selection";
+        ui_tooltip = "Custom Hue Range Selection";
         ui_category = "Custom Saturation Adjustments";
         ui_type = "slider";
         ui_min = 0.0;
@@ -83,6 +90,7 @@ namespace pd80_conbrisat
         > = 0.167;
     uniform float sat_custom <
         ui_label = "Custom Saturation Level";
+        ui_tooltip = "Custom Saturation Level";
         ui_category = "Custom Saturation Adjustments";
         ui_type = "slider";
         ui_min = -2.0;
@@ -90,6 +98,7 @@ namespace pd80_conbrisat
         > = 0.0;
     uniform float sat_r <
         ui_label = "Red Saturation";
+        ui_tooltip = "Red Saturation";
         ui_category = "Color Saturation Adjustments";
         ui_type = "slider";
         ui_min = -2.0;
@@ -97,6 +106,7 @@ namespace pd80_conbrisat
         > = 0.0;
     uniform float sat_o <
         ui_label = "Orange Saturation";
+        ui_tooltip = "Orange Saturation";
         ui_category = "Color Saturation Adjustments";
         ui_type = "slider";
         ui_min = -2.0;
@@ -104,6 +114,7 @@ namespace pd80_conbrisat
         > = 0.0;
     uniform float sat_y <
         ui_label = "Yellow Saturation";
+        ui_tooltip = "Yellow Saturation";
         ui_category = "Color Saturation Adjustments";
         ui_type = "slider";
         ui_min = -2.0;
@@ -111,6 +122,7 @@ namespace pd80_conbrisat
         > = 0.0;
     uniform float sat_g <
         ui_label = "Green Saturation";
+        ui_tooltip = "Green Saturation";
         ui_category = "Color Saturation Adjustments";
         ui_type = "slider";
         ui_min = -2.0;
@@ -118,6 +130,7 @@ namespace pd80_conbrisat
         > = 0.0;
     uniform float sat_a <
         ui_label = "Aqua Saturation";
+        ui_tooltip = "Aqua Saturation";
         ui_category = "Color Saturation Adjustments";
         ui_type = "slider";
         ui_min = -2.0;
@@ -125,6 +138,7 @@ namespace pd80_conbrisat
         > = 0.0;
     uniform float sat_b <
         ui_label = "Blue Saturation";
+        ui_tooltip = "Blue Saturation";
         ui_category = "Color Saturation Adjustments";
         ui_type = "slider";
         ui_min = -2.0;
@@ -132,6 +146,7 @@ namespace pd80_conbrisat
         > = 0.0;
     uniform float sat_p <
         ui_label = "Purple Saturation";
+        ui_tooltip = "Purple Saturation";
         ui_category = "Color Saturation Adjustments";
         ui_type = "slider";
         ui_min = -2.0;
@@ -139,6 +154,7 @@ namespace pd80_conbrisat
         > = 0.0;
     uniform float sat_m <
         ui_label = "Magenta Saturation";
+        ui_tooltip = "Magenta Saturation";
         ui_category = "Color Saturation Adjustments";
         ui_type = "slider";
         ui_min = -2.0;
@@ -146,15 +162,18 @@ namespace pd80_conbrisat
         > = 0.0;
     uniform bool enable_depth <
         ui_label = "Enable depth based adjustments.\nMake sure you have setup your depth buffer correctly.";
+        ui_tooltip = "Enable depth based adjustments";
         ui_category = "Final Adjustments: Depth";
         > = false;
     uniform bool display_depth <
         ui_label = "Show depth texture";
+        ui_tooltip = "Show depth texture";
         ui_category = "Final Adjustments: Depth";
         > = false;
     uniform float depthStart <
         ui_type = "slider";
         ui_label = "Change Depth Start Plane";
+        ui_tooltip = "Change Depth Start Plane";
         ui_category = "Final Adjustments: Depth";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -162,12 +181,14 @@ namespace pd80_conbrisat
     uniform float depthEnd <
         ui_type = "slider";
         ui_label = "Change Depth End Plane";
+        ui_tooltip = "Change Depth End Plane";
         ui_category = "Final Adjustments: Depth";
         ui_min = 0.0f;
         ui_max = 1.0f;
         > = 0.1;
     uniform float depthCurve <
         ui_label = "Depth Curve Adjustment";
+        ui_tooltip = "Depth Curve Adjustment";
         ui_category = "Final Adjustments: Depth";
         ui_type = "slider";
         ui_min = 0.05;
@@ -175,6 +196,7 @@ namespace pd80_conbrisat
         > = 1.0;
     uniform float exposureD <
         ui_label = "Exposure Far";
+        ui_tooltip = "Exposure Far";
         ui_category = "Final Adjustments: Far";
         ui_type = "slider";
         ui_min = -4.0;
@@ -182,6 +204,7 @@ namespace pd80_conbrisat
         > = 0.0;
     uniform float contrastD <
         ui_label = "Contrast Far";
+        ui_tooltip = "Contrast Far";
         ui_category = "Final Adjustments: Far";
         ui_type = "slider";
         ui_min = -1.0;
@@ -189,6 +212,7 @@ namespace pd80_conbrisat
         > = 0.0;
     uniform float brightnessD <
         ui_label = "Brightness Far";
+        ui_tooltip = "Brightness Far";
         ui_category = "Final Adjustments: Far";
         ui_type = "slider";
         ui_min = -1.0;
@@ -196,6 +220,7 @@ namespace pd80_conbrisat
         > = 0.0;
     uniform float saturationD <
         ui_label = "Saturation Far";
+        ui_tooltip = "Saturation Far";
         ui_category = "Final Adjustments: Far";
         ui_type = "slider";
         ui_min = -1.0;
@@ -203,6 +228,7 @@ namespace pd80_conbrisat
         > = 0.0;
     uniform float vibranceD <
         ui_label = "Vibrance Far";
+        ui_tooltip = "Vibrance Far";
         ui_category = "Final Adjustments: Far";
         ui_type = "slider";
         ui_min = -1.0;

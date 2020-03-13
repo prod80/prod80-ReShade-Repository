@@ -42,6 +42,7 @@ namespace pd80_ColorIsolation
         > = 0.0;
     uniform float hueRange <
         ui_label = "Hue Range Selection";
+        ui_tooltip = "Hue Range Selection";
         ui_category = "Color Isolation";
         ui_type = "slider";
         ui_min = 0.0;
@@ -49,6 +50,7 @@ namespace pd80_ColorIsolation
         > = 0.167;
     uniform float satLimit <
         ui_label = "Saturation Output";
+        ui_tooltip = "Saturation Output";
         ui_category = "Color Isolation";
         ui_type = "slider";
         ui_min = 0.0;
@@ -56,6 +58,7 @@ namespace pd80_ColorIsolation
         > = 1.0;
     uniform float fxcolorMix <
         ui_label = "Mix with Original";
+        ui_tooltip = "Mix with Original";
         ui_category = "Color Isolation";
         ui_type = "slider";
         ui_min = 0.0;

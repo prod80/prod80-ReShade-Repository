@@ -38,13 +38,13 @@ namespace pd80_technicolor
     uniform float3 Red2strip <
         ui_type = "color";
         ui_label = "Red Dye Color";
-        ui_tooltip = "Color used to create Cyan (contemporary)";
+        ui_tooltip = "Red Color used to create Cyan (contemporary)";
         ui_category = "Technicolor 2 strip";
         > = float3(1.0, 0.098, 0.0);
     uniform float3 Cyan2strip <
         ui_type = "color";
         ui_label = "Cyan Dye Color";
-        ui_tooltip = "Color used to create Red (contemporary)";
+        ui_tooltip = "Cyan Color used to create Red (contemporary)";
         ui_category = "Technicolor 2 strip";
         > = float3(0.0, 0.988, 1.0);
     uniform float3 colorKey <
@@ -63,6 +63,7 @@ namespace pd80_technicolor
         > = 1.5;
     uniform bool enable3strip <
         ui_label = "Enable Technicolor 3 strip";
+        ui_tooltip = "Enable Technicolor 3 strip";
         ui_category = "Technicolor 3 strip";
         > = false;
     uniform float3 ColorStrength <

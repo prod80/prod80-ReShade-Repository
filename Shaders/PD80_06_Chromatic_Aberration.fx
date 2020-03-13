@@ -34,12 +34,14 @@ namespace pd80_ca
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
     uniform int CA_type < __UNIFORM_COMBO_INT1
         ui_label = "Chromatic Aberration Type";
+        ui_tooltip = "Chromatic Aberration Type";
         ui_category = "Chromatic Aberration";
         ui_items = "Center Weighted Radial\0Center Weighted Longitudinal\0Full screen Radial\0Full screen Longitudinal\0";
         > = 0;
     uniform int degrees <
         ui_type = "slider";
         ui_label = "CA Rotation Offset";
+        ui_tooltip = "CA Rotation Offset";
         ui_category = "Chromatic Aberration";
         ui_min = 0;
         ui_max = 360;
@@ -48,6 +50,7 @@ namespace pd80_ca
     uniform float CA <
         ui_type = "slider";
         ui_label = "CA Global Width";
+        ui_tooltip = "CA Global Width";
         ui_category = "Chromatic Aberration";
         ui_min = -150.0f;
         ui_max = 150.0f;
@@ -55,6 +58,7 @@ namespace pd80_ca
     uniform int sampleSTEPS <
         ui_type = "slider";
         ui_label = "Number of Hues";
+        ui_tooltip = "Number of Hues";
         ui_category = "Chromatic Aberration";
         ui_min = 8;
         ui_max = 96;
@@ -63,22 +67,26 @@ namespace pd80_ca
     uniform float CA_strength <
         ui_type = "slider";
         ui_label = "CA Effect Strength";
+        ui_tooltip = "CA Effect Strength";
         ui_category = "Chromatic Aberration";
         ui_min = 0.0f;
         ui_max = 1.0f;
         > = 1.0;
     uniform bool show_CA <
         ui_label = "CA Show Center / Vignette";
+        ui_tooltip = "CA Show Center / Vignette";
         ui_category = "CA: Center Weighted";
         > = false;
     uniform float3 vignetteColor <
         ui_type = "color";
         ui_label = "Vignette Color";
+        ui_tooltip = "Vignette Color";
         ui_category = "CA: Center Weighted";
         > = float3(0.0, 0.0, 0.0);
     uniform float CA_width <
         ui_type = "slider";
         ui_label = "CA Width";
+        ui_tooltip = "CA Width";
         ui_category = "CA: Center Weighted";
         ui_min = 0.0f;
         ui_max = 5.0f;
@@ -86,6 +94,7 @@ namespace pd80_ca
     uniform float CA_curve <
         ui_type = "slider";
         ui_label = "CA Curve";
+        ui_tooltip = "CA Curve";
         ui_category = "CA: Center Weighted";
         ui_min = 0.1f;
         ui_max = 12.0f;
@@ -93,6 +102,7 @@ namespace pd80_ca
     uniform float oX <
         ui_type = "slider";
         ui_label = "CA Center (X)";
+        ui_tooltip = "CA Center (X)";
         ui_category = "CA: Center Weighted";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -100,6 +110,7 @@ namespace pd80_ca
     uniform float oY <
         ui_type = "slider";
         ui_label = "CA Center (Y)";
+        ui_tooltip = "CA Center (Y)";
         ui_category = "CA: Center Weighted";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -107,6 +118,7 @@ namespace pd80_ca
     uniform float CA_shapeX <
         ui_type = "slider";
         ui_label = "CA Shape (X)";
+        ui_tooltip = "CA Shape (X)";
         ui_category = "CA: Center Weighted";
         ui_min = 0.2f;
         ui_max = 6.0f;
@@ -114,25 +126,30 @@ namespace pd80_ca
     uniform float CA_shapeY <
         ui_type = "slider";
         ui_label = "CA Shape (Y)";
+        ui_tooltip = "CA Shape (Y)";
         ui_category = "CA: Center Weighted";
         ui_min = 0.2f;
         ui_max = 6.0f;
         > = 1.0;
     uniform bool enable_depth_int <
         ui_label = "Intensity: Enable depth based adjustments.\nMake sure you have setup your depth buffer correctly.";
+        ui_tooltip = "Intensity: Enable depth based adjustments";
         ui_category = "Final Adjustments: Depth";
         > = false;
     uniform bool enable_depth_width <
         ui_label = "Width: Enable depth based adjustments.\nMake sure you have setup your depth buffer correctly.";
+        ui_tooltip = "Width: Enable depth based adjustments";
         ui_category = "Final Adjustments: Depth";
         > = false;
     uniform bool display_depth <
         ui_label = "Show depth texture";
+        ui_tooltip = "Show depth texture";
         ui_category = "Final Adjustments: Depth";
         > = false;
     uniform float depthStart <
         ui_type = "slider";
         ui_label = "Change Depth Start Plane";
+        ui_tooltip = "Change Depth Start Plane";
         ui_category = "Final Adjustments: Depth";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -140,12 +157,14 @@ namespace pd80_ca
     uniform float depthEnd <
         ui_type = "slider";
         ui_label = "Change Depth End Plane";
+        ui_tooltip = "Change Depth End Plane";
         ui_category = "Final Adjustments: Depth";
         ui_min = 0.0f;
         ui_max = 1.0f;
         > = 0.1;
     uniform float depthCurve <
         ui_label = "Depth Curve Adjustment";
+        ui_tooltip = "Depth Curve Adjustment";
         ui_category = "Final Adjustments: Depth";
         ui_type = "slider";
         ui_min = 0.05;

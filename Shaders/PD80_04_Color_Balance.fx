@@ -36,72 +36,83 @@ namespace pd80_colorbalance
     //// UI ELEMENS /////////////////////////////////////////////////////////////////
     uniform bool preserve_luma <
         ui_label = "Preserve Luminosity";
+        ui_tooltip = "Preserve Luminosity";
         ui_category = "Color Balance";
     > = true;
     uniform int separation_mode < __UNIFORM_COMBO_INT1
         ui_label = "Luma Separation Mode";
+        ui_tooltip = "Luma Separation Mode";
         ui_category = "Color Balance";
         ui_items = "Harsh Separation\0Smooth Separation\0";
         > = 0;
     uniform float s_RedShift <
         ui_label = "Cyan <--> Red";
-        ui_category = "Shadows:";
+        ui_tooltip = "Shadows: Cyan <--> Red";
+        ui_category = "Shadows";
         ui_type = "slider";
         ui_min = -1.0;
         ui_max = 1.0;
         > = 0.0;
     uniform float s_GreenShift <
         ui_label = "Magenta <--> Green";
-        ui_category = "Shadows:";
+        ui_tooltip = "Shadows: Magenta <--> Green";
+        ui_category = "Shadows";
         ui_type = "slider";
         ui_min = -1.0;
         ui_max = 1.0;
         > = 0.0;
     uniform float s_BlueShift <
         ui_label = "Yellow <--> Blue";
-        ui_category = "Shadows:";
+        ui_tooltip = "Shadows: Yellow <--> Blue";
+        ui_category = "Shadows";
         ui_type = "slider";
         ui_min = -1.0;
         ui_max = 1.0;
         > = 0.0;
     uniform float m_RedShift <
         ui_label = "Cyan <--> Red";
-        ui_category = "Midtones:";
+        ui_tooltip = "Midtones: Cyan <--> Red";
+        ui_category = "Midtones";
         ui_type = "slider";
         ui_min = -1.0;
         ui_max = 1.0;
         > = 0.0;
     uniform float m_GreenShift <
         ui_label = "Magenta <--> Green";
-        ui_category = "Midtones:";
+        ui_tooltip = "Midtones: Magenta <--> Green";
+        ui_category = "Midtones";
         ui_type = "slider";
         ui_min = -1.0;
         ui_max = 1.0;
         > = 0.0;
     uniform float m_BlueShift <
         ui_label = "Yellow <--> Blue";
-        ui_category = "Midtones:";
+        ui_tooltip = "Midtones: Yellow <--> Blue";
+        ui_category = "Midtones";
         ui_type = "slider";
         ui_min = -1.0;
         ui_max = 1.0;
         > = 0.0;
     uniform float h_RedShift <
         ui_label = "Cyan <--> Red";
-        ui_category = "Highlights:";
+        ui_tooltip = "Highlights: Cyan <--> Red";
+        ui_category = "Highlights";
         ui_type = "slider";
         ui_min = -1.0;
         ui_max = 1.0;
         > = 0.0;
     uniform float h_GreenShift <
         ui_label = "Magenta <--> Green";
-        ui_category = "Highlights:";
+        ui_tooltip = "Highlights: Magenta <--> Green";
+        ui_category = "Highlights";
         ui_type = "slider";
         ui_min = -1.0;
         ui_max = 1.0;
         > = 0.0;
     uniform float h_BlueShift <
         ui_label = "Yellow <--> Blue";
-        ui_category = "Highlights:";
+        ui_tooltip = "Highlights: Yellow <--> Blue";
+        ui_category = "Highlights";
         ui_type = "slider";
         ui_min = -1.0;
         ui_max = 1.0;
@@ -126,7 +137,7 @@ namespace pd80_colorbalance
     float3 ColorBalance( float3 c, float3 shadows, float3 midtones, float3 highlights )
     {
         // For highlights
-        float luma   = dot( c.xyz, 0.333f );
+        float luma = dot( c.xyz, float3( 0.333333f, 0.333334f, 0.333333f ));
         
         // Determine the distribution curves between shadows, midtones, and highlights
         float3 dist_s; float3 dist_h;

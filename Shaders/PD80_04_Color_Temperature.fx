@@ -37,28 +37,29 @@ namespace pd80_colortemp
 {
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
     uniform uint Kelvin <
-    ui_label = "Color Temp (K)";
-    ui_category = "Kelvin";
-    ui_type = "slider";
-    ui_min = 1000;
-    ui_max = 40000;
-    > = 6500;
-
+        ui_label = "Color Temp (K)";
+        ui_tooltip = "Color Temp (K)";
+        ui_category = "Kelvin";
+        ui_type = "slider";
+        ui_min = 1000;
+        ui_max = 40000;
+        > = 6500;
     uniform float LumPreservation <
-    ui_label = "Luminance Preservation";
-    ui_category = "Kelvin";
-    ui_type = "slider";
-    ui_min = 0.0;
-    ui_max = 1.0;
-    > = 1.0;
-
+        ui_label = "Luminance Preservation";
+        ui_tooltip = "Luminance Preservation";
+        ui_category = "Kelvin";
+        ui_type = "slider";
+        ui_min = 0.0;
+        ui_max = 1.0;
+        > = 1.0;
     uniform float kMix <
-    ui_label = "Mix with Original";
-    ui_category = "Kelvin";
-    ui_type = "slider";
-    ui_min = 0.0;
-    ui_max = 1.0;
-    > = 1.0;
+        ui_label = "Mix with Original";
+        ui_tooltip = "Mix with Original";
+        ui_category = "Kelvin";
+        ui_type = "slider";
+        ui_min = 0.0;
+        ui_max = 1.0;
+        > = 1.0;
 
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;

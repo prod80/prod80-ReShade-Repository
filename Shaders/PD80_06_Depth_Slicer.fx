@@ -37,6 +37,7 @@ namespace pd80_depthslicer
     uniform float depth_near <
         ui_type = "slider";
         ui_label = "Depth Near Plane";
+        ui_tooltip = "Depth Near Plane";
         ui_category = "Depth Slicer";
         ui_min = 0.0;
         ui_max = 1.0;
@@ -44,6 +45,7 @@ namespace pd80_depthslicer
     uniform float depthpos <
         ui_type = "slider";
         ui_label = "Depth Position";
+        ui_tooltip = "Depth Position";
         ui_category = "Depth Slicer";
         ui_min = 0.0;
         ui_max = 1.0;
@@ -51,6 +53,7 @@ namespace pd80_depthslicer
     uniform float depth_far <
         ui_type = "slider";
         ui_label = "Depth Far Plane";
+        ui_tooltip = "Depth Far Plane";
         ui_category = "Depth Slicer";
         ui_min = 0.0;
         ui_max = 1.0;
@@ -58,6 +61,7 @@ namespace pd80_depthslicer
     uniform float depth_smoothing <
         ui_type = "slider";
         ui_label = "Depth Smoothing";
+        ui_tooltip = "Depth Smoothing";
         ui_category = "Depth Slicer";
         ui_min = 0.0;
         ui_max = 1.0;
@@ -65,6 +69,7 @@ namespace pd80_depthslicer
     uniform float intensity <
         ui_type = "slider";
         ui_label = "Lightness";
+        ui_tooltip = "Lightness";
         ui_category = "Depth Slicer";
         ui_min = 0.0;
         ui_max = 1.0;
@@ -72,6 +77,7 @@ namespace pd80_depthslicer
     uniform float hue <
         ui_type = "slider";
         ui_label = "Hue";
+        ui_tooltip = "Hue";
         ui_category = "Depth Slicer";
         ui_min = 0.0;
         ui_max = 1.0;
@@ -79,18 +85,21 @@ namespace pd80_depthslicer
     uniform float saturation <
         ui_type = "slider";
         ui_label = "Saturation";
+        ui_tooltip = "Saturation";
         ui_category = "Depth Slicer";
         ui_min = 0.0;
         ui_max = 1.0;
         > = 0.0;
     uniform int blendmode_1 < __UNIFORM_COMBO_INT1
         ui_label = "Blendmode";
+        ui_tooltip = "Blendmode";
         ui_category = "Depth Slicer";
         ui_items = "Default\0Darken\0Multiply\0Linearburn\0Colorburn\0Lighten\0Screen\0Colordodge\0Lineardodge\0Overlay\0Softlight\0Vividlight\0Linearlight\0Pinlight\0Hardmix\0Reflect\0Glow\0Hue\0Saturation\0Color\0Luminosity\0";
         > = 0;
     uniform float opacity <
         ui_type = "slider";
         ui_label = "Opacity";
+        ui_tooltip = "Opacity";
         ui_category = "Depth Slicer";
         ui_min = 0.0;
         ui_max = 1.0;

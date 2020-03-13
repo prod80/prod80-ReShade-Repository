@@ -62,7 +62,7 @@ namespace pd80_hqbloom
         > = false;
     uniform float BloomMix <
         ui_label = "Bloom Mix";
-        ui_tooltip = "...";
+        ui_tooltip = "Bloom Mix";
         ui_category = "Bloom";
         ui_type = "slider";
         ui_min = 0.0;
@@ -70,7 +70,7 @@ namespace pd80_hqbloom
         > = 0.5;
     uniform float BloomLimit <
         ui_label = "Bloom Threshold";
-        ui_tooltip = "The maximum level of Bloom";
+        ui_tooltip = "Bloom Threshold";
         ui_category = "Bloom";
         ui_type = "slider";
         ui_min = 0.0;
@@ -78,7 +78,7 @@ namespace pd80_hqbloom
         > = 0.28;
     uniform float GreyValue <
         ui_label = "Bloom Exposure 50% Greyvalue";
-        ui_tooltip = "Bloom Exposure Compensation";
+        ui_tooltip = "Bloom Exposure 50% Greyvalue";
         ui_category = "Bloom";
         ui_type = "slider";
         ui_min = 0.0;
@@ -86,7 +86,7 @@ namespace pd80_hqbloom
         > = 0.333;
     uniform float bExposure <
         ui_label = "Bloom Exposure";
-        ui_tooltip = "Bloom Exposure Compensation";
+        ui_tooltip = "Bloom Exposure";
         ui_category = "Bloom";
         ui_type = "slider";
         ui_min = -1.0;
@@ -94,7 +94,7 @@ namespace pd80_hqbloom
         > = 0.0;
     uniform float BlurSigma <
         ui_label = "Bloom Width";
-        ui_tooltip = "...";
+        ui_tooltip = "Bloom Width";
         ui_category = "Bloom";
         ui_type = "slider";
         ui_min = 5.0;
@@ -103,11 +103,13 @@ namespace pd80_hqbloom
     #if( BLOOM_ENABLE_CA == 0 )
     uniform bool enableBKelvin <
         ui_label  = "Enable Bloom Color Temp (K)";
+        ui_tooltip = "Enable Bloom Color Temp (K)";
         ui_category = "Bloom Color Temperature";
         > = false;
     uniform uint BKelvin <
         ui_type = "slider";
         ui_label = "Bloom Color Temp (K)";
+        ui_tooltip = "Bloom Color Temp (K)";
         ui_category = "Bloom Color Temperature";
         ui_min = 1000;
         ui_max = 40000;
@@ -116,16 +118,19 @@ namespace pd80_hqbloom
     #if( BLOOM_ENABLE_CA == 1 )
     uniform int CA_type < __UNIFORM_COMBO_INT1
         ui_label = "Chromatic Aberration Type";
+        ui_tooltip = "Chromatic Aberration Type";
         ui_category = "Chromatic Aberration";
         ui_items = "Center Weighted Radial\0Center Weighted Longitudinal\0Full screen Radial\0Full screen Longitudinal\0";
         > = 0;
     uniform bool use_only_ca <
         ui_label  = "Use only CA";
+        ui_tooltip = "Use only CA";
         ui_category = "Chromatic Aberration";
         > = false;
     uniform int degrees <
         ui_type = "slider";
         ui_label = "CA Rotation Offset";
+        ui_tooltip = "CA Rotation Offset";
         ui_category = "Chromatic Aberration";
         ui_min = 0;
         ui_max = 360;
@@ -134,6 +139,7 @@ namespace pd80_hqbloom
     uniform float CA <
         ui_type = "slider";
         ui_label = "CA Global Width";
+        ui_tooltip = "CA Global Width";
         ui_category = "Chromatic Aberration";
         ui_min = -150.0f;
         ui_max = 150.0f;
@@ -141,6 +147,7 @@ namespace pd80_hqbloom
     uniform float CA_strength <
         ui_type = "slider";
         ui_label = "CA Effect Strength";
+        ui_tooltip = "CA Effect Strength";
         ui_category = "Chromatic Aberration";
         ui_min = 0.0f;
         ui_max = 5.0f;

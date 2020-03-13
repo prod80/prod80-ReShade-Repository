@@ -36,6 +36,7 @@ namespace pd80_posterizepixelate
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
     uniform int number_of_levels <
         ui_label = "Number of Levels";
+        ui_tooltip = "Number of Levels";
         ui_category = "Posterize";
         ui_type = "slider";
         ui_min = 2;
@@ -43,6 +44,7 @@ namespace pd80_posterizepixelate
         > = 255;
 	uniform int pixel_size <
 		ui_label = "Pixel Size";
+        ui_tooltip = "Pixel Size";
         ui_category = "Pixelate";
         ui_type = "slider";
         ui_min = 1;
@@ -51,6 +53,7 @@ namespace pd80_posterizepixelate
     uniform float effect_strength <
         ui_type = "slider";
         ui_label = "Effect Strength";
+        ui_tooltip = "Effect Strength";
         ui_category = "Posterize Pixelate";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -58,6 +61,7 @@ namespace pd80_posterizepixelate
 	uniform float border_str <
         ui_type = "slider";
         ui_label = "Border Strength";
+        ui_tooltip = "Border Strength";
         ui_category = "Posterize Pixelate";
         ui_min = 0.0f;
         ui_max = 1.0f;

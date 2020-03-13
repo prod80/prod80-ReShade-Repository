@@ -42,16 +42,19 @@ namespace pd80_filmgrain
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
     uniform bool enable_test <
         ui_label = "Enable Setup Mode";
+        ui_tooltip = "Enable Setup Mode";
         ui_category = "Film Grain (simplex)";
         > = false;
     uniform int grainMotion < __UNIFORM_COMBO_INT1
         ui_label = "Grain Motion";
+        ui_tooltip = "Grain Motion";
         ui_category = "Film Grain (simplex)";
         ui_items = "Disabled\0Enabled\0";
         > = 1;
     uniform float grainAdjust <
         ui_type = "slider";
         ui_label = "Grain Pattern Adjust (for still noise)";
+        ui_tooltip = "Grain Pattern Adjust (for still noise)";
         ui_category = "Film Grain (simplex)";
         ui_min = 1.0f;
         ui_max = 2.0f;
@@ -59,6 +62,7 @@ namespace pd80_filmgrain
     uniform int grainSize <
         ui_type = "slider";
         ui_label = "Grain Size";
+        ui_tooltip = "Grain Size";
         ui_category = "Film Grain (simplex)";
         ui_min = 1;
         ui_max = 4;
@@ -67,6 +71,7 @@ namespace pd80_filmgrain
     uniform float grainBlur <
         ui_type = "slider";
         ui_label = "Grain Smoothness";
+        ui_tooltip = "Grain Smoothness";
         ui_category = "Film Grain (simplex)";
         ui_min = 0.005f;
         ui_max = 0.7f;
@@ -74,16 +79,19 @@ namespace pd80_filmgrain
 #endif
     uniform int grainOrigColor < __UNIFORM_COMBO_INT1
         ui_label = "Use Original Color";
+        ui_tooltip = "Use Original Color";
         ui_category = "Film Grain (simplex)";
         ui_items = "Use Random Color\0Use Original Color\0";
         > = 1;
     uniform bool use_negnoise <
         ui_label = "Use Negative Noise (highlights)";
+        ui_tooltip = "Use Negative Noise (highlights)";
         ui_category = "Film Grain (simplex)";
         > = false;
     uniform float grainColor <
         ui_type = "slider";
         ui_label = "Grain Color Amount";
+        ui_tooltip = "Grain Color Amount";
         ui_category = "Film Grain (simplex)";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -91,6 +99,7 @@ namespace pd80_filmgrain
     uniform float grainAmount <
         ui_type = "slider";
         ui_label = "Grain Amount";
+        ui_tooltip = "Grain Amount";
         ui_category = "Film Grain (simplex)";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -98,6 +107,7 @@ namespace pd80_filmgrain
     uniform float grainIntensity <
         ui_type = "slider";
         ui_label = "Grain Intensity";
+        ui_tooltip = "Grain Intensity";
         ui_category = "Film Grain (simplex)";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -105,6 +115,7 @@ namespace pd80_filmgrain
     uniform float grainDensity <
         ui_type = "slider";
         ui_label = "Grain Density";
+        ui_tooltip = "Grain Density";
         ui_category = "Film Grain (simplex)";
         ui_min = 0.0f;
         ui_max = 10.0f;
@@ -112,6 +123,7 @@ namespace pd80_filmgrain
     uniform float grainIntHigh <
         ui_type = "slider";
         ui_label = "Grain Intensity Highlights";
+        ui_tooltip = "Grain Intensity Highlights";
         ui_category = "Film Grain (simplex)";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -119,21 +131,25 @@ namespace pd80_filmgrain
     uniform float grainIntLow <
         ui_type = "slider";
         ui_label = "Grain Intensity Shadows";
+        ui_tooltip = "Grain Intensity Shadows";
         ui_category = "Film Grain (simplex)";
         ui_min = 0.0f;
         ui_max = 1.0f;
         > = 1.0;
     uniform bool enable_depth <
         ui_label = "Enable depth based adjustments.\nMake sure you have setup your depth buffer correctly.";
+        ui_tooltip = "Enable depth based adjustments";
         ui_category = "Film Grain (simplex): Depth";
         > = false;
     uniform bool display_depth <
         ui_label = "Show depth texture";
+        ui_tooltip = "Show depth texture";
         ui_category = "Film Grain (simplex): Depth";
         > = false;
     uniform float depthStart <
         ui_type = "slider";
         ui_label = "Change Depth Start Plane";
+        ui_tooltip = "Change Depth Start Plane";
         ui_category = "Film Grain (simplex): Depth";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -141,12 +157,14 @@ namespace pd80_filmgrain
     uniform float depthEnd <
         ui_type = "slider";
         ui_label = "Change Depth End Plane";
+        ui_tooltip = "Change Depth End Plane";
         ui_category = "Film Grain (simplex): Depth";
         ui_min = 0.0f;
         ui_max = 1.0f;
         > = 0.1;
     uniform float depthCurve <
         ui_label = "Depth Curve Adjustment";
+        ui_tooltip = "Depth Curve Adjustment";
         ui_category = "Film Grain (simplex): Depth";
         ui_type = "slider";
         ui_min = 0.05;

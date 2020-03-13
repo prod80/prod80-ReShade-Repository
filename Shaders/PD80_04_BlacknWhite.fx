@@ -36,12 +36,14 @@ namespace pd80_blackandwhite
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
     uniform int bw_mode < __UNIFORM_COMBO_INT1
         ui_label = "Black & White Conversion";
+        ui_tooltip = "Black & White Conversion";
         ui_category = "Black & White Techniques";
         ui_items = "Red Filter\0Green Filter\0Blue Filter\0High Contrast Red Filter\0High Contrast Green Filter\0High Contrast Blue Filter\0Infrared\0Maximum Black\0Maximum White\0Preserve Luminosity\0Neutral Green Filter\0Maintain Contrasts\0High Contrast\0Custom\0";
         > = 13;
     uniform float redchannel <
         ui_type = "slider";
         ui_label = "Custom: Red Weight";
+        ui_tooltip = "Custom: Red Weight";
         ui_category = "Black & White Techniques";
         ui_min = -2.0f;
         ui_max = 3.0f;
@@ -49,6 +51,7 @@ namespace pd80_blackandwhite
     uniform float yellowchannel <
         ui_type = "slider";
         ui_label = "Custom: Yellow Weight";
+        ui_tooltip = "Custom: Yellow Weight";
         ui_category = "Black & White Techniques";
         ui_min = -2.0f;
         ui_max = 3.0f;
@@ -56,6 +59,7 @@ namespace pd80_blackandwhite
     uniform float greenchannel <
         ui_type = "slider";
         ui_label = "Custom: Green Weight";
+        ui_tooltip = "Custom: Green Weight";
         ui_category = "Black & White Techniques";
         ui_min = -2.0f;
         ui_max = 3.0f;
@@ -63,6 +67,7 @@ namespace pd80_blackandwhite
     uniform float cyanchannel <
         ui_type = "slider";
         ui_label = "Custom: Cyan Weight";
+        ui_tooltip = "Custom: Cyan Weight";
         ui_category = "Black & White Techniques";
         ui_min = -2.0f;
         ui_max = 3.0f;
@@ -70,6 +75,7 @@ namespace pd80_blackandwhite
     uniform float bluechannel <
         ui_type = "slider";
         ui_label = "Custom: Blue Weight";
+        ui_tooltip = "Custom: Blue Weight";
         ui_category = "Black & White Techniques";
         ui_min = -2.0f;
         ui_max = 3.0f;
@@ -77,17 +83,20 @@ namespace pd80_blackandwhite
     uniform float magentachannel <
         ui_type = "slider";
         ui_label = "Custom: Magenta Weight";
+        ui_tooltip = "Custom: Magenta Weight";
         ui_category = "Black & White Techniques";
         ui_min = -2.0f;
         ui_max = 3.0f;
         > = -0.2f;
     uniform bool use_tint <
         ui_label = "Enable Tinting";
+        ui_tooltip = "Enable Tinting";
         ui_category = "Tint";
         > = false;
     uniform float tinthue <
         ui_type = "slider";
         ui_label = "Tint Hue";
+        ui_tooltip = "Tint Hue";
         ui_category = "Tint";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -95,6 +104,7 @@ namespace pd80_blackandwhite
     uniform float tintsat <
         ui_type = "slider";
         ui_label = "Tint Saturation";
+        ui_tooltip = "Tint Saturation";
         ui_category = "Tint";
         ui_min = 0.0f;
         ui_max = 1.0f;
@@ -102,12 +112,14 @@ namespace pd80_blackandwhite
     uniform float curve_str <
         ui_type = "slider";
         ui_label = "Contrast Smoothness";
+        ui_tooltip = "Contrast Smoothness";
         ui_category = "Smoothness";
         ui_min = 1.0f;
         ui_max = 4.0f;
         > = 1.5f;
     uniform bool show_clip <
         ui_label = "Show Clipping Mask";
+        ui_tooltip = "Show Clipping Mask";
         ui_category = "Visualize Clipping";
         > = false;
     //// TEXTURES ///////////////////////////////////////////////////////////////////
