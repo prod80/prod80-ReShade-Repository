@@ -510,8 +510,11 @@ namespace pd80_hqbloom
         float4 bloom     = tex2D( samplerCABloom, texcoord );
         #endif
         float4 color     = tex2D( samplerColor, texcoord );
-        float gNoise     = tex2D( samplerNoise, texcoord ).x;
-        bloom.xyz        += lerp( -0.5/255, 0.5/255, gNoise ); // Dither
+        // Dither
+        float2 uv        = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / float2( 512.0f, 512.0f );
+        uv.xy            = uv.xy * texcoord.xy;
+        float gNoise     = tex2D( samplerNoise, uv ).x;
+        bloom.xyz        = saturate( bloom.xyz + lerp( -0.5/255, 0.5/255, gNoise ));
 
         #if( BLOOM_ENABLE_CA == 0 )
         if( enableBKelvin )
