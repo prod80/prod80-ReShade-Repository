@@ -3,10 +3,6 @@
     Author      : prod80 (Bas Veth)
     License     : MIT, Copyright (c) 2020 prod80
 
-    Additional credits
-    - Deband effect by haasn, optimized for Reshade by JPulowski
-      License: MIT, Copyright (c) 2015 Niklas Haas
-
 
     MIT License
 
@@ -56,6 +52,14 @@ namespace pd80_hqbloom
         ui_label  = "Show only bloom on screen";
         ui_category = "Bloom debug";
         > = false;
+    uniform float dither_strength <
+    	ui_label = "Bloom Dither Stength";
+    	ui_tooltip = "Bloom Dither Stength";
+    	ui_category = "Bloom";
+        ui_type = "slider";
+        ui_min = 0.0;
+        ui_max = 1.0;
+        > = 0.7;
     uniform float BloomMix <
         ui_label = "Bloom Mix";
         ui_tooltip = "Bloom Mix";
@@ -204,7 +208,6 @@ namespace pd80_hqbloom
     sampler samplerBloom { Texture = texBloom; };
     //// DEFINES ////////////////////////////////////////////////////////////////////
     uniform float Frametime < source = "frametime"; >;
-    uniform int drandom < source = "random"; min = 0; max = 32767; >;
     #define LumCoeff float3(0.212656, 0.715158, 0.072186)
     #define PI 3.141592f
     #define LOOPCOUNT 150
@@ -514,7 +517,7 @@ namespace pd80_hqbloom
         float2 uv        = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / float2( 512.0f, 512.0f );
         uv.xy            = uv.xy * texcoord.xy;
         float gNoise     = tex2D( samplerNoise, uv ).x;
-        bloom.xyz        = saturate( bloom.xyz + lerp( -0.5/255, 0.5/255, gNoise ));
+        bloom.xyz        = saturate( bloom.xyz + lerp( -dither_strength/255, dither_strength/255, gNoise ));
 
         #if( BLOOM_ENABLE_CA == 0 )
         if( enableBKelvin )
