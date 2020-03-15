@@ -32,6 +32,14 @@
 namespace pd80_conbrisat
 {
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
+    uniform float tint <
+        ui_label = "Tint";
+        ui_tooltip = "Tint";
+        ui_category = "Final Adjustments";
+        ui_type = "slider";
+        ui_min = -1.0;
+        ui_max = 1.0;
+        > = 0.0;
     uniform float exposureN <
         ui_label = "Exposure";
         ui_tooltip = "Exposure";
@@ -286,11 +294,39 @@ namespace pd80_conbrisat
     {
         return x * x * ( 3.0 - 2.0 * x );
     }
-
+    
     float3 softlight( float3 c, float3 b )
     { 
         return b < 0.5f ? ( 2.0f * c * b + c * c * ( 1.0f - 2.0f * b )) :
                           ( sqrt( c ) * ( 2.0f * b - 1.0f ) + 2.0f * c * ( 1.0f - b ));
+    }
+
+    float getAvgColor( float3 col )
+    {
+        return dot( col.xyz, float3( 0.333333f, 0.333334f, 0.333333f ));
+    }
+
+    // nVidia blend modes
+    // Source: https://www.khronos.org/registry/OpenGL/extensions/NV/NV_blend_equation_advanced.txt
+    float3 ClipColor( float3 color )
+    {
+        float lum         = getAvgColor( color.xyz );
+        float mincol      = min( min( color.x, color.y ), color.z );
+        float maxcol      = max( max( color.x, color.y ), color.z );
+        color.xyz         = ( mincol < 0.0f ) ? lum + (( color.xyz - lum ) * lum ) / ( lum - mincol ) : color.xyz;
+        color.xyz         = ( maxcol > 1.0f ) ? lum + (( color.xyz - lum ) * ( 1.0f - lum )) / ( maxcol - lum ) : color.xyz;
+        return color;
+    }
+    
+    // Luminosity: base, blend
+    // Color: blend, base
+    float3 blendLuma( float3 base, float3 blend )
+    {
+        float lumbase     = getAvgColor( base.xyz );
+        float lumblend    = getAvgColor( blend.xyz );
+        float ldiff       = lumblend - lumbase;
+        float3 col        = base.xyz + ldiff;
+        return ClipColor( col.xyz );
     }
 
     float3 exposure( float3 res, float x )
@@ -391,8 +427,14 @@ namespace pd80_conbrisat
         depth            = smoothstep( depthStart, depthEnd, depth );
         depth            = pow( depth, depthCurve );
         color.xyz        = saturate( color.xyz );
-        float3 dcolor    = color.xyz;
 
+        float3 cold      = float3( 0.0f,  0.365f, 1.0f ); //LBB
+        float3 warm      = float3( 0.98f, 0.588f, 0.0f ); //LBA
+
+        color.xyz        = ( tint < 0.0f ) ? lerp( color.xyz, blendLuma( cold.xyz, color.xyz ), abs( tint )) :
+                                             lerp( color.xyz, blendLuma( warm.xyz, color.xyz ), tint );
+
+        float3 dcolor    = color.xyz;
         color.xyz        = exposure( color.xyz, exposureN );
         color.xyz        = con( color.xyz, contrast   );
         color.xyz        = bri( color.xyz, brightness );
