@@ -43,7 +43,7 @@ namespace pd80_hqbloom
     // 1 = 1/4th size   - High
     // 2 = 1/8th size   - Medium
     // Default = Medium quality (1) as difference is nearly impossible to tell during gameplay, and performance 60% faster than Ultra (0)
-    #ifndef BLOOM_QUALITY
+    #ifndef BLOOM_QUALITY_0_TO_2
         #define BLOOM_QUALITY_0_TO_2	1
     #endif
 
@@ -171,21 +171,21 @@ namespace pd80_hqbloom
     #if( BLOOM_ENABLE_CA == 1 )
     texture texCABloom { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
     #endif
-    #if( BLOOM_QUALITY == 0 )
+    #if( BLOOM_QUALITY_0_TO_2 == 0 )
         texture texBloomIn { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
         texture texBloomH { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
         texture texBloom { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
         #define SWIDTH   BUFFER_WIDTH
         #define SHEIGHT  BUFFER_HEIGHT
     #endif
-    #if( BLOOM_QUALITY == 1 )
+    #if( BLOOM_QUALITY_0_TO_2 == 1 )
         #define SWIDTH   ( BUFFER_WIDTH / 2 )
         #define SHEIGHT  ( BUFFER_HEIGHT / 2 )
         texture texBloomIn { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
         texture texBloomH { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
         texture texBloom { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
     #endif
-    #if( BLOOM_QUALITY == 2 )
+    #if( BLOOM_QUALITY_0_TO_2 == 2 )
         #define SWIDTH   ( BUFFER_WIDTH / 4 )
         #define SHEIGHT  ( BUFFER_HEIGHT / 4 )
         texture texBloomIn { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
@@ -338,7 +338,7 @@ namespace pd80_hqbloom
 
     float4 PS_BloomIn(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
-        float4 color     = tex2Dlod( samplerLODColor, float4( texcoord.xy, 0.0f, BLOOM_QUALITY ));
+        float4 color     = tex2Dlod( samplerLODColor, float4( texcoord.xy, 0.0f, BLOOM_QUALITY_0_TO_2 ));
         float luma       = tex2D( samplerBAvgLuma, float2( 0.5f, 0.5f )).x;
         luma             = clamp( luma, 0.000001f, 0.999999f );
         color.xyz        = saturate( color.xyz - luma ) / saturate( 1.0f - luma );
@@ -353,13 +353,13 @@ namespace pd80_hqbloom
         float SigmaSum   = 0.0f;
         float pxlOffset  = 1.5f;
         float2 buffSigma = 0.0f;
-        #if( BLOOM_QUALITY == 0 )
+        #if( BLOOM_QUALITY_0_TO_2 == 0 )
             float bSigma = BlurSigma;
         #endif
-        #if( BLOOM_QUALITY == 1 )
+        #if( BLOOM_QUALITY_0_TO_2 == 1 )
             float bSigma = BlurSigma * 0.5f;
         #endif
-        #if( BLOOM_QUALITY == 2 )
+        #if( BLOOM_QUALITY_0_TO_2 == 2 )
             float bSigma = BlurSigma * 0.25f;
         #endif
         //Gaussian Math
@@ -399,13 +399,13 @@ namespace pd80_hqbloom
         float SigmaSum   = 0.0f;
         float pxlOffset  = 1.5f;
         float2 buffSigma = 0.0f;
-        #if( BLOOM_QUALITY == 0 )
+        #if( BLOOM_QUALITY_0_TO_2 == 0 )
             float bSigma = BlurSigma;
         #endif
-        #if( BLOOM_QUALITY == 1 )
+        #if( BLOOM_QUALITY_0_TO_2 == 1 )
             float bSigma = BlurSigma * 0.5f;
         #endif
-        #if( BLOOM_QUALITY == 2 )
+        #if( BLOOM_QUALITY_0_TO_2 == 2 )
             float bSigma = BlurSigma * 0.25f;
         #endif
         //Gaussian Math
