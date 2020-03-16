@@ -35,16 +35,16 @@ namespace pd80_hqbloom
 
     // Funky stuff
     #ifndef BLOOM_ENABLE_CA
-        #define BLOOM_ENABLE_CA     0
+        #define BLOOM_ENABLE_CA         0
     #endif
 
     // Min: 0, Max: 3 | Bloom Quality, 0 is best quality (full screen) and values higher than that will progessively use lower resolution texture. Value 3 will use 1/4th screen resolution texture size
     // 0 = Fullscreen   - Ultra
-    // 1 = 1/2th size   - High
-    // 2 = 1/4th size   - Medium
-    // Default = Medium quality (2) as difference is nearly impossible to tell during gameplay, and performance 60% faster than Ultra (0)
+    // 1 = 1/4th size   - High
+    // 2 = 1/8th size   - Medium
+    // Default = Medium quality (1) as difference is nearly impossible to tell during gameplay, and performance 60% faster than Ultra (0)
     #ifndef BLOOM_QUALITY
-        #define BLOOM_QUALITY		2
+        #define BLOOM_QUALITY_0_TO_2	1
     #endif
 
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
@@ -163,6 +163,7 @@ namespace pd80_hqbloom
     #endif
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
+    texture texPrepLOD { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; MipLevels = 3; };
     texture texBLuma { Width = 256; Height = 256; Format = R16F; MipLevels = 8; };
     texture texBAvgLuma { Format = R16F; };
     texture texBPrevAvgLuma { Format = R16F; };
@@ -178,15 +179,15 @@ namespace pd80_hqbloom
         #define SHEIGHT  BUFFER_HEIGHT
     #endif
     #if( BLOOM_QUALITY == 1 )
-        #define SWIDTH   ( BUFFER_WIDTH / 4 * 3 )
-        #define SHEIGHT  ( BUFFER_HEIGHT / 4 * 3 )
+        #define SWIDTH   ( BUFFER_WIDTH / 2 )
+        #define SHEIGHT  ( BUFFER_HEIGHT / 2 )
         texture texBloomIn { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
         texture texBloomH { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
         texture texBloom { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
     #endif
     #if( BLOOM_QUALITY == 2 )
-        #define SWIDTH   ( BUFFER_WIDTH / 2 )
-        #define SHEIGHT  ( BUFFER_HEIGHT / 2 )
+        #define SWIDTH   ( BUFFER_WIDTH / 4 )
+        #define SHEIGHT  ( BUFFER_HEIGHT / 4 )
         texture texBloomIn { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
         texture texBloomH { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
         texture texBloom { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
@@ -194,6 +195,7 @@ namespace pd80_hqbloom
 
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerColor { Texture = texColorBuffer; };
+    sampler samplerLODColor { Texture = texPrepLOD; };
     sampler samplerLinColor { Texture = texColorBuffer; SRGBTexture = true; };
     sampler samplerBLuma { Texture = texBLuma; };
     sampler samplerBAvgLuma { Texture = texBAvgLuma; };
@@ -328,10 +330,15 @@ namespace pd80_hqbloom
         float avgLuma    = lerp( prevluma, luma, 1.0f / fps ); 
         return avgLuma;
     }
+    
+    float4 PS_PrepLOD(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
+    {
+        return tex2D( samplerColor, texcoord );
+    }
 
     float4 PS_BloomIn(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
-        float4 color     = tex2D( samplerColor, texcoord );
+        float4 color     = tex2Dlod( samplerLODColor, float4( texcoord.xy, 0.0f, BLOOM_QUALITY ));
         float luma       = tex2D( samplerBAvgLuma, float2( 0.5f, 0.5f )).x;
         luma             = clamp( luma, 0.000001f, 0.999999f );
         color.xyz        = saturate( color.xyz - luma ) / saturate( 1.0f - luma );
@@ -342,7 +349,7 @@ namespace pd80_hqbloom
     float4 PS_GaussianH(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color     = tex2D( samplerBloomIn, texcoord );
-        float px         = 1.0f / SWIDTH;
+        float px         = rcp( SWIDTH );
         float SigmaSum   = 0.0f;
         float pxlOffset  = 1.5f;
         float2 buffSigma = 0.0f;
@@ -350,10 +357,10 @@ namespace pd80_hqbloom
             float bSigma = BlurSigma;
         #endif
         #if( BLOOM_QUALITY == 1 )
-            float bSigma = BlurSigma * 0.75f;
+            float bSigma = BlurSigma * 0.5f;
         #endif
         #if( BLOOM_QUALITY == 2 )
-            float bSigma = BlurSigma * 0.5f;
+            float bSigma = BlurSigma * 0.25f;
         #endif
         //Gaussian Math
         float3 Sigma;
@@ -388,7 +395,7 @@ namespace pd80_hqbloom
     float4 PS_GaussianV(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color     = tex2D( samplerBloomH, texcoord );
-        float py         = 1.0f / SHEIGHT;
+        float py         = rcp( SHEIGHT );
         float SigmaSum   = 0.0f;
         float pxlOffset  = 1.5f;
         float2 buffSigma = 0.0f;
@@ -396,10 +403,10 @@ namespace pd80_hqbloom
             float bSigma = BlurSigma;
         #endif
         #if( BLOOM_QUALITY == 1 )
-            float bSigma = BlurSigma * 0.75f;
+            float bSigma = BlurSigma * 0.5f;
         #endif
         #if( BLOOM_QUALITY == 2 )
-            float bSigma = BlurSigma * 0.5f;
+            float bSigma = BlurSigma * 0.25f;
         #endif
         //Gaussian Math
         float3 Sigma;
@@ -501,7 +508,7 @@ namespace pd80_hqbloom
         {
             huecolor.xyz  = HUEToRGB( i / 8.0f );
             o2            = lerp( -caWidth, caWidth, i / o1 );
-            temp.xyz      = tex2Dlod( samplerBloom, float4( texcoord.xy + float2( o2 * offsetX, o2 * offsetY ), 0.0, 0.0 )).xyz;
+            temp.xyz      = tex2D( samplerBloom, texcoord.xy + float2( o2 * offsetX, o2 * offsetY )).xyz;
             color.xyz     += temp.xyz * huecolor.xyz;
             d.xyz         += huecolor.xyz;
         }
@@ -562,6 +569,12 @@ namespace pd80_hqbloom
             VertexShader   = PostProcessVS;
             PixelShader    = PS_AvgBLuma;
             RenderTarget   = texBAvgLuma;
+        }
+        pass PrepLod
+        {
+            VertexShader   = PostProcessVS;
+            PixelShader    = PS_PrepLOD;
+            RenderTarget   = texPrepLOD;
         }
         pass BloomIn
         {
