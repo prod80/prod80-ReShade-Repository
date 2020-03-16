@@ -100,6 +100,22 @@ namespace pd80_magicalrectangle
         ui_min = 0.0;
         ui_max = 1.0;
         > = 0.002;
+    uniform float dither_strength <
+    	ui_label = "Shape Dither Stength";
+    	ui_tooltip = "Shape Dither Stength";
+    	ui_category = "Shape Manipulation";
+        ui_type = "slider";
+        ui_min = 0.0;
+        ui_max = 2.0;
+        > = 0.7;
+    uniform int dither_size <
+    	ui_label = "Shape Dither Size";
+    	ui_tooltip = "Shape Dither Size";
+    	ui_category = "Shape Manipulation";
+        ui_type = "slider";
+        ui_min = 1;
+        ui_max = 2;
+        > = 1;
     uniform float intensity <
         ui_text = "-------------------------------------\n"
                   "Use Opacity and Blend Mode to adjust\n"
@@ -219,11 +235,22 @@ namespace pd80_magicalrectangle
         > = 1.0;
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
-    texture texMagicRectangle { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
+    texture texMagicRectangle { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
+    texture texNoise < source = "monochrome_gaussnoise.png"; > { Width = 512; Height = 512; Format = RGBA8; };
 
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerColor { Texture = texColorBuffer; };
     sampler samplerMagicRectangle { Texture = texMagicRectangle; };
+    sampler samplerNoise
+    { 
+        Texture = texNoise;
+        MipFilter = POINT;
+        MinFilter = POINT;
+        MagFilter = POINT;
+        AddressU = WRAP;
+        AddressV = WRAP;
+        AddressW = WRAP;
+    };
 
     //// DEFINES ////////////////////////////////////////////////////////////////////
     #define ASPECT_RATIO float( BUFFER_WIDTH * BUFFER_RCP_HEIGHT )
@@ -530,6 +557,12 @@ namespace pd80_magicalrectangle
         float4 orig       = tex2D( samplerColor, texcoord );
         float3 color;
         float4 layer_1    = saturate( tex2D( samplerMagicRectangle, texcoord ));
+        // Dither
+        float2 uv        = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / float2( 512.0f, 512.0f );
+        uv.xy            = uv.xy * ( texcoord.xy / dither_size );
+        float gNoise     = tex2D( samplerNoise, uv ).x;
+        layer_1.xyz      = saturate( layer_1.xyz + lerp( -dither_strength/255, dither_strength/255, gNoise ));
+
         orig.xyz          = exposure( orig.xyz, mr_exposure, layer_1.w );
         orig.xyz          = con( orig.xyz, mr_contrast * layer_1.w );
         orig.xyz          = bri( orig.xyz, mr_brightness * layer_1.w );
