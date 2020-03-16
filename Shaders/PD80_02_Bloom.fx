@@ -58,8 +58,16 @@ namespace pd80_hqbloom
     	ui_category = "Bloom";
         ui_type = "slider";
         ui_min = 0.0;
-        ui_max = 1.0;
+        ui_max = 2.0;
         > = 0.7;
+    uniform int dither_size <
+    	ui_label = "Bloom Dither Size";
+    	ui_tooltip = "Bloom Dither Size";
+    	ui_category = "Bloom";
+        ui_type = "slider";
+        ui_min = 1;
+        ui_max = 2;
+        > = 1;
     uniform float BloomMix <
         ui_label = "Bloom Mix";
         ui_tooltip = "Bloom Mix";
@@ -515,7 +523,7 @@ namespace pd80_hqbloom
         float4 color     = tex2D( samplerColor, texcoord );
         // Dither
         float2 uv        = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / float2( 512.0f, 512.0f );
-        uv.xy            = uv.xy * texcoord.xy;
+        uv.xy            = uv.xy * ( texcoord.xy / dither_size );
         float gNoise     = tex2D( samplerNoise, uv ).x;
         bloom.xyz        = saturate( bloom.xyz + lerp( -dither_strength/255, dither_strength/255, gNoise ));
 
