@@ -185,6 +185,7 @@ namespace pd80_correctcolor
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
     texture texColor { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; MipLevels = 5; };
+    texture texNoise < source = "monochrome_gaussnoise.png"; > { Width = 512; Height = 512; Format = RGBA8; };
     texture texDS_1_Max { Width = 32; Height = 32; Format = RGBA16F; };
     texture texDS_1_Min { Width = 32; Height = 32; Format = RGBA16F; };
     texture texDS_1_Mid { Width = 32; Height = 32; Format = RGBA16F; };
@@ -194,6 +195,16 @@ namespace pd80_correctcolor
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerColorBuffer { Texture = texColorBuffer; };
     sampler samplerColor { Texture = texColor; };
+    sampler samplerNoise
+    { 
+        Texture = texNoise;
+        MipFilter = POINT;
+        MinFilter = POINT;
+        MagFilter = POINT;
+        AddressU = WRAP;
+        AddressV = WRAP;
+        AddressW = WRAP;
+    };
     sampler samplerDS_1_Max
     { 
         Texture = texDS_1_Max;
@@ -273,9 +284,9 @@ namespace pd80_correctcolor
         float2 stop        = floor(( texcoord.xy + hst ) * stexSize.xy );    // ... end position
 
         [loop]
-        for( int y = start.y; y < stop.y; y += OFFSET )
+        for( int y = start.y; y < stop.y && y < stexSize.y; y += OFFSET )
         {
-            for( int x = start.x; x < stop.x; x += OFFSET )
+            for( int x = start.x; x < stop.x && x < stexSize.x; x += OFFSET )
             {
                 currColor      = tex2Dfetch( samplerColor, int4( x, y, 0, RT_MIPLVL )).xyz;
                 // Dark color detection methods
@@ -412,6 +423,11 @@ namespace pd80_correctcolor
         float avgMid       = dot( midValue.xyz, 0.333333f );
         avgCol             = 1.0f - abs( avgCol * 2.0f - 1.0f );
         color.xyz          = saturate( color.xyz - midValue.xyz * avgCol + avgMid * avgCol * rt_midpoint_respect_luma );
+        // Dither
+        float2 uv          = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / float2( 512.0f, 512.0f );
+        uv.xy              = uv.xy * texcoord.xy;
+        float noise        = tex2D( samplerNoise, uv ).x;
+        color.xyz          = saturate( color.xyz + lerp( -0.5/255, 0.5/255, noise ));
         // Debug
         /*
         switch( debug_mode )

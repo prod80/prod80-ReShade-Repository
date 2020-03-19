@@ -245,9 +245,20 @@ namespace pd80_conbrisat
 
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
+    texture texNoise < source = "monochrome_gaussnoise.png"; > { Width = 512; Height = 512; Format = RGBA8; };
 
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerColor { Texture = texColorBuffer; };
+    sampler samplerNoise
+    { 
+        Texture = texNoise;
+        MipFilter = POINT;
+        MinFilter = POINT;
+        MagFilter = POINT;
+        AddressU = WRAP;
+        AddressV = WRAP;
+        AddressW = WRAP;
+    };
 
     //// DEFINES ////////////////////////////////////////////////////////////////////
 
@@ -426,6 +437,11 @@ namespace pd80_conbrisat
         float depth      = ReShade::GetLinearizedDepth( texcoord ).x;
         depth            = smoothstep( depthStart, depthEnd, depth );
         depth            = pow( depth, depthCurve );
+        float2 uv        = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / float2( 512.0f, 512.0f );
+        uv.xy            = uv.xy * texcoord.xy;
+        float noise      = tex2D( samplerNoise, uv ).x;
+        depth            = saturate( depth + lerp( -0.5/255, 0.5/255, noise ));
+        
         color.xyz        = saturate( color.xyz );
 
         float3 cold      = float3( 0.0f,  0.365f, 1.0f ); //LBB
@@ -452,7 +468,8 @@ namespace pd80_conbrisat
         color.xyz        = channelsat( color.xyz, sat_r, sat_o, sat_y, sat_g, sat_a, sat_b, sat_p, sat_m );
         color.xyz        = customsat( color.xyz, huemid, huerange, sat_custom );
 
-        color.xyz        = saturate( color.xyz ); // shouldn't be needed, but just to ensure no oddities are there
+        // Dither
+        color.xyz        = saturate( color.xyz + lerp( -0.5/255, 0.5/255, noise ));
         color.xyz        = display_depth ? depth.xxx : color.xyz; // show depth
 
         return float4( color.xyz, 1.0f );

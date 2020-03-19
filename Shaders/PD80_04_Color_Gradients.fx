@@ -172,12 +172,23 @@ namespace pd80_ColorGradients
     texture texLuma { Width = 256; Height = 256; Format = R16F; MipLevels = 8; };
     texture texAvgLuma { Format = R16F; };
     texture texPrevAvgLuma { Format = R16F; };
+    texture texNoise < source = "monochrome_gaussnoise.png"; > { Width = 512; Height = 512; Format = RGBA8; };
 
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerColor { Texture = texColorBuffer; };
     sampler samplerLuma { Texture = texLuma; };
     sampler samplerAvgLuma { Texture = texAvgLuma; };
     sampler samplerPrevAvgLuma { Texture = texPrevAvgLuma; };
+    sampler samplerNoise
+    { 
+        Texture = texNoise;
+        MipFilter = POINT;
+        MinFilter = POINT;
+        MagFilter = POINT;
+        AddressU = WRAP;
+        AddressV = WRAP;
+        AddressW = WRAP;
+    };
 
     //// DEFINES ////////////////////////////////////////////////////////////////////
     #define LumCoeff float3(0.212656, 0.715158, 0.072186)
@@ -420,6 +431,13 @@ namespace pd80_ColorGradients
         float3 new_c     = lerp( DS_col.xyz, LS_col.xyz, sceneluma );
         new_c.xyz        = ( enable_ds ) ? new_c.xyz : LS_col.xyz;
         color.xyz        = lerp( color.xyz, new_c.xyz, finalmix );
+
+        // Dither
+        float2 uv        = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / float2( 512.0f, 512.0f );
+        uv.xy            = uv.xy * texcoord.xy;
+        float noise      = tex2D( samplerNoise, uv ).x;
+        color.xyz        = saturate( color.xyz + lerp( -0.5/255, 0.5/255, noise ));
+
         return float4( color.xyz, 1.0f );
     }
 

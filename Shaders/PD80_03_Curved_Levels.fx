@@ -309,9 +309,20 @@ namespace pd80_curvedlevels
 
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
+    texture texNoise < source = "monochrome_gaussnoise.png"; > { Width = 512; Height = 512; Format = RGBA8; };
     
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerColor { Texture = texColorBuffer; };
+    sampler samplerNoise
+    { 
+        Texture = texNoise;
+        MipFilter = POINT;
+        MinFilter = POINT;
+        MagFilter = POINT;
+        AddressU = WRAP;
+        AddressV = WRAP;
+        AddressW = WRAP;
+    };
 
     //// STRUCTURES /////////////////////////////////////////////////////////////////
     struct TonemapParams
@@ -496,6 +507,10 @@ namespace pd80_curvedlevels
             }
         }
         #endif
+        float2 uv         = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / float2( 512.0f, 512.0f );
+        uv.xy             = uv.xy * texcoord.xy;
+        float noise       = tex2D( samplerNoise, uv ).x;
+        color.xyz         = saturate( color.xyz + lerp( -0.5/255, 0.5/255, noise ));
         return float4( color.xyz, 1.0f );
     }
 
