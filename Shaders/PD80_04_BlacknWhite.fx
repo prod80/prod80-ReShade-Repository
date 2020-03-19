@@ -34,6 +34,11 @@ namespace pd80_blackandwhite
     //// PREPROCESSOR DEFINITIONS ///////////////////////////////////////////////////
 
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
+    uniform bool enable_dither <
+        ui_label = "Enable Dithering";
+        ui_tooltip = "Enable Dithering";
+        ui_category = "Black & White Techniques";
+        > = true;
     uniform int bw_mode < __UNIFORM_COMBO_INT1
         ui_label = "Black & White Conversion";
         ui_tooltip = "Black & White Conversion";
@@ -405,7 +410,7 @@ namespace pd80_blackandwhite
         float2 uv         = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / float2( 512.0f, 512.0f );
         uv.xy             = uv.xy * texcoord.xy * 1.4f;
         float noise       = tex2D( samplerNoise, uv ).x;
-        color.xyz         = saturate( color.xyz + lerp( -0.5/255, 0.5/255, noise ));
+        color.xyz         = enable_dither ? saturate( color.xyz + lerp( -0.5/255, 0.5/255, noise )) : color.xyz;
         return float4( color.xyz, 1.0f );
     }
 

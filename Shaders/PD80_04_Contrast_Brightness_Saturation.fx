@@ -32,6 +32,11 @@
 namespace pd80_conbrisat
 {
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
+    uniform bool enable_dither <
+        ui_label = "Enable Dithering";
+        ui_tooltip = "Enable Dithering";
+        ui_category = "Global";
+        > = true;
     uniform float tint <
         ui_label = "Tint";
         ui_tooltip = "Tint";
@@ -469,7 +474,7 @@ namespace pd80_conbrisat
         color.xyz        = customsat( color.xyz, huemid, huerange, sat_custom );
 
         // Dither
-        color.xyz        = saturate( color.xyz + lerp( -0.5/255, 0.5/255, noise ));
+        color.xyz        = enable_dither ? saturate( color.xyz + lerp( -0.5/255, 0.5/255, noise )) : color.xyz;
         color.xyz        = display_depth ? depth.xxx : color.xyz; // show depth
 
         return float4( color.xyz, 1.0f );

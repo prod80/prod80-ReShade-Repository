@@ -45,6 +45,11 @@ namespace pd80_levels
 
 
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
+    uniform bool enable_dither <
+        ui_label = "Enable Dithering";
+        ui_tooltip = "Enable Dithering";
+        ui_category = "Levels";
+        > = true;
     uniform float3 ib <
         ui_type = "color";
         ui_label = "Black IN Level";
@@ -193,7 +198,7 @@ namespace pd80_levels
         float2 uv         = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / float2( 512.0f, 512.0f );
         uv.xy             = uv.xy * texcoord.xy * 1.2f;
         float noise       = tex2D( samplerNoise, uv ).x;
-        color.xyz         = saturate( color.xyz + lerp( -0.5/255, 0.5/255, noise ));
+        color.xyz         = enable_dither ? saturate( color.xyz + lerp( -0.5/255, 0.5/255, noise )) : color.xyz;
 
         return float4( color.xyz, 1.0f );
     }

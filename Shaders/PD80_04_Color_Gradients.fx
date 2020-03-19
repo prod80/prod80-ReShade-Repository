@@ -35,15 +35,20 @@ namespace pd80_ColorGradients
     uniform int luma_mode < __UNIFORM_COMBO_INT1
         ui_label = "Luma Mode";
         ui_tooltip = "Luma Mode";
-        ui_category = "Luma Mode";
+        ui_category = "Global";
         ui_items = "Use Average\0Use Perceived Luma\0Use Max Value\0";
         > = 0;
     uniform int separation_mode < __UNIFORM_COMBO_INT1
         ui_label = "Luma Separation Mode";
         ui_tooltip = "Luma Separation Mode";
-        ui_category = "Luma Mode";
+        ui_category = "Global";
         ui_items = "Harsh Separation\0Smooth Separation\0";
         > = 0;
+    uniform bool enable_dither <
+        ui_label = "Enable Dithering";
+        ui_tooltip = "Enable Dithering";
+        ui_category = "Global";
+        > = true;
     uniform float CGdesat <
         ui_label = "Desaturate Base Image";
         ui_tooltip = "Desaturate Base Image";
@@ -436,7 +441,7 @@ namespace pd80_ColorGradients
         float2 uv        = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / float2( 512.0f, 512.0f );
         uv.xy            = uv.xy * texcoord.xy * 1.5f;
         float noise      = tex2D( samplerNoise, uv ).x;
-        color.xyz        = saturate( color.xyz + lerp( -0.5/255, 0.5/255, noise ));
+        color.xyz        = enable_dither ? saturate( color.xyz + lerp( -0.5/255, 0.5/255, noise )) : color.xyz;
 
         return float4( color.xyz, 1.0f );
     }

@@ -43,6 +43,11 @@ namespace pd80_curvedlevels
         #define CURVEDCONTRASTS_VISUALIZE       0 // 0 = disabled, 1 = enabled
     #endif
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
+    uniform bool enable_dither <
+        ui_label = "Enable Dithering";
+        ui_tooltip = "Enable Dithering";
+        ui_category = "Global: Contrast Curves";
+        > = true;
     // Greys
     uniform int black_in_grey <
         ui_type = "slider";
@@ -510,7 +515,7 @@ namespace pd80_curvedlevels
         float2 uv         = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / float2( 512.0f, 512.0f );
         uv.xy             = uv.xy * texcoord.xy * 1.1f;
         float noise       = tex2D( samplerNoise, uv ).x;
-        color.xyz         = saturate( color.xyz + lerp( -0.5/255, 0.5/255, noise ));
+        color.xyz         = enable_dither ? saturate( color.xyz + lerp( -0.5/255, 0.5/255, noise )) : color.xyz;
         return float4( color.xyz, 1.0f );
     }
 
