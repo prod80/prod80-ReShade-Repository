@@ -93,6 +93,11 @@ namespace pd80_correctcolor
         ui_tooltip = "Freeze Correction";
         ui_category = "Global: Remove Tint";
         > = false;
+    uniform bool enable_dither <
+        ui_label = "Enable Dithering";
+        ui_tooltip = "Enable Dithering";
+        ui_category = "Global: Remove Tint";
+        > = true;
     uniform bool rt_enable_whitepoint_correction <
         ui_text = "----------------------------------------------";
         ui_label = "Enable Whitepoint Correction";
@@ -427,7 +432,7 @@ namespace pd80_correctcolor
         float2 uv          = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / float2( 512.0f, 512.0f );
         uv.xy              = uv.xy * texcoord.xy;
         float noise        = tex2D( samplerNoise, uv ).x;
-        color.xyz          = saturate( color.xyz + lerp( -0.5/255, 0.5/255, noise ));
+        color.xyz          = enable_dither ? saturate( color.xyz + lerp( -1.0/255, 1.0/255, noise )) : color.xyz;
         // Debug
         /*
         switch( debug_mode )

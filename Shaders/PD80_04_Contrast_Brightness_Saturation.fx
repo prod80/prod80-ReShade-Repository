@@ -445,7 +445,7 @@ namespace pd80_conbrisat
         float2 uv        = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / float2( 512.0f, 512.0f );
         uv.xy            = uv.xy * texcoord.xy * 1.6f;
         float noise      = tex2D( samplerNoise, uv ).x;
-        depth            = saturate( depth + lerp( -0.5/255, 0.5/255, noise ));
+        depth            = saturate( depth + lerp( -1.0/255, 1.0/255, noise ));
         
         color.xyz        = saturate( color.xyz );
 
@@ -473,8 +473,6 @@ namespace pd80_conbrisat
         color.xyz        = channelsat( color.xyz, sat_r, sat_o, sat_y, sat_g, sat_a, sat_b, sat_p, sat_m );
         color.xyz        = customsat( color.xyz, huemid, huerange, sat_custom );
 
-        // Dither
-        color.xyz        = enable_dither ? saturate( color.xyz + lerp( -0.5/255, 0.5/255, noise )) : color.xyz;
         color.xyz        = display_depth ? depth.xxx : color.xyz; // show depth
 
         return float4( color.xyz, 1.0f );
