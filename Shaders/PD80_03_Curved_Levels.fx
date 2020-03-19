@@ -43,11 +43,6 @@ namespace pd80_curvedlevels
         #define CURVEDCONTRASTS_VISUALIZE       0 // 0 = disabled, 1 = enabled
     #endif
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
-    uniform bool enable_dither <
-        ui_label = "Enable Dithering";
-        ui_tooltip = "Enable Dithering";
-        ui_category = "Global: Contrast Curves";
-        > = true;
     // Greys
     uniform int black_in_grey <
         ui_type = "slider";

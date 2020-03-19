@@ -32,11 +32,6 @@
 namespace pd80_conbrisat
 {
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
-    uniform bool enable_dither <
-        ui_label = "Enable Dithering";
-        ui_tooltip = "Enable Dithering";
-        ui_category = "Global";
-        > = true;
     uniform float tint <
         ui_label = "Tint";
         ui_tooltip = "Tint";
