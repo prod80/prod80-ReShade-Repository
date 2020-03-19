@@ -403,7 +403,7 @@ namespace pd80_blackandwhite
             color.xyz     = max( max( color.x, color.y ), color.z ) <= l ? lerp( float3( 0.0f, 0.0f, 1.0f ), color.xyz, smoothstep( 0.0f, l, max( max( color.x, color.y ), color.z ))) : color.xyz;
         }
         float2 uv         = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / float2( 512.0f, 512.0f );
-        uv.xy             = uv.xy * texcoord.xy;
+        uv.xy             = uv.xy * texcoord.xy * 1.4f;
         float noise       = tex2D( samplerNoise, uv ).x;
         color.xyz         = saturate( color.xyz + lerp( -0.5/255, 0.5/255, noise ));
         return float4( color.xyz, 1.0f );

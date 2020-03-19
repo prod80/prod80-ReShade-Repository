@@ -559,7 +559,7 @@ namespace pd80_magicalrectangle
         float4 layer_1    = saturate( tex2D( samplerMagicRectangle, texcoord ));
         // Dither
         float2 uv        = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / float2( 512.0f, 512.0f );
-        uv.xy            = uv.xy * ( texcoord.xy / dither_size );
+        uv.xy            = uv.xy * ( texcoord.xy / dither_size ) * 1.7f;
         float gNoise     = tex2D( samplerNoise, uv ).x;
         layer_1.xyz      = saturate( layer_1.xyz + lerp( -dither_strength/255, dither_strength/255, gNoise ));
 

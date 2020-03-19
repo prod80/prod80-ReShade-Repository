@@ -438,7 +438,7 @@ namespace pd80_conbrisat
         depth            = smoothstep( depthStart, depthEnd, depth );
         depth            = pow( depth, depthCurve );
         float2 uv        = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / float2( 512.0f, 512.0f );
-        uv.xy            = uv.xy * texcoord.xy;
+        uv.xy            = uv.xy * texcoord.xy * 1.6f;
         float noise      = tex2D( samplerNoise, uv ).x;
         depth            = saturate( depth + lerp( -0.5/255, 0.5/255, noise ));
         

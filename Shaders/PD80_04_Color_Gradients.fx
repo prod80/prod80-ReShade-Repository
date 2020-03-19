@@ -434,7 +434,7 @@ namespace pd80_ColorGradients
 
         // Dither
         float2 uv        = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / float2( 512.0f, 512.0f );
-        uv.xy            = uv.xy * texcoord.xy;
+        uv.xy            = uv.xy * texcoord.xy * 1.5f;
         float noise      = tex2D( samplerNoise, uv ).x;
         color.xyz        = saturate( color.xyz + lerp( -0.5/255, 0.5/255, noise ));
 

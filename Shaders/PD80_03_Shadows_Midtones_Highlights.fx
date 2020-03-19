@@ -252,9 +252,20 @@ namespace pd80_SMH
         > = 0.0;
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
+    texture texNoise < source = "monochrome_gaussnoise.png"; > { Width = 512; Height = 512; Format = RGBA8; };
     
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerColor { Texture = texColorBuffer; };
+    sampler samplerNoise
+    { 
+        Texture = texNoise;
+        MipFilter = POINT;
+        MinFilter = POINT;
+        MagFilter = POINT;
+        AddressU = WRAP;
+        AddressV = WRAP;
+        AddressW = WRAP;
+    };
 
     //// DEFINES ////////////////////////////////////////////////////////////////////
 
@@ -530,6 +541,12 @@ namespace pd80_SMH
             color.xyz    = lerp( color.xyz, softlight( color.xyz, warm.xyz ), tint_h * weight_h );
         color.xyz        = sat( color.xyz, saturation_h * weight_h );
         color.xyz        = vib( color.xyz, vibrance_h   * weight_h );
+
+        // Dither
+        float2 uv        = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / float2( 512.0f, 512.0f );
+        uv.xy            = uv.xy * texcoord.xy * 1.3f;
+        float noise      = tex2D( samplerNoise, uv ).x;
+        color.xyz        = saturate( color.xyz + lerp( -0.5/255, 0.5/255, noise ));
 
         return float4( color.xyz, 1.0f );
     }
