@@ -51,6 +51,14 @@ namespace pd80_SMH
         ui_tooltip = "Enable Dithering";
         ui_category = "Global";
         > = true;
+    uniform float dither_strength <
+        ui_type = "slider";
+        ui_label = "Dither Strength";
+        ui_tooltip = "Dither Strength";
+        ui_category = "Global";
+        ui_min = 0.0f;
+        ui_max = 10.0f;
+        > = 1.0;
     uniform float exposure_s <
         ui_label = "Exposure";
         ui_tooltip = "Shadow Exposure";
@@ -443,6 +451,16 @@ namespace pd80_SMH
     {
         float4 color      = tex2D( samplerColor, texcoord );
         color.xyz         = saturate( color.xyz );
+
+        // Dither
+        float dcurve       = dot( color.xyz, 0.333333f );
+        float dither       = ( 1.0f - ( dcurve * dcurve )) * dither_strength; 
+        float2 uv          = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / 512.0f;
+        uv.xy              *= texcoord.xy * 1.1f;
+        float dnoise       = tex2D( samplerNoise, uv ).x;
+  	    dnoise             -= 0.5f;
+        color.xyz          = enable_dither ? saturate( color.xyz + dnoise * 0.499f * ( dither / 256.0f )) : color.xyz;   
+
         float pLuma       = 0.0f;
         switch( luma_mode )
         {
@@ -546,12 +564,6 @@ namespace pd80_SMH
             color.xyz    = lerp( color.xyz, softlight( color.xyz, warm.xyz ), tint_h * weight_h );
         color.xyz        = sat( color.xyz, saturation_h * weight_h );
         color.xyz        = vib( color.xyz, vibrance_h   * weight_h );
-
-        // Dither
-        float2 uv        = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / float2( 512.0f, 512.0f );
-        uv.xy            = uv.xy * texcoord.xy * 1.3f;
-        float noise      = tex2D( samplerNoise, uv ).x;
-        color.xyz        = enable_dither ? saturate( color.xyz + lerp( -1.0/255, 1.0/255, noise )) : color.xyz;
 
         return float4( color.xyz, 1.0f );
     }

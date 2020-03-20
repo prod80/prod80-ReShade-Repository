@@ -49,6 +49,14 @@ namespace pd80_ColorGradients
         ui_tooltip = "Enable Dithering";
         ui_category = "Global";
         > = true;
+    uniform float dither_strength <
+        ui_type = "slider";
+        ui_label = "Dither Strength";
+        ui_tooltip = "Dither Strength";
+        ui_category = "Global";
+        ui_min = 0.0f;
+        ui_max = 10.0f;
+        > = 1.0;
     uniform float CGdesat <
         ui_label = "Desaturate Base Image";
         ui_tooltip = "Desaturate Base Image";
@@ -347,6 +355,15 @@ namespace pd80_ColorGradients
         float ml         = ( minlevel >= maxlevel ) ? maxlevel - 0.01f : minlevel;
         sceneluma        = smoothstep( ml, maxlevel, sceneluma );
         color.xyz        = saturate( color.xyz );
+
+        // Dither
+        float dcurve       = dot( color.xyz, 0.333333f );
+        float dither       = ( 1.0f - ( dcurve * dcurve )) * dither_strength; 
+        float2 uv          = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / 512.0f;
+        uv.xy              *= texcoord.xy * 1.3f;
+        float dnoise       = tex2D( samplerNoise, uv ).x;
+  	    dnoise             -= 0.5f;
+        color.xyz          = enable_dither ? saturate( color.xyz + dnoise * 0.499f * ( dither / 256.0f )) : color.xyz;      
         
         // Weights
         float cWeight;
@@ -436,12 +453,6 @@ namespace pd80_ColorGradients
         float3 new_c     = lerp( DS_col.xyz, LS_col.xyz, sceneluma );
         new_c.xyz        = ( enable_ds ) ? new_c.xyz : LS_col.xyz;
         color.xyz        = lerp( color.xyz, new_c.xyz, finalmix );
-
-        // Dither
-        float2 uv        = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / float2( 512.0f, 512.0f );
-        uv.xy            = uv.xy * texcoord.xy * 1.5f;
-        float noise      = tex2D( samplerNoise, uv ).x;
-        color.xyz        = enable_dither ? saturate( color.xyz + lerp( -1.0/255, 1.0/255, noise )) : color.xyz;
 
         return float4( color.xyz, 1.0f );
     }

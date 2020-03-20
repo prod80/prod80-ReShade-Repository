@@ -39,6 +39,14 @@ namespace pd80_blackandwhite
         ui_tooltip = "Enable Dithering";
         ui_category = "Black & White Techniques";
         > = true;
+    uniform float dither_strength <
+        ui_type = "slider";
+        ui_label = "Dither Strength";
+        ui_tooltip = "Dither Strength";
+        ui_category = "Black & White Techniques";
+        ui_min = 0.0f;
+        ui_max = 10.0f;
+        > = 1.0;
     uniform int bw_mode < __UNIFORM_COMBO_INT1
         ui_label = "Black & White Conversion";
         ui_tooltip = "Black & White Conversion";
@@ -147,7 +155,6 @@ namespace pd80_blackandwhite
     //// DEFINES ////////////////////////////////////////////////////////////////////
 
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
-    
     float3 HUEToRGB( in float H )
     {
         return saturate( float3( abs( H * 6.0f - 3.0f ) - 1.0f,
@@ -232,7 +239,6 @@ namespace pd80_blackandwhite
 
         return saturate( ret );
     }
-
 
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float4 PS_BlackandWhite(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
@@ -400,6 +406,14 @@ namespace pd80_blackandwhite
         color.xyz         = ProcessBW( color.xyz, red, yellow, green, cyan, blue, magenta );
         // Do the tinting
         color.xyz         = lerp( color.xyz, HSLToRGB( float3( tinthue, tintsat, color.x )), use_tint );
+        // Dither
+        float dcurve       = dot( color.xyz, 0.333333f );
+        float dither       = ( 1.0f - ( dcurve * dcurve )) * dither_strength; 
+        float2 uv          = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / 512.0f;
+        uv.xy              *= texcoord.xy * 1.2f;
+        float dnoise       = tex2D( samplerNoise, uv ).x;
+  	    dnoise             -= 0.5f;
+        color.xyz          = enable_dither ? saturate( color.xyz + dnoise * 0.499f * ( dither / 256.0f )) : color.xyz;
         if( show_clip )
         {
             float h       = 0.98f;
@@ -407,10 +421,6 @@ namespace pd80_blackandwhite
             color.xyz     = min( min( color.x, color.y ), color.z ) >= h ? lerp( color.xyz, float3( 1.0f, 0.0f, 0.0f ), smoothstep( h, 1.0f, min( min( color.x, color.y ), color.z ))) : color.xyz;
             color.xyz     = max( max( color.x, color.y ), color.z ) <= l ? lerp( float3( 0.0f, 0.0f, 1.0f ), color.xyz, smoothstep( 0.0f, l, max( max( color.x, color.y ), color.z ))) : color.xyz;
         }
-        float2 uv         = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / float2( 512.0f, 512.0f );
-        uv.xy             = uv.xy * texcoord.xy * 1.4f;
-        float noise       = tex2D( samplerNoise, uv ).x;
-        color.xyz         = enable_dither ? saturate( color.xyz + lerp( -1.0/255, 1.0/255, noise )) : color.xyz;
         return float4( color.xyz, 1.0f );
     }
 

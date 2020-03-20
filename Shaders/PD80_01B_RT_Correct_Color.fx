@@ -98,6 +98,14 @@ namespace pd80_correctcolor
         ui_tooltip = "Enable Dithering";
         ui_category = "Global: Remove Tint";
         > = true;
+    uniform float dither_strength <
+        ui_type = "slider";
+        ui_label = "Dither Strength";
+        ui_tooltip = "Dither Strength";
+        ui_category = "Global: Remove Tint";
+        ui_min = 0.0f;
+        ui_max = 10.0f;
+        > = 1.0;
     uniform bool rt_enable_whitepoint_correction <
         ui_text = "----------------------------------------------";
         ui_label = "Enable Whitepoint Correction";
@@ -399,6 +407,15 @@ namespace pd80_correctcolor
     float4 PS_RemoveTint(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color       = tex2D( samplerColor, texcoord );
+        // Dither
+        float dcurve       = dot( color.xyz, 0.333333f );
+        float dither       = ( 1.0f - ( dcurve * dcurve )) * dither_strength; 
+        float2 uv          = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / 512.0f;
+        uv.xy              *= texcoord.xy;
+        float dnoise       = tex2D( samplerNoise, uv ).x;
+  	    dnoise             -= 0.5f;
+        color.xyz          = enable_dither ? saturate( color.xyz + dnoise * 0.499f * ( dither / 256.0f )) : color.xyz;      
+        // Grab min, max, mid values
         float3 minValue    = tex2D( samplerDS_1x1, float2( texcoord.x / 6.0f, texcoord.y )).xyz;
         float3 midValue    = tex2D( samplerDS_1x1, float2(( texcoord.x + 2.0f ) / 6.0f, texcoord.y )).xyz;
         float3 maxValue    = tex2D( samplerDS_1x1, float2(( texcoord.x + 4.0f ) / 6.0f, texcoord.y )).xyz;
@@ -428,11 +445,6 @@ namespace pd80_correctcolor
         float avgMid       = dot( midValue.xyz, 0.333333f );
         avgCol             = 1.0f - abs( avgCol * 2.0f - 1.0f );
         color.xyz          = saturate( color.xyz - midValue.xyz * avgCol + avgMid * avgCol * rt_midpoint_respect_luma );
-        // Dither
-        float2 uv          = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / float2( 512.0f, 512.0f );
-        uv.xy              = uv.xy * texcoord.xy;
-        float noise        = tex2D( samplerNoise, uv ).x;
-        color.xyz          = enable_dither ? saturate( color.xyz + lerp( -1.0/255, 1.0/255, noise )) : color.xyz;
         // Debug
         /*
         switch( debug_mode )

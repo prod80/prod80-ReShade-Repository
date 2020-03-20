@@ -101,21 +101,13 @@ namespace pd80_magicalrectangle
         ui_max = 1.0;
         > = 0.002;
     uniform float dither_strength <
-    	ui_label = "Shape Dither Stength";
-    	ui_tooltip = "Shape Dither Stength";
-    	ui_category = "Shape Manipulation";
         ui_type = "slider";
-        ui_min = 0.0;
-        ui_max = 2.0;
-        > = 0.7;
-    uniform int dither_size <
-    	ui_label = "Shape Dither Size";
-    	ui_tooltip = "Shape Dither Size";
-    	ui_category = "Shape Manipulation";
-        ui_type = "slider";
-        ui_min = 1;
-        ui_max = 2;
-        > = 1;
+        ui_label = "Dither Strength";
+        ui_tooltip = "Dither Strength";
+        ui_category = "Shape Manipulation";
+        ui_min = 0.0f;
+        ui_max = 10.0f;
+        > = 1.0;
     uniform float intensity <
         ui_text = "-------------------------------------\n"
                   "Use Opacity and Blend Mode to adjust\n"
@@ -558,10 +550,13 @@ namespace pd80_magicalrectangle
         float3 color;
         float4 layer_1    = saturate( tex2D( samplerMagicRectangle, texcoord ));
         // Dither
-        float2 uv        = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / float2( 512.0f, 512.0f );
-        uv.xy            = uv.xy * ( texcoord.xy / dither_size ) * 1.7f;
-        float gNoise     = tex2D( samplerNoise, uv ).x;
-        layer_1.xyz      = saturate( layer_1.xyz + lerp( -dither_strength/255, dither_strength/255, gNoise ));
+        float dcurve      = dot( layer_1.xyz, 0.333333f );
+        float dither      = ( 1.0f - ( dcurve * dcurve )) * dither_strength; 
+        float2 uv         = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / 512.0f;
+        uv.xy             *= texcoord.xy * 1.4f;
+        float dnoise      = tex2D( samplerNoise, uv ).x;
+  	  dnoise            -= 0.5f;
+        layer_1.xyz       = saturate( layer_1.xyz + dnoise * 0.499f * ( dither / 256.0f ));
 
         orig.xyz          = exposure( orig.xyz, mr_exposure, layer_1.w );
         orig.xyz          = con( orig.xyz, mr_contrast * layer_1.w );

@@ -66,9 +66,23 @@ namespace pd80_posterizepixelate
         ui_min = 0.0f;
         ui_max = 1.0f;
         > = 0.0;
+    uniform bool enable_dither <
+        ui_label = "Enable Dithering";
+        ui_tooltip = "Enable Dithering";
+        ui_category = "Posterize Pixelate";
+        > = false;
+    uniform float dither_strength <
+        ui_type = "slider";
+        ui_label = "Dither Strength";
+        ui_tooltip = "Dither Strength";
+        ui_category = "Posterize Pixelate";
+        ui_min = 0.0f;
+        ui_max = 10.0f;
+        > = 1.0;
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
     texture texMipMe { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; MipLevels = 9; };
+    texture texNoise < source = "monochrome_gaussnoise.png"; > { Width = 512; Height = 512; Format = RGBA8; };
     
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerColor { Texture = texColorBuffer; };
@@ -78,6 +92,16 @@ namespace pd80_posterizepixelate
         MipFilter = POINT;
         MinFilter = POINT;
         MagFilter = POINT;
+    };
+    sampler samplerNoise
+    { 
+        Texture = texNoise;
+        MipFilter = POINT;
+        MinFilter = POINT;
+        MagFilter = POINT;
+        AddressU = WRAP;
+        AddressV = WRAP;
+        AddressW = WRAP;
     };
 
     //// DEFINES ////////////////////////////////////////////////////////////////////
@@ -93,6 +117,15 @@ namespace pd80_posterizepixelate
     float4 PS_Posterize(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float3 color      = tex2Dlod( samplerMipMe, float4( texcoord.xy, 0.0f, pixel_size - 1 )).xyz;
+        // Dither
+        float dcurve      = dot( color.xyz, 0.333333f );
+        float dither      = ( 1.0f - ( dcurve * dcurve )) * dither_strength; 
+        float2 tx         = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / 512.0f;
+        tx.xy             *= texcoord.xy;
+        float dnoise      = tex2D( samplerNoise, tx ).x;
+  	    dnoise            -= 0.5f;
+        color.xyz         = enable_dither ? saturate( color.xyz + dnoise * 0.499f * ( dither / number_of_levels )) : color.xyz;
+        // Dither end
         float3 orig       = color.xyz;
         color.xyz         = floor( color.xyz * number_of_levels ) / ( number_of_levels - 1 );
         float exp         = exp2( pixel_size - 1 );
