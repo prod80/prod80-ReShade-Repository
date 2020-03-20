@@ -555,7 +555,7 @@ namespace pd80_magicalrectangle
         float2 uv         = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / 512.0f;
         uv.xy             *= texcoord.xy * 1.4f;
         float dnoise      = tex2D( samplerNoise, uv ).x;
-  	  dnoise            -= 0.5f;
+        dnoise            -= 0.5f;
         layer_1.xyz       = saturate( layer_1.xyz + dnoise * 0.499f * ( dither / 256.0f ));
 
         orig.xyz          = exposure( orig.xyz, mr_exposure, layer_1.w );
