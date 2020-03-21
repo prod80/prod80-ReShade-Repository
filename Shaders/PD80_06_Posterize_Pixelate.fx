@@ -119,12 +119,11 @@ namespace pd80_posterizepixelate
         float3 color      = tex2Dlod( samplerMipMe, float4( texcoord.xy, 0.0f, pixel_size - 1 )).xyz;
         // Dither
         float dcurve      = dot( color.xyz, 0.333333f );
-        float dither      = ( 1.0f - ( dcurve * dcurve )) * dither_strength; 
         float2 tx         = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / 512.0f;
         tx.xy             *= texcoord.xy;
         float dnoise      = tex2D( samplerNoise, tx ).x;
-  	    dnoise            -= 0.5f;
-        color.xyz         = enable_dither ? saturate( color.xyz + dnoise * 0.499f * ( dither / number_of_levels )) : color.xyz;
+        dnoise            -= 0.5f;
+        color.xyz         = enable_dither ? saturate( color.xyz + dnoise * 0.499f * ( dither_strength / number_of_levels )) : color.xyz;
         // Dither end
         float3 orig       = color.xyz;
         color.xyz         = floor( color.xyz * number_of_levels ) / ( number_of_levels - 1 );
