@@ -458,7 +458,7 @@ namespace pd80_SMH
         float2 uv          = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / 512.0f;
         uv.xy              *= texcoord.xy * 1.1f;
         float dnoise       = tex2D( samplerNoise, uv ).x;
-  	    dnoise             -= 0.5f;
+        dnoise             -= 0.5f;
         color.xyz          = enable_dither ? saturate( color.xyz + dnoise * 0.499f * ( dither / 256.0f )) : color.xyz;   
 
         float pLuma       = 0.0f;
