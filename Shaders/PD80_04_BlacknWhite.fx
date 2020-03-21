@@ -37,16 +37,29 @@ namespace pd80_blackandwhite
     uniform bool enable_dither <
         ui_label = "Enable Dithering";
         ui_tooltip = "Enable Dithering";
-        ui_category = "Black & White Techniques";
+        ui_category = "Global";
         > = true;
     uniform float dither_strength <
         ui_type = "slider";
         ui_label = "Dither Strength";
         ui_tooltip = "Dither Strength";
-        ui_category = "Black & White Techniques";
+        ui_category = "Global";
         ui_min = 0.0f;
         ui_max = 10.0f;
         > = 1.0;
+    uniform float curve_str <
+        ui_type = "slider";
+        ui_label = "Contrast Smoothness";
+        ui_tooltip = "Contrast Smoothness";
+        ui_category = "Global";
+        ui_min = 1.0f;
+        ui_max = 4.0f;
+        > = 1.5f;
+    uniform bool show_clip <
+        ui_label = "Show Clipping Mask";
+        ui_tooltip = "Show Clipping Mask";
+        ui_category = "Global";
+        > = false;
     uniform int bw_mode < __UNIFORM_COMBO_INT1
         ui_label = "Black & White Conversion";
         ui_tooltip = "Black & White Conversion";
@@ -122,19 +135,6 @@ namespace pd80_blackandwhite
         ui_min = 0.0f;
         ui_max = 1.0f;
         > = 0.12f;
-    uniform float curve_str <
-        ui_type = "slider";
-        ui_label = "Contrast Smoothness";
-        ui_tooltip = "Contrast Smoothness";
-        ui_category = "Smoothness";
-        ui_min = 1.0f;
-        ui_max = 4.0f;
-        > = 1.5f;
-    uniform bool show_clip <
-        ui_label = "Show Clipping Mask";
-        ui_tooltip = "Show Clipping Mask";
-        ui_category = "Visualize Clipping";
-        > = false;
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
     texture texNoise < source = "monochrome_gaussnoise.png"; > { Width = 512; Height = 512; Format = RGBA8; };
@@ -245,6 +245,13 @@ namespace pd80_blackandwhite
     {
         float4 color      = tex2D( samplerColor, texcoord );
         color.xyz         = saturate( color.xyz );
+
+        // Dither
+        float2 uv          = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / 512.0f;
+        uv.xy              *= texcoord.xy * 1.2f;
+        float dnoise       = tex2D( samplerNoise, uv ).x;
+        dnoise             -= 0.5f;
+        color.xyz          = enable_dither ? saturate( color.xyz + dnoise * 0.499f * ( dither_strength / 256.0f )) : color.xyz;
         
         float red;  float yellow; float green;
         float cyan; float blue;   float magenta;
@@ -406,14 +413,6 @@ namespace pd80_blackandwhite
         color.xyz         = ProcessBW( color.xyz, red, yellow, green, cyan, blue, magenta );
         // Do the tinting
         color.xyz         = lerp( color.xyz, HSLToRGB( float3( tinthue, tintsat, color.x )), use_tint );
-        // Dither
-        float dcurve       = dot( color.xyz, 0.333333f );
-        float dither       = ( 1.0f - ( dcurve * dcurve )) * dither_strength; 
-        float2 uv          = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / 512.0f;
-        uv.xy              *= texcoord.xy * 1.2f;
-        float dnoise       = tex2D( samplerNoise, uv ).x;
-  	    dnoise             -= 0.5f;
-        color.xyz          = enable_dither ? saturate( color.xyz + dnoise * 0.499f * ( dither / 256.0f )) : color.xyz;
         if( show_clip )
         {
             float h       = 0.98f;
