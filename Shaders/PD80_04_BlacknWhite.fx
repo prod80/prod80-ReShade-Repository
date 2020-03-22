@@ -28,6 +28,7 @@
 
 #include "ReShade.fxh"
 #include "ReShadeUI.fxh"
+#include "PD80_00_Noise_Samplers.fxh"
 
 namespace pd80_blackandwhite
 {
@@ -46,7 +47,7 @@ namespace pd80_blackandwhite
         ui_category = "Global";
         ui_min = 0.0f;
         ui_max = 10.0f;
-        > = 1.0;
+        > = 3.0;
     uniform float curve_str <
         ui_type = "slider";
         ui_label = "Contrast Smoothness";
@@ -137,24 +138,15 @@ namespace pd80_blackandwhite
         > = 0.12f;
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
-    texture texNoise < source = "monochrome_gaussnoise.png"; > { Width = 512; Height = 512; Format = RGBA8; };
 
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerColor { Texture = texColorBuffer; };
-    sampler samplerNoise
-    { 
-        Texture = texNoise;
-        MipFilter = POINT;
-        MinFilter = POINT;
-        MagFilter = POINT;
-        AddressU = WRAP;
-        AddressV = WRAP;
-        AddressW = WRAP;
-    };
 
     //// DEFINES ////////////////////////////////////////////////////////////////////
 
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
+    uniform float2 pingpong < source = "pingpong"; min = 0; max = 128; step = 1; >;
+
     float3 HUEToRGB( in float H )
     {
         return saturate( float3( abs( H * 6.0f - 3.0f ) - 1.0f,
@@ -248,8 +240,9 @@ namespace pd80_blackandwhite
 
         // Dither
         float2 uv          = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / 512.0f;
-        uv.xy              *= texcoord.xy * 1.2f;
+        uv.xy              *= texcoord.xy;
         float dnoise       = tex2D( samplerNoise, uv ).x;
+        dnoise             = frac( dnoise + 0.61803398875f * ( pingpong.x + 4 ));
         dnoise             -= 0.5f;
         color.xyz          = enable_dither ? saturate( color.xyz + dnoise * 0.499f * ( dither_strength / 256.0f )) : color.xyz;
         

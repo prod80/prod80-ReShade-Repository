@@ -28,6 +28,7 @@
 
 #include "ReShade.fxh"
 #include "ReShadeUI.fxh"
+#include "PD80_00_Noise_Samplers.fxh"
 
 namespace pd80_ColorGradients
 {
@@ -56,7 +57,7 @@ namespace pd80_ColorGradients
         ui_category = "Global";
         ui_min = 0.0f;
         ui_max = 10.0f;
-        > = 1.0;
+        > = 3.0;
     uniform float CGdesat <
         ui_label = "Desaturate Base Image";
         ui_tooltip = "Desaturate Base Image";
@@ -185,27 +186,17 @@ namespace pd80_ColorGradients
     texture texLuma { Width = 256; Height = 256; Format = R16F; MipLevels = 8; };
     texture texAvgLuma { Format = R16F; };
     texture texPrevAvgLuma { Format = R16F; };
-    texture texNoise < source = "monochrome_gaussnoise.png"; > { Width = 512; Height = 512; Format = RGBA8; };
 
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerColor { Texture = texColorBuffer; };
     sampler samplerLuma { Texture = texLuma; };
     sampler samplerAvgLuma { Texture = texAvgLuma; };
     sampler samplerPrevAvgLuma { Texture = texPrevAvgLuma; };
-    sampler samplerNoise
-    { 
-        Texture = texNoise;
-        MipFilter = POINT;
-        MinFilter = POINT;
-        MagFilter = POINT;
-        AddressU = WRAP;
-        AddressV = WRAP;
-        AddressW = WRAP;
-    };
 
     //// DEFINES ////////////////////////////////////////////////////////////////////
     #define LumCoeff float3(0.212656, 0.715158, 0.072186)
     uniform float Frametime < source = "frametime"; >;
+    uniform float2 pingpong < source = "pingpong"; min = 0; max = 128; step = 1; >;
 
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
     float getLuminance( in float3 x )
@@ -357,13 +348,12 @@ namespace pd80_ColorGradients
         color.xyz        = saturate( color.xyz );
 
         // Dither
-        float dcurve       = dot( color.xyz, 0.333333f );
-        float dither       = ( 1.0f - ( dcurve * dcurve )) * dither_strength; 
         float2 uv          = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / 512.0f;
-        uv.xy              *= texcoord.xy * 1.3f;
+        uv.xy              *= texcoord.xy;
         float dnoise       = tex2D( samplerNoise, uv ).x;
+        dnoise             = frac( dnoise + 0.61803398875f * ( pingpong.x + 5 ));
   	    dnoise             -= 0.5f;
-        color.xyz          = enable_dither ? saturate( color.xyz + dnoise * 0.499f * ( dither / 256.0f )) : color.xyz;      
+        color.xyz          = enable_dither ? saturate( color.xyz + dnoise * 0.499f * ( dither_strength / 256.0f )) : color.xyz;      
         
         // Weights
         float cWeight;

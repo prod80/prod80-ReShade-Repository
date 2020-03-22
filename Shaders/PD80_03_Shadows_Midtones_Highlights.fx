@@ -28,6 +28,7 @@
 
 #include "ReShade.fxh"
 #include "ReShadeUI.fxh"
+#include "PD80_00_Noise_Samplers.fxh"
 
 namespace pd80_SMH
 {
@@ -58,7 +59,7 @@ namespace pd80_SMH
         ui_category = "Global";
         ui_min = 0.0f;
         ui_max = 10.0f;
-        > = 1.0;
+        > = 3.0;
     uniform float exposure_s <
         ui_label = "Exposure";
         ui_tooltip = "Shadow Exposure";
@@ -265,24 +266,15 @@ namespace pd80_SMH
         > = 0.0;
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
-    texture texNoise < source = "monochrome_gaussnoise.png"; > { Width = 512; Height = 512; Format = RGBA8; };
     
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerColor { Texture = texColorBuffer; };
-    sampler samplerNoise
-    { 
-        Texture = texNoise;
-        MipFilter = POINT;
-        MinFilter = POINT;
-        MagFilter = POINT;
-        AddressU = WRAP;
-        AddressV = WRAP;
-        AddressW = WRAP;
-    };
 
     //// DEFINES ////////////////////////////////////////////////////////////////////
 
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
+    uniform float2 pingpong < source = "pingpong"; min = 0; max = 128; step = 1; >;
+
     float getLuminance( in float3 x )
     {
         return dot( x, float3( 0.212656, 0.715158, 0.072186 ));
@@ -453,13 +445,12 @@ namespace pd80_SMH
         color.xyz         = saturate( color.xyz );
 
         // Dither
-        float dcurve       = dot( color.xyz, 0.333333f );
-        float dither       = ( 1.0f - ( dcurve * dcurve )) * dither_strength; 
         float2 uv          = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / 512.0f;
-        uv.xy              *= texcoord.xy * 1.1f;
+        uv.xy              *= texcoord.xy;
         float dnoise       = tex2D( samplerNoise, uv ).x;
+        dnoise             = frac( dnoise + 0.61803398875f * ( pingpong.x + 3 ));
         dnoise             -= 0.5f;
-        color.xyz          = enable_dither ? saturate( color.xyz + dnoise * 0.499f * ( dither / 256.0f )) : color.xyz;   
+        color.xyz          = enable_dither ? saturate( color.xyz + dnoise * 0.499f * ( dither_strength / 256.0f )) : color.xyz;   
 
         float pLuma       = 0.0f;
         switch( luma_mode )

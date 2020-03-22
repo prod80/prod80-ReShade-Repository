@@ -28,6 +28,7 @@
 
 #include "ReShade.fxh"
 #include "ReShadeUI.fxh"
+#include "PD80_00_Noise_Samplers.fxh"
 
 namespace pd80_conbrisat
 {
@@ -245,20 +246,9 @@ namespace pd80_conbrisat
 
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
-    texture texNoise < source = "monochrome_gaussnoise.png"; > { Width = 512; Height = 512; Format = RGBA8; };
 
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerColor { Texture = texColorBuffer; };
-    sampler samplerNoise
-    { 
-        Texture = texNoise;
-        MipFilter = POINT;
-        MinFilter = POINT;
-        MagFilter = POINT;
-        AddressU = WRAP;
-        AddressV = WRAP;
-        AddressW = WRAP;
-    };
 
     //// DEFINES ////////////////////////////////////////////////////////////////////
 
@@ -426,8 +416,8 @@ namespace pd80_conbrisat
         depth            = smoothstep( depthStart, depthEnd, depth );
         depth            = pow( depth, depthCurve );
         float2 uv        = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / float2( 512.0f, 512.0f );
-        uv.xy            = uv.xy * texcoord.xy * 1.6f;
-        float noise      = tex2D( samplerNoise, uv ).x;
+        uv.xy            = uv.xy * texcoord.xy;
+        float noise      = tex2D( samplerGaussNoise, uv ).x;
         depth            = saturate( depth + lerp( -1.0/255, 1.0/255, noise ));
         
         color.xyz        = saturate( color.xyz );

@@ -28,6 +28,8 @@
 
 #include "ReShade.fxh"
 #include "ReShadeUI.fxh"
+#include "PD80_00_Noise_Samplers.fxh"
+
 namespace pd80_magicalrectangle
 {
     //// PREPROCESSOR DEFINITIONS ///////////////////////////////////////////////////
@@ -107,7 +109,7 @@ namespace pd80_magicalrectangle
         ui_category = "Shape Manipulation";
         ui_min = 0.0f;
         ui_max = 10.0f;
-        > = 1.0;
+        > = 3.0;
     uniform float intensity <
         ui_text = "-------------------------------------\n"
                   "Use Opacity and Blend Mode to adjust\n"
@@ -228,21 +230,10 @@ namespace pd80_magicalrectangle
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
     texture texMagicRectangle { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
-    texture texNoise < source = "monochrome_gaussnoise.png"; > { Width = 512; Height = 512; Format = RGBA8; };
 
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerColor { Texture = texColorBuffer; };
     sampler samplerMagicRectangle { Texture = texMagicRectangle; };
-    sampler samplerNoise
-    { 
-        Texture = texNoise;
-        MipFilter = POINT;
-        MinFilter = POINT;
-        MagFilter = POINT;
-        AddressU = WRAP;
-        AddressV = WRAP;
-        AddressW = WRAP;
-    };
 
     //// DEFINES ////////////////////////////////////////////////////////////////////
     #define ASPECT_RATIO float( BUFFER_WIDTH * BUFFER_RCP_HEIGHT )
@@ -550,13 +541,11 @@ namespace pd80_magicalrectangle
         float3 color;
         float4 layer_1    = saturate( tex2D( samplerMagicRectangle, texcoord ));
         // Dither
-        float dcurve      = dot( layer_1.xyz, 0.333333f );
-        float dither      = ( 1.0f - ( dcurve * dcurve )) * dither_strength; 
         float2 uv         = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / 512.0f;
-        uv.xy             *= texcoord.xy * 1.4f;
+        uv.xy             *= texcoord.xy;
         float dnoise      = tex2D( samplerNoise, uv ).x;
         dnoise            -= 0.5f;
-        layer_1.xyz       = saturate( layer_1.xyz + dnoise * 0.499f * ( dither / 256.0f ));
+        layer_1.xyz       = saturate( layer_1.xyz + dnoise * 0.499f * ( dither_strength / 256.0f ));
 
         orig.xyz          = exposure( orig.xyz, mr_exposure, layer_1.w );
         orig.xyz          = con( orig.xyz, mr_contrast * layer_1.w );

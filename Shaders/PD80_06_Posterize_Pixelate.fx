@@ -28,6 +28,7 @@
 
 #include "ReShade.fxh"
 #include "ReShadeUI.fxh"
+#include "PD80_00_Noise_Samplers.fxh"
 
 namespace pd80_posterizepixelate
 {
@@ -71,6 +72,11 @@ namespace pd80_posterizepixelate
         ui_tooltip = "Enable Dithering";
         ui_category = "Posterize Pixelate";
         > = false;
+    uniform bool dither_motion <
+        ui_label = "Dither Motion";
+        ui_tooltip = "Dither Motion";
+        ui_category = "Posterize Pixelate";
+        > = true;
     uniform float dither_strength <
         ui_type = "slider";
         ui_label = "Dither Strength";
@@ -78,11 +84,10 @@ namespace pd80_posterizepixelate
         ui_category = "Posterize Pixelate";
         ui_min = 0.0f;
         ui_max = 10.0f;
-        > = 1.0;
+        > = 3.0;
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
     texture texMipMe { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; MipLevels = 9; };
-    texture texNoise < source = "monochrome_gaussnoise.png"; > { Width = 512; Height = 512; Format = RGBA8; };
     
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerColor { Texture = texColorBuffer; };
@@ -93,20 +98,12 @@ namespace pd80_posterizepixelate
         MinFilter = POINT;
         MagFilter = POINT;
     };
-    sampler samplerNoise
-    { 
-        Texture = texNoise;
-        MipFilter = POINT;
-        MinFilter = POINT;
-        MagFilter = POINT;
-        AddressU = WRAP;
-        AddressV = WRAP;
-        AddressW = WRAP;
-    };
 
     //// DEFINES ////////////////////////////////////////////////////////////////////
     #define aspect      float( BUFFER_WIDTH * BUFFER_RCP_HEIGHT )
+    
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
+    uniform float2 pingpong < source = "pingpong"; min = 0; max = 128; step = 1; >;
 
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float4 PS_MipMe(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
@@ -118,10 +115,11 @@ namespace pd80_posterizepixelate
     {
         float3 color      = tex2Dlod( samplerMipMe, float4( texcoord.xy, 0.0f, pixel_size - 1 )).xyz;
         // Dither
-        float dcurve      = dot( color.xyz, 0.333333f );
         float2 tx         = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / 512.0f;
         tx.xy             *= texcoord.xy;
         float dnoise      = tex2D( samplerNoise, tx ).x;
+        float mot         = dither_motion ? pingpong.x + 6 : 1.0f;
+        dnoise            = frac( dnoise + 0.61803398875f * mot );
         dnoise            -= 0.5f;
         color.xyz         = enable_dither ? saturate( color.xyz + dnoise * 0.499f * ( dither_strength / number_of_levels )) : color.xyz;
         // Dither end

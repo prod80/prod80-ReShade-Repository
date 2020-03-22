@@ -28,6 +28,7 @@
 
 #include "ReShade.fxh"
 #include "ReShadeUI.fxh"
+#include "PD80_00_Noise_Samplers.fxh"
 
 namespace pd80_correctcolor
 {
@@ -105,7 +106,7 @@ namespace pd80_correctcolor
         ui_category = "Global: Remove Tint";
         ui_min = 0.0f;
         ui_max = 10.0f;
-        > = 1.0;
+        > = 3.0;
     uniform bool rt_enable_whitepoint_correction <
         ui_text = "----------------------------------------------";
         ui_label = "Enable Whitepoint Correction";
@@ -198,7 +199,6 @@ namespace pd80_correctcolor
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
     texture texColor { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; MipLevels = 5; };
-    texture texNoise < source = "monochrome_gaussnoise.png"; > { Width = 512; Height = 512; Format = RGBA8; };
     texture texDS_1_Max { Width = 32; Height = 32; Format = RGBA16F; };
     texture texDS_1_Min { Width = 32; Height = 32; Format = RGBA16F; };
     texture texDS_1_Mid { Width = 32; Height = 32; Format = RGBA16F; };
@@ -208,16 +208,6 @@ namespace pd80_correctcolor
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerColorBuffer { Texture = texColorBuffer; };
     sampler samplerColor { Texture = texColor; };
-    sampler samplerNoise
-    { 
-        Texture = texNoise;
-        MipFilter = POINT;
-        MinFilter = POINT;
-        MagFilter = POINT;
-        AddressU = WRAP;
-        AddressV = WRAP;
-        AddressW = WRAP;
-    };
     sampler samplerDS_1_Max
     { 
         Texture = texDS_1_Max;
@@ -256,6 +246,7 @@ namespace pd80_correctcolor
 
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
     uniform float frametime < source = "frametime"; >;
+    uniform float2 pingpong < source = "pingpong"; min = 0; max = 256; step = 1; >;
 
     float3 interpolate( float3 o, float3 n, float factor, float ft )
     {
@@ -408,13 +399,12 @@ namespace pd80_correctcolor
     {
         float4 color       = tex2D( samplerColor, texcoord );
         // Dither
-        float dcurve       = dot( color.xyz, 0.333333f );
-        float dither       = ( 1.0f - ( dcurve * dcurve )) * dither_strength; 
         float2 uv          = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / 512.0f;
         uv.xy              *= texcoord.xy;
         float dnoise       = tex2D( samplerNoise, uv ).x;
-  	    dnoise             -= 0.5f;
-        color.xyz          = enable_dither ? saturate( color.xyz + dnoise * 0.499f * ( dither / 256.0f )) : color.xyz;      
+        dnoise             = frac( dnoise + 0.61803398875f * ( pingpong.x ));
+        dnoise             -= 0.5f;
+        color.xyz          = enable_dither ? saturate( color.xyz + dnoise * 0.499f * ( dither_strength / 256.0f )) : color.xyz;
         // Grab min, max, mid values
         float3 minValue    = tex2D( samplerDS_1x1, float2( texcoord.x / 6.0f, texcoord.y )).xyz;
         float3 midValue    = tex2D( samplerDS_1x1, float2(( texcoord.x + 2.0f ) / 6.0f, texcoord.y )).xyz;

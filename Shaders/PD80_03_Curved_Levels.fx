@@ -35,6 +35,7 @@
 
 #include "ReShade.fxh"
 #include "ReShadeUI.fxh"
+#include "PD80_00_Noise_Samplers.fxh"
 
 namespace pd80_curvedlevels
 {
@@ -43,6 +44,19 @@ namespace pd80_curvedlevels
         #define CURVEDCONTRASTS_VISUALIZE       0 // 0 = disabled, 1 = enabled
     #endif
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
+    uniform bool enable_dither <
+        ui_label = "Enable Dithering";
+        ui_tooltip = "Enable Dithering";
+        ui_category = "Global";
+        > = true;
+    uniform float dither_strength <
+        ui_type = "slider";
+        ui_label = "Dither Strength";
+        ui_tooltip = "Dither Strength";
+        ui_category = "Global";
+        ui_min = 0.0f;
+        ui_max = 10.0f;
+        > = 3.0;
     // Greys
     uniform int black_in_grey <
         ui_type = "slider";
@@ -323,6 +337,8 @@ namespace pd80_curvedlevels
     };
 
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
+    uniform float2 pingpong < source = "pingpong"; min = 0; max = 128; step = 1; >;
+
     float3 Tonemap(const TonemapParams tc, float3 x)
     {
         float3 toe = - tc.mToe.x / (x + tc.mToe.y) + tc.mToe.z;
@@ -395,6 +411,13 @@ namespace pd80_curvedlevels
         float4 color      = tex2D( samplerColor, texcoord );
         float2 coords     = float2(( texcoord.x - 0.75f ) * 4.0f, ( 1.0f - texcoord.y ) * 4.0f ); // For vizualization
         color.xyz         = saturate( color.xyz );
+        // Dither
+        float2 uv         = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / 512.0f;
+        uv.xy             *= texcoord.xy;
+        float dnoise      = tex2D( samplerNoise, uv ).x;
+        dnoise            = frac( dnoise + 0.61803398875f * ( pingpong.x + 2 ));
+        dnoise            -= 0.5f;
+        color.xyz         = enable_dither ? saturate( color.xyz + dnoise * 0.499f * ( dither_strength / 256.0f )) : color.xyz;
 
         #if( CURVEDCONTRASTS_VISUALIZE == 1 )
         int def_bi        = 0;

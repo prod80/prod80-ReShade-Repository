@@ -28,6 +28,7 @@
 
 #include "ReShade.fxh"
 #include "ReShadeUI.fxh"
+#include "PD80_00_Noise_Samplers.fxh"
 
 namespace pd80_hqbloom
 {
@@ -67,16 +68,8 @@ namespace pd80_hqbloom
     	ui_category = "Bloom";
         ui_type = "slider";
         ui_min = 0.0;
-        ui_max = 2.0;
-        > = 0.7;
-    uniform int dither_size <
-    	ui_label = "Bloom Dither Size";
-    	ui_tooltip = "Bloom Dither Size";
-    	ui_category = "Bloom";
-        ui_type = "slider";
-        ui_min = 1;
-        ui_max = 2;
-        > = 1;
+        ui_max = 10.0;
+        > = 3.0;
     uniform float BloomMix <
         ui_label = "Bloom Mix";
         ui_tooltip = "Bloom Mix";
@@ -176,7 +169,6 @@ namespace pd80_hqbloom
     texture texBLuma { Width = 256; Height = 256; Format = R16F; MipLevels = 9; };
     texture texBAvgLuma { Format = R16F; };
     texture texBPrevAvgLuma { Format = R16F; };
-    texture texNoise < source = "monochrome_gaussnoise.png"; > { Width = 512; Height = 512; Format = RGBA8; };
     #if( BLOOM_ENABLE_CA == 1 )
     texture texCABloom { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
     #endif
@@ -209,22 +201,13 @@ namespace pd80_hqbloom
     sampler samplerBPrevAvgLuma { Texture = texBPrevAvgLuma; };
     sampler samplerBloomIn { Texture = texBloomIn; };
     sampler samplerBloomH { Texture = texBloomH; };
-    sampler samplerNoise
-    { 
-        Texture = texNoise;
-        MipFilter = POINT;
-        MinFilter = POINT;
-        MagFilter = POINT;
-        AddressU = WRAP;
-        AddressV = WRAP;
-        AddressW = WRAP;
-    };
     #if( BLOOM_ENABLE_CA == 1 )
     sampler samplerCABloom { Texture = texCABloom; };
     #endif
     sampler samplerBloom { Texture = texBloom; };
     //// DEFINES ////////////////////////////////////////////////////////////////////
-    uniform float Frametime < source = "frametime"; >;
+    uniform float frametime < source = "frametime"; >;
+    uniform float2 pingpong < source = "pingpong"; min = 0; max = 128; step = 1; >;
     #define LumCoeff float3(0.212656, 0.715158, 0.072186)
     #define PI 3.141592f
     #define LOOPCOUNT 150.0f
@@ -332,7 +315,7 @@ namespace pd80_hqbloom
         float luma       = tex2Dlod( samplerBLuma, float4(0.5f, 0.5f, 0, 8 )).x;
         luma             = exp2( luma );
         float prevluma   = tex2D( samplerBPrevAvgLuma, float2( 0.5f, 0.5f )).x;
-        float fps        = max( 1000.0f / Frametime, 0.001f );
+        float fps        = max( 1000.0f / frametime, 0.001f );
         fps              *= 0.5f; //approx. 1 second delay to change luma between bright and dark
         float avgLuma    = lerp( prevluma, luma, saturate( 1.0f / fps )); 
         return avgLuma;
@@ -532,10 +515,12 @@ namespace pd80_hqbloom
         #endif
         float4 color     = tex2D( samplerColor, texcoord );
         // Dither
-        float2 uv        = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / float2( 512.0f, 512.0f );
-        uv.xy            = uv.xy * ( texcoord.xy / dither_size );
-        float gNoise     = tex2D( samplerNoise, uv ).x;
-        bloom.xyz        = saturate( bloom.xyz + lerp( -dither_strength/255, dither_strength/255, gNoise ));
+        float2 uv        = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / 512.0f;
+        uv.xy            *= texcoord.xy;
+        float dnoise     = tex2D( samplerNoise, uv ).x;
+        dnoise           = frac( dnoise + 0.61803398875f * ( pingpong.x + 1 ));
+        dnoise           -= 0.5f;
+        bloom.xyz        = saturate( bloom.xyz + dnoise * 0.499f * ( dither_strength / 256.0f ));    
 
         #if( BLOOM_ENABLE_CA == 0 )
         if( enableBKelvin )
