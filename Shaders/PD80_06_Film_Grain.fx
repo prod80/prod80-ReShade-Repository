@@ -172,7 +172,7 @@ namespace pd80_filmgrain
         > = 1.0;
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
-    texture texPerm < source = "permtexture.png"; > { Width = 256; Height = 256; Format = RGBA8; };
+    texture texPerm < source = "pd80_permtexture.png"; > { Width = 256; Height = 256; Format = RGBA8; };
     texture texNoise { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
 #if( FG_GRAIN_SMOOTHING )
     texture texNoiseH { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
