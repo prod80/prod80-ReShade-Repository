@@ -28,6 +28,7 @@
 
 #include "ReShade.fxh"
 #include "ReShadeUI.fxh"
+#include "PD80_00_Noise_Samplers.fxh"
 
 namespace pd80_levels
 {
@@ -45,6 +46,19 @@ namespace pd80_levels
 
 
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
+    uniform bool enable_dither <
+        ui_label = "Enable Dithering";
+        ui_tooltip = "Enable Dithering";
+        ui_category = "Global";
+        > = true;
+    uniform float dither_strength <
+        ui_type = "slider";
+        ui_label = "Dither Strength";
+        ui_tooltip = "Dither Strength";
+        ui_category = "Global";
+        ui_min = 0.0f;
+        ui_max = 10.0f;
+        > = 1.0;
     uniform float3 ib <
         ui_type = "color";
         ui_label = "Black IN Level";
@@ -149,6 +163,8 @@ namespace pd80_levels
     //// DEFINES ////////////////////////////////////////////////////////////////////
 
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
+    uniform float2 pingpong < source = "pingpong"; min = 0; max = 128; step = 1; >;
+
     float3 levels( float3 color, float3 blackin, float3 whitein, float gamma, float3 outblack, float3 outwhite )
     {
         float3 ret       = saturate( max( color.xyz - blackin.xyz, 0.0f )/max( whitein.xyz - blackin.xyz, 0.000001f ));
@@ -158,23 +174,39 @@ namespace pd80_levels
     }
 
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
-
     float4 PS_Levels(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color     = tex2D( samplerColor, texcoord );
-        
+        // Dither
+        float2 uv          = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / 512.0f;
+        uv.xy              *= texcoord.xy;
+        float4 dnoise      = tex2D( samplerRGBNoise, uv );
+        dnoise.xyzw        = frac( dnoise.xyzw + 0.61803398875f * ( pingpong.x + 4 ));
+        dnoise.xyzw        -= 0.5f;
+        dnoise.xyzw        = enable_dither ? dnoise.xyzw * 0.499f * ( dither_strength / 256.0f ) : float4( 0.0f, 0.0f, 0.0f, 0.0f );
+
         #if( LEVELS_USE_DEPTH == 1 )
         float depth      = ReShade::GetLinearizedDepth( texcoord ).x;
         depth            = smoothstep( depthStart, depthEnd, depth );
         depth            = pow( depth, depthCurve );
+        depth            = saturate( depth + dnoise.w );
         #endif
 
-        color.xyz        = saturate( color.xyz );
+        color.xyz        = saturate( color.xyz + dnoise.w );
         float3 dcolor    = color.xyz;
-        color.xyz        = levels( color.xyz, ib.xyz, iw.xyz, ig, ob.xyz, ow.xyz );
+        color.xyz        = levels( color.xyz,  saturate( ib.xyz + dnoise.xyz ),
+                                               saturate( iw.xyz + dnoise.xyz ),
+                                               ig, 
+                                               saturate( ob.xyz + dnoise.xyz ), 
+                                               saturate( ow.xyz + dnoise.xyz ));
         
         #if( LEVELS_USE_DEPTH == 1 )
-        dcolor.xyz       = levels( dcolor.xyz, ibd.xyz, iwd.xyz, igd, obd.xyz, owd.xyz );
+        dcolor.xyz       = levels( dcolor.xyz, saturate( ibd.xyz + dnoise.xyz ),
+                                               saturate( iwd.xyz + dnoise.xyz ),
+                                               igd, 
+                                               saturate( obd.xyz + dnoise.xyz ), 
+                                               saturate( owd.xyz + dnoise.xyz ));
+                                               
         color.xyz        = lerp( color.xyz, dcolor.xyz, depth );
         color.xyz        = lerp( color.xyz, depth.xxx, display_depth );
         #endif
