@@ -167,9 +167,9 @@ namespace pd80_levels
 
     float3 levels( float3 color, float3 blackin, float3 whitein, float gamma, float3 outblack, float3 outwhite )
     {
-        float3 ret       = saturate( max( color.xyz - blackin.xyz, 0.0f )/max( whitein.xyz - blackin.xyz, 0.000001f ));
+        float3 ret       = saturate( color.xyz - blackin.xyz ) / max( whitein.xyz - blackin.xyz, 0.000001f );
         ret.xyz          = pow( ret.xyz, gamma );
-        ret.xyz          = ret.xyz * max( outwhite.xyz - outblack.xyz, 0.000001f ) + outblack.xyz;
+        ret.xyz          = ret.xyz * saturate( outwhite.xyz - outblack.xyz ) + outblack.xyz;
         return ret;
     }
 

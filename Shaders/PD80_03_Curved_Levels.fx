@@ -383,7 +383,7 @@ namespace pd80_curvedlevels
 
     float blackwhiteOUT( float c, float b, float w )
     {
-        return c * ( w - b ) + b;
+        return c * saturate( w - b ) + b;
     }
 
     float3 blackwhiteIN( float3 c, float b, float w )
@@ -393,7 +393,7 @@ namespace pd80_curvedlevels
 
     float3 blackwhiteOUT( float3 c, float b, float w )
     {
-        return c.xyz * ( w - b ) + b;
+        return c.xyz * saturate( w - b ) + b;
     }
 
     float4 setBoundaries( float tx, float ty, float sx, float sy )

@@ -114,8 +114,11 @@ namespace pd80_posterizepixelate
     float4 PS_Posterize(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float3 color      = tex2Dlod( samplerMipMe, float4( texcoord.xy, 0.0f, pixel_size - 1 )).xyz;
+        float exp         = exp2( pixel_size - 1 );
+        float rcp_exp     = max( rcp( exp ) - 0.00001f, 0.0f ); //  - 0.00001f because fp precision comes into play
+        float2 bwbh       = float2( floor( BUFFER_WIDTH / exp ), floor( BUFFER_HEIGHT / exp ));
         // Dither
-        float2 tx         = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / 512.0f;
+        float2 tx         = bwbh.xy / 512.0f;
         tx.xy             *= texcoord.xy;
         float dnoise      = tex2D( samplerNoise, tx ).x;
         float mot         = dither_motion ? pingpong.x + 6 : 1.0f;
@@ -125,9 +128,7 @@ namespace pd80_posterizepixelate
         // Dither end
         float3 orig       = color.xyz;
         color.xyz         = floor( color.xyz * number_of_levels ) / ( number_of_levels - 1 );
-        float exp         = exp2( pixel_size - 1 );
-        float rcp_exp     = max( rcp( exp ) - 0.00001f, 0.0f ); //  - 0.00001f because fp precision comes into play
-        float2 uv         = frac( texcoord.xy * float2( floor( BUFFER_WIDTH / exp ), floor( BUFFER_HEIGHT / exp )));
+        float2 uv         = frac( texcoord.xy * bwbh.xy );
         float grade       = ( uv.x <= rcp_exp ) ? 1.0 : 0.0; 
         grade            += ( uv.y <= rcp_exp ) ? 1.0 : 0.0;
         color.xyz         = lerp( color.xyz, lerp( color.xyz, 0.0f, border_str * saturate( pixel_size - 1 )), saturate( grade ));
