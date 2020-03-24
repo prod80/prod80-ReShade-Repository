@@ -40,6 +40,10 @@
 namespace pd80_curvedlevels
 {
     //// PREPROCESSOR DEFINITIONS ///////////////////////////////////////////////////
+    #ifndef CURVEDCONTRASTS_ENABLE_RGB
+        #define CURVEDCONTRASTS_ENABLE_RGB      0
+    #endif
+
     #ifndef CURVEDCONTRASTS_VISUALIZE
         #define CURVEDCONTRASTS_VISUALIZE       0 // 0 = disabled, 1 = enabled
     #endif
@@ -56,24 +60,26 @@ namespace pd80_curvedlevels
         ui_category = "Global";
         ui_min = 0.0f;
         ui_max = 10.0f;
-        > = 3.0;
+        > = 1.0;
     // Greys
-    uniform int black_in_grey <
+    uniform float black_in_grey <
         ui_type = "slider";
         ui_label = "Grey: Black Point";
         ui_tooltip = "Grey: Black Point";
         ui_category = "Grey: Contrast Curves";
         ui_min = 0;
         ui_max = 255;
-        > = 0;
-    uniform int white_in_grey <
+        ui_step = 1;
+        > = 0.0;
+    uniform float white_in_grey <
         ui_type = "slider";
         ui_label = "Grey: White Point";
         ui_tooltip = "Grey: White Point";
         ui_category = "Grey: Contrast Curves";
         ui_min = 0;
         ui_max = 255;
-        > = 255;
+        ui_step = 1;
+        > = 255.0;
     uniform float pos0_shoulder_grey <
         ui_type = "slider";
         ui_label = "Grey: Shoulder Position X";
@@ -106,40 +112,44 @@ namespace pd80_curvedlevels
         ui_min = 0.0f;
         ui_max = 1.0f;
         > = 0.25;
-    uniform int black_out_grey <
+    uniform float black_out_grey <
         ui_type = "slider";
         ui_label = "Grey: Black Point Offset";
         ui_tooltip = "Grey: Black Point Offset";
         ui_category = "Grey: Contrast Curves";
         ui_min = 0;
         ui_max = 255;
-        > = 0;
-    uniform int white_out_grey <
+        ui_step = 1;
+        > = 0.0;
+    uniform float white_out_grey <
         ui_type = "slider";
         ui_label = "Grey: White Point Offset";
         ui_tooltip = "Grey: White Point Offset";
         ui_category = "Grey: Contrast Curves";
         ui_min = 0;
         ui_max = 255;
-        > = 255;
-
+        ui_step = 1;
+        > = 255.0;
+#if( CURVEDCONTRASTS_ENABLE_RGB )
     // Reds
-    uniform int black_in_red <
+    uniform float black_in_red <
         ui_type = "slider";
         ui_label = "Red: Black Point";
         ui_tooltip = "Red: Black Point";
         ui_category = "Red: Contrast Curves";
         ui_min = 0;
         ui_max = 255;
-        > = 0;
-    uniform int white_in_red <
+        ui_step = 1;
+        > = 0.0;
+    uniform float white_in_red <
         ui_type = "slider";
         ui_label = "Red: White Point";
         ui_tooltip = "Red: White Point";
         ui_category = "Red: Contrast Curves";
         ui_min = 0;
         ui_max = 255;
-        > = 255;
+        ui_step = 1;
+        > = 255.0;
     uniform float pos0_shoulder_red <
         ui_type = "slider";
         ui_label = "Red: Shoulder Position X";
@@ -172,40 +182,44 @@ namespace pd80_curvedlevels
         ui_min = 0.0f;
         ui_max = 1.0f;
         > = 0.25;
-    uniform int black_out_red <
+    uniform float black_out_red <
         ui_type = "slider";
         ui_label = "Red: Black Point Offset";
         ui_tooltip = "Red: Black Point Offset";
         ui_category = "Red: Contrast Curves";
         ui_min = 0;
         ui_max = 255;
-        > = 0;
-    uniform int white_out_red <
+        ui_step = 1;
+        > = 0.0;
+    uniform float white_out_red <
         ui_type = "slider";
         ui_label = "Red: White Point Offset";
         ui_tooltip = "Red: White Point Offset";
         ui_category = "Red: Contrast Curves";
         ui_min = 0;
         ui_max = 255;
-        > = 255;
+        ui_step = 1;
+        > = 255.0;
 
     // Greens
-    uniform int black_in_green <
+    uniform float black_in_green <
         ui_type = "slider";
         ui_label = "Green: Black Point";
         ui_tooltip = "Green: Black Point";
         ui_category = "Green: Contrast Curves";
         ui_min = 0;
         ui_max = 255;
-        > = 0;
-    uniform int white_in_green <
+        ui_step = 1;
+        > = 0.0;
+    uniform float white_in_green <
         ui_type = "slider";
         ui_label = "Green: White Point";
         ui_tooltip = "Green: White Point";
         ui_category = "Green: Contrast Curves";
         ui_min = 0;
         ui_max = 255;
-        > = 255;
+        ui_step = 1;
+        > = 255.0;
     uniform float pos0_shoulder_green <
         ui_type = "slider";
         ui_label = "Green: Shoulder Position X";
@@ -238,40 +252,44 @@ namespace pd80_curvedlevels
         ui_min = 0.0f;
         ui_max = 1.0f;
         > = 0.25;
-    uniform int black_out_green <
+    uniform float black_out_green <
         ui_type = "slider";
         ui_label = "Green: Black Point Offset";
         ui_tooltip = "Green: Black Point Offset";
         ui_category = "Green: Contrast Curves";
         ui_min = 0;
         ui_max = 255;
-        > = 0;
-    uniform int white_out_green <
+        ui_step = 1;
+        > = 0.0;
+    uniform float white_out_green <
         ui_type = "slider";
         ui_label = "Green: White Point Offset";
         ui_tooltip = "Green: White Point Offset";
         ui_category = "Green: Contrast Curves";
         ui_min = 0;
         ui_max = 255;
-        > = 255;
+        ui_step = 1;
+        > = 255.0;
 
     // Blues
-    uniform int black_in_blue <
+    uniform float black_in_blue <
         ui_type = "slider";
         ui_label = "Blue: Black Point";
         ui_tooltip = "Blue: Black Point";
         ui_category = "Blue: Contrast Curves";
         ui_min = 0;
         ui_max = 255;
-        > = 0;
-    uniform int white_in_blue <
+        ui_step = 1;
+        > = 0.0;
+    uniform float white_in_blue <
         ui_type = "slider";
         ui_label = "Blue: White Point";
         ui_tooltip = "Blue: White Point";
         ui_category = "Blue: Contrast Curves";
         ui_min = 0;
         ui_max = 255;
-        > = 255;
+        ui_step = 1;
+        > = 255.0;
     uniform float pos0_shoulder_blue <
         ui_type = "slider";
         ui_label = "Blue: Shoulder Position X";
@@ -304,23 +322,25 @@ namespace pd80_curvedlevels
         ui_min = 0.0f;
         ui_max = 1.0f;
         > = 0.25;
-    uniform int black_out_blue <
+    uniform float black_out_blue <
         ui_type = "slider";
         ui_label = "Blue: Black Point Offset";
         ui_tooltip = "Blue: Black Point Offset";
         ui_category = "Blue: Contrast Curves";
         ui_min = 0;
         ui_max = 255;
-        > = 0;
-    uniform int white_out_blue <
+        ui_step = 1;
+        > = 0.0;
+    uniform float white_out_blue <
         ui_type = "slider";
         ui_label = "Blue: White Point Offset";
         ui_tooltip = "Blue: White Point Offset";
         ui_category = "Blue: Contrast Curves";
         ui_min = 0;
         ui_max = 255;
-        > = 255;
-
+        ui_step = 1;
+        > = 255.0;
+#endif
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texColorBuffer : COLOR;
     
@@ -338,36 +358,42 @@ namespace pd80_curvedlevels
 
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
     uniform float2 pingpong < source = "pingpong"; min = 0; max = 128; step = 1; >;
+    
+    float LinearTosRGB( float c )
+    {
+        float x         = c * 12.92f;
+        float y         = 1.055f * pow( saturate( c ), 1.0f / 2.4f ) - 0.055f;
+        return ( c < 0.0031308f ) ? x : y;
+    }
 
     float3 Tonemap(const TonemapParams tc, float3 x)
     {
         float3 toe = - tc.mToe.x / (x + tc.mToe.y) + tc.mToe.z;
         float3 mid = tc.mMid.x * x + tc.mMid.y;
         float3 shoulder = - tc.mShoulder.x / (x + tc.mShoulder.y) + tc.mShoulder.z;
-
-        float3 result = lerp(toe, mid, step(tc.mBx.x, x));
-        result = lerp(result, shoulder, step(tc.mBx.y, x));
+        float3 result = ( x >= tc.mBx.x ) ? mid : toe;
+        result = ( x >= tc.mBx.y ) ? shoulder : result;
         return result;
     }
 
     float blackwhiteIN( float c, float b, float w )
     {
-        return saturate( c - b )/max( saturate( w - b ), 0.000001f );
+        return saturate( c - b )/max( w - b, 0.000001f );
     }
 
     float blackwhiteOUT( float c, float b, float w )
     {
-        return c * max( saturate( w - b ), 0.000001f ) + b;
+        return c * ( w - b ) + b;
     }
 
     float3 blackwhiteIN( float3 c, float b, float w )
     {
-        return saturate( c.xyz - b )/max( saturate( w - b ), 0.000001f );
+        return saturate( c.xyz - b )/max( w - b, 0.000001f );
     }
 
     float3 blackwhiteOUT( float3 c, float b, float w )
     {
-        return c.xyz * max( saturate( w - b ), 0.000001f ) + b;
+        return c.xyz * ( w - b ) + b;
     }
 
     float4 setBoundaries( float tx, float ty, float sx, float sy )
@@ -410,14 +436,14 @@ namespace pd80_curvedlevels
     {
         float4 color      = tex2D( samplerColor, texcoord );
         float2 coords     = float2(( texcoord.x - 0.75f ) * 4.0f, ( 1.0f - texcoord.y ) * 4.0f ); // For vizualization
-        color.xyz         = saturate( color.xyz );
         // Dither
         float2 uv         = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / 512.0f;
         uv.xy             *= texcoord.xy;
-        float dnoise      = tex2D( samplerNoise, uv ).x;
-        dnoise            = frac( dnoise + 0.61803398875f * ( pingpong.x + 2 ));
-        dnoise            -= 0.5f;
-        color.xyz         = enable_dither ? saturate( color.xyz + dnoise * 0.499f * ( dither_strength / 256.0f )) : color.xyz;
+        float4 dnoise     = tex2D( samplerRGBNoise, uv );
+        dnoise.xyzw       = frac( dnoise.xyzw + 0.61803398875f * ( pingpong.x + 2 ));
+        dnoise.xyzw       -= 0.5f;
+        dnoise.xyzw       = enable_dither ? dnoise.xyzw * 0.499f * ( dither_strength / 256.0f ) : float4( 0.0f, 0.0f, 0.0f, 0.0f );
+        color.xyz         = saturate( color.xyz + dnoise.yzx );
 
         #if( CURVEDCONTRASTS_VISUALIZE == 1 )
         int def_bi        = 0;
@@ -432,14 +458,20 @@ namespace pd80_curvedlevels
         #endif
 
         TonemapParams tc;
+
         // Grey apply black/white points and curves
+        float bigr        = saturate( black_in_grey/255.0f + dnoise.w );
+        float wigr        = saturate( white_in_grey/255.0f + dnoise.w );
+        float bogr        = saturate( black_out_grey/255.0f + dnoise.w );
+        float wogr        = saturate( white_out_grey/255.0f + dnoise.w );
+
         float4 grey       = setBoundaries( pos0_toe_grey, pos1_toe_grey, pos0_shoulder_grey, pos1_shoulder_grey );
         PrepareTonemapParams( grey.xy, grey.zw, float2( 1.0f, 1.0f ), tc );
-        color.xyz         = blackwhiteIN( color.xyz, black_in_grey/255.0f, white_in_grey/255.0f );
+        color.xyz         = blackwhiteIN( color.xyz, bigr, wigr );
         color.xyz         = Tonemap( tc, color.xyz );
-        color.xyz         = blackwhiteOUT( color.xyz, black_out_grey/255.0f, white_out_grey/255.0f );
+        color.xyz         = blackwhiteOUT( color.xyz, bogr, wogr );
         // Visual
-        #if( CURVEDCONTRASTS_VISUALIZE == 1 )
+#if( CURVEDCONTRASTS_VISUALIZE )
             // Draw a bunch of lines
             float4 bandwidth      = float4( 0.002f, 0.002f, 0.0002f, 0.0002f );
             bandwidth.y           *= ( BUFFER_WIDTH * BUFFER_RCP_HEIGHT );
@@ -461,14 +493,20 @@ namespace pd80_curvedlevels
                 showcurve.xyz     = blackwhiteOUT( showcurve.xyz, black_out_grey/255.0f, white_out_grey/255.0f );
                 color.xyz         = lerp( float3( 1.0f, 1.0f, 1.0f ), color.xyz, smoothstep( 0.0f, 20.0f * BUFFER_RCP_HEIGHT, abs( coords.y - showcurve.x )));
             }     
-        #endif
+#endif
+#if( CURVEDCONTRASTS_ENABLE_RGB )
         // Red
+        float bir         = saturate( black_in_red/255.0f + dnoise.x );
+        float wir         = saturate( white_in_red/255.0f + dnoise.x );
+        float bor         = saturate( black_out_red/255.0f + dnoise.x );
+        float wor         = saturate( white_out_red/255.0f + dnoise.x );
+
         float4 red        = setBoundaries( pos0_toe_red, pos1_toe_red, pos0_shoulder_red, pos1_shoulder_red );
         PrepareTonemapParams( red.xy, red.zw, float2( 1.0f, 1.0f ), tc );
-        color.x           = blackwhiteIN( color.x, black_in_red/255.0f, white_in_red/255.0f );
+        color.x           = blackwhiteIN( color.x, bir, wir );
         color.x           = Tonemap( tc, color.xxx ).x;
-        color.x           = blackwhiteOUT( color.x, black_out_red/255.0f, white_out_red/255.0f );
-        #if( CURVEDCONTRASTS_VISUALIZE == 1 )
+        color.x           = blackwhiteOUT( color.x, bor, wor );
+#if( CURVEDCONTRASTS_VISUALIZE )
         if( any( float4( def_toe0 - pos0_toe_red, def_toe1 - pos1_toe_red, def_sho0 - pos0_shoulder_red, def_sho1 - pos1_shoulder_red )) ||
             any( int4(   def_bi - black_in_red, def_wi - white_in_red, def_bo - black_out_red, def_wo - white_out_red )))
         {
@@ -480,14 +518,19 @@ namespace pd80_curvedlevels
                 color.xyz         = lerp( float3( 1.0f, 0.0f, 0.0f ), color.xyz, smoothstep( 0.0f, 20.0f * BUFFER_RCP_HEIGHT, abs( coords.y - showcurve.x )));
             }
         }
-        #endif
+#endif
         // Green
+        float big         = saturate( black_in_green/255.0f + dnoise.y );
+        float wig         = saturate( white_in_green/255.0f + dnoise.y );
+        float bog         = saturate( black_out_green/255.0f + dnoise.y );
+        float wog         = saturate( white_out_green/255.0f + dnoise.y );
+
         float4 green      = setBoundaries( pos0_toe_green, pos1_toe_green, pos0_shoulder_green, pos1_shoulder_green );
         PrepareTonemapParams( green.xy, green.zw, float2( 1.0f, 1.0f ), tc );
-        color.y           = blackwhiteIN( color.y, black_in_green/255.0f, white_in_green/255.0f );
+        color.y           = blackwhiteIN( color.y, big, wig );
         color.y           = Tonemap( tc, color.yyy ).y;
-        color.y           = blackwhiteOUT( color.y, black_out_green/255.0f, white_out_green/255.0f );
-        #if( CURVEDCONTRASTS_VISUALIZE == 1 )
+        color.y           = blackwhiteOUT( color.y, bog, wog );
+#if( CURVEDCONTRASTS_VISUALIZE )
         if( any( float4( def_toe0 - pos0_toe_green, def_toe1 - pos1_toe_green, def_sho0 - pos0_shoulder_green, def_sho1 - pos1_shoulder_green )) ||
             any( int4(   def_bi - black_in_green, def_wi - white_in_green, def_bo - black_out_green, def_wo - white_out_green )))
         {
@@ -499,14 +542,19 @@ namespace pd80_curvedlevels
                 color.xyz         = lerp( float3( 0.0f, 1.0f, 0.0f ), color.xyz, smoothstep( 0.0f, 20.0f * BUFFER_RCP_HEIGHT, abs( coords.y - showcurve.y )));
             }
         }
-        #endif
+#endif
         // Blue
+        float bib         = saturate( black_in_blue/255.0f + dnoise.z );
+        float wib         = saturate( white_in_blue/255.0f + dnoise.z );
+        float bob         = saturate( black_out_blue/255.0f + dnoise.z );
+        float wob         = saturate( white_out_blue/255.0f + dnoise.z );
+
         float4 blue       = setBoundaries( pos0_toe_blue, pos1_toe_blue, pos0_shoulder_blue, pos1_shoulder_blue );
         PrepareTonemapParams( blue.xy, blue.zw, float2( 1.0f, 1.0f ), tc );
-        color.z           = blackwhiteIN( color.z, black_in_blue/255.0f, white_in_blue/255.0f );
+        color.z           = blackwhiteIN( color.z, bib, wib );
         color.z           = Tonemap( tc, color.zzz ).z;
-        color.z           = blackwhiteOUT( color.z, black_out_blue/255.0f, white_out_blue/255.0f );
-        #if( CURVEDCONTRASTS_VISUALIZE == 1 )
+        color.z           = blackwhiteOUT( color.z, bob, wob );
+#if( CURVEDCONTRASTS_VISUALIZE )
         if( any( float4( def_toe0 - pos0_toe_blue, def_toe1 - pos1_toe_blue, def_sho0 - pos0_shoulder_blue, def_sho1 - pos1_shoulder_blue )) ||
             any( int4(   def_bi - black_in_blue, def_wi - white_in_blue, def_bo - black_out_blue, def_wo - white_out_blue )))
         {
@@ -518,7 +566,8 @@ namespace pd80_curvedlevels
                 color.xyz         = lerp( float3( 0.0f, 0.0f, 1.0f ), color.xyz, smoothstep( 0.0f, 20.0f * BUFFER_RCP_HEIGHT, abs( coords.y - showcurve.z )));
             }
         }
-        #endif
+#endif
+#endif
         return float4( color.xyz, 1.0f );
     }
 

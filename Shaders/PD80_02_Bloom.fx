@@ -77,7 +77,7 @@ namespace pd80_hqbloom
         ui_type = "slider";
         ui_min = 0.0;
         ui_max = 1.0;
-        > = 0.5;
+        > = 1.0;
     uniform float BloomLimit <
         ui_label = "Bloom Threshold";
         ui_tooltip = "Bloom Threshold";
@@ -85,7 +85,7 @@ namespace pd80_hqbloom
         ui_type = "slider";
         ui_min = 0.0;
         ui_max = 1.0;
-        > = 0.28;
+        > = 0.333;
     uniform float GreyValue <
         ui_label = "Bloom Exposure 50% Greyvalue";
         ui_tooltip = "Bloom Exposure 50% Greyvalue";
@@ -107,8 +107,8 @@ namespace pd80_hqbloom
         ui_tooltip = "Bloom Width";
         ui_category = "Bloom";
         ui_type = "slider";
-        ui_min = 5.0;
-        ui_max = 80.0;
+        ui_min = 10.0;
+        ui_max = 100.0;
         > = 30.0;
     #if( BLOOM_ENABLE_CA == 0 )
     uniform bool enableBKelvin <
@@ -520,7 +520,7 @@ namespace pd80_hqbloom
         float dnoise     = tex2D( samplerNoise, uv ).x;
         dnoise           = frac( dnoise + 0.61803398875f * ( pingpong.x + 1 ));
         dnoise           -= 0.5f;
-        bloom.xyz        = saturate( bloom.xyz + dnoise * 0.499f * ( dither_strength / 256.0f ));    
+        bloom.xyz        = saturate( bloom.xyz + dnoise * 0.499f * ( dither_strength / 256.0f ));
 
         #if( BLOOM_ENABLE_CA == 0 )
         if( enableBKelvin )

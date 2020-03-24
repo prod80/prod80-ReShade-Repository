@@ -350,10 +350,10 @@ namespace pd80_ColorGradients
         // Dither
         float2 uv          = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / 512.0f;
         uv.xy              *= texcoord.xy;
-        float dnoise       = tex2D( samplerNoise, uv ).x;
-        dnoise             = frac( dnoise + 0.61803398875f * ( pingpong.x + 5 ));
-  	    dnoise             -= 0.5f;
-        color.xyz          = enable_dither ? saturate( color.xyz + dnoise * 0.499f * ( dither_strength / 256.0f )) : color.xyz;      
+        float3 dnoise      = tex2D( samplerRGBNoise, uv ).xyz;
+        dnoise.xyz         = frac( dnoise.xyz + 0.61803398875f * ( pingpong.x + 5 ));
+        dnoise.xyz         -= 0.5f;
+        color.xyz          = enable_dither ? saturate( color.xyz + dnoise.xyz * 0.499f * ( dither_strength / 256.0f )) : color.xyz;      
         
         // Weights
         float cWeight;

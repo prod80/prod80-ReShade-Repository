@@ -4,13 +4,24 @@
  */
 
 // Textures
-texture texNoise        < source = "pd80_bluenoise.png"; >   { Width = 512; Height = 512; Format = RGBA8; };
-texture texGaussNoise   < source = "pd80_gaussnoise.png"; >  { Width = 512; Height = 512; Format = RGBA8; };
+texture texNoise        < source = "pd80_bluenoise.png"; >       { Width = 512; Height = 512; Format = RGBA8; };
+texture texNoiseRGB     < source = "pd80_bluenoise_rgba.png"; >  { Width = 512; Height = 512; Format = RGBA8; };
+texture texGaussNoise   < source = "pd80_gaussnoise.png"; >      { Width = 512; Height = 512; Format = RGBA8; };
 
 // Samplers
 sampler samplerNoise
 { 
     Texture = texNoise;
+    MipFilter = POINT;
+    MinFilter = POINT;
+    MagFilter = POINT;
+    AddressU = WRAP;
+    AddressV = WRAP;
+    AddressW = WRAP;
+};
+sampler samplerRGBNoise
+{ 
+    Texture = texNoiseRGB;
     MipFilter = POINT;
     MinFilter = POINT;
     MagFilter = POINT;

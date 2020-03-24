@@ -241,10 +241,11 @@ namespace pd80_blackandwhite
         // Dither
         float2 uv          = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / 512.0f;
         uv.xy              *= texcoord.xy;
-        float dnoise       = tex2D( samplerNoise, uv ).x;
-        dnoise             = frac( dnoise + 0.61803398875f * ( pingpong.x + 4 ));
-        dnoise             -= 0.5f;
-        color.xyz          = enable_dither ? saturate( color.xyz + dnoise * 0.499f * ( dither_strength / 256.0f )) : color.xyz;
+        float4 dnoise      = tex2D( samplerRGBNoise, uv );
+        dnoise.xyzw        = frac( dnoise.xyzw + 0.61803398875f * ( pingpong.x + 4 ));
+        dnoise.xyzw        -= 0.5f;
+        dnoise.xyzw        = enable_dither ? dnoise.xyzw * 0.499f * ( dither_strength / 256.0f ) : float4( 0.0f, 0.0f, 0.0f, 0.0f );
+        color.xyz          = saturate( color.xyz + dnoise.w );
         
         float red;  float yellow; float green;
         float cyan; float blue;   float magenta;
@@ -413,6 +414,7 @@ namespace pd80_blackandwhite
             color.xyz     = min( min( color.x, color.y ), color.z ) >= h ? lerp( color.xyz, float3( 1.0f, 0.0f, 0.0f ), smoothstep( h, 1.0f, min( min( color.x, color.y ), color.z ))) : color.xyz;
             color.xyz     = max( max( color.x, color.y ), color.z ) <= l ? lerp( float3( 0.0f, 0.0f, 1.0f ), color.xyz, smoothstep( 0.0f, l, max( max( color.x, color.y ), color.z ))) : color.xyz;
         }
+        color.xyz         = saturate( color.xyz + dnoise.xyz );
         return float4( color.xyz, 1.0f );
     }
 
