@@ -155,10 +155,8 @@ namespace pd80_levels
         > = 1.0;
     #endif
     //// TEXTURES ///////////////////////////////////////////////////////////////////
-    texture texColorBuffer : COLOR;
     
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
-    sampler samplerColor { Texture = texColorBuffer; };
 
     //// DEFINES ////////////////////////////////////////////////////////////////////
 
@@ -176,7 +174,7 @@ namespace pd80_levels
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float4 PS_Levels(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
-        float4 color     = tex2D( samplerColor, texcoord );
+        float4 color     = tex2D( ReShade::BackBuffer, texcoord );
         // Dither
         float2 uv          = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / 512.0f;
         uv.xy              *= texcoord.xy;

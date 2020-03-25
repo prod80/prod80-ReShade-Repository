@@ -171,10 +171,8 @@ namespace pd80_ca
         ui_max = 8.0;
         > = 1.0;
     //// TEXTURES ///////////////////////////////////////////////////////////////////
-    texture texColorBuffer : COLOR;
 
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
-    sampler samplerColor { Texture = texColorBuffer; };
     
     //// DEFINES ////////////////////////////////////////////////////////////////////
 
@@ -193,7 +191,7 @@ namespace pd80_ca
         float px          = BUFFER_RCP_WIDTH;
         float py          = BUFFER_RCP_HEIGHT;
         float aspect      = float( BUFFER_WIDTH * BUFFER_RCP_HEIGHT );
-        float3 orig       = tex2D( samplerColor, texcoord ).xyz;
+        float3 orig       = tex2D( ReShade::BackBuffer, texcoord ).xyz;
         float depth       = ReShade::GetLinearizedDepth( texcoord ).x;
         depth             = smoothstep( depthStart, depthEnd, depth );
         depth             = pow( depth, depthCurve );
@@ -269,7 +267,7 @@ namespace pd80_ca
         {
             huecolor.xyz  = HUEToRGB( i / sampleSTEPS );
             o2            = lerp( -caWidth, caWidth, i / o1 );
-            temp.xyz      = tex2D( samplerColor, texcoord.xy + float2( o2 * offsetX, o2 * offsetY )).xyz;
+            temp.xyz      = tex2D( ReShade::BackBuffer, texcoord.xy + float2( o2 * offsetX, o2 * offsetY )).xyz;
             color.xyz     += temp.xyz * huecolor.xyz;
             d.xyz         += huecolor.xyz;
         }

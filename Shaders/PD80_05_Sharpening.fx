@@ -110,12 +110,10 @@ namespace pd80_lumasharpen
         > = 1.0;
 
     //// TEXTURES ///////////////////////////////////////////////////////////////////
-    texture texColorBuffer : COLOR;
     texture texGaussianH { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; }; 
     texture texGaussian { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
 
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
-    sampler samplerColor { Texture = texColorBuffer; };
     sampler samplerGaussianH { Texture = texGaussianH; };
     sampler samplerGaussian { Texture = texGaussian; };
 
@@ -162,7 +160,7 @@ namespace pd80_lumasharpen
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float4 PS_GaussianH(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
-        float4 color     = tex2D( samplerColor, texcoord );
+        float4 color     = tex2D( ReShade::BackBuffer, texcoord );
         float px         = BUFFER_RCP_WIDTH;
         float SigmaSum   = 0.0f;
         float pxlOffset  = 1.0f;
@@ -185,8 +183,8 @@ namespace pd80_lumasharpen
         [loop]
         for( int i = 0; i < loops; ++i )
         {
-            color        += tex2Dlod( samplerColor, float4( texcoord.xy + float2( pxlOffset*px, 0.0f ), 0.0, 0.0 )) * Sigma.x;
-            color        += tex2Dlod( samplerColor, float4( texcoord.xy - float2( pxlOffset*px, 0.0f ), 0.0, 0.0 )) * Sigma.x;
+            color        += tex2Dlod( ReShade::BackBuffer, float4( texcoord.xy + float2( pxlOffset*px, 0.0f ), 0.0, 0.0 )) * Sigma.x;
+            color        += tex2Dlod( ReShade::BackBuffer, float4( texcoord.xy - float2( pxlOffset*px, 0.0f ), 0.0, 0.0 )) * Sigma.x;
             SigmaSum     += ( 2.0f * Sigma.x );
             pxlOffset    += 1.0f;
             Sigma.xy     *= Sigma.yz;
@@ -234,7 +232,7 @@ namespace pd80_lumasharpen
 
     float4 PS_LumaSharpen(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
-        float4 orig      = tex2D( samplerColor, texcoord );
+        float4 orig      = tex2D( ReShade::BackBuffer, texcoord );
         float4 gaussian  = tex2D( samplerGaussian, texcoord );
         
         float depth      = ReShade::GetLinearizedDepth( texcoord ).x;

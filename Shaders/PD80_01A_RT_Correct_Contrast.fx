@@ -83,14 +83,12 @@ namespace pd80_correctcontrast
         > = 1.0;
 
     //// TEXTURES ///////////////////////////////////////////////////////////////////
-    texture texColorBuffer : COLOR;
     texture texDS_1_Max { Width = 32; Height = 32; Format = RGBA16F; };
     texture texDS_1_Min { Width = 32; Height = 32; Format = RGBA16F; };
     texture texPrevious { Width = 4; Height = 2; Format = RGBA16F; };
     texture texDS_1x1 { Width = 4; Height = 2; Format = RGBA16F; };
 
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
-    sampler samplerColorBuffer { Texture = texColorBuffer; };
     sampler samplerDS_1_Max
     { 
         Texture = texDS_1_Max;
@@ -150,7 +148,7 @@ namespace pd80_correctcontrast
         {
             for( int x = start.x; x < stop.x; ++x )
             {
-                currColor    = tex2Dfetch( samplerColorBuffer, int4( x, y, 0, 0 )).xyz;
+                currColor    = tex2Dfetch( ReShade::BackBuffer, int4( x, y, 0, 0 )).xyz;
                 // Dark color detection methods
                 minValue.xyz = min( minValue.xyz, currColor.xyz );
                 // Light color detection methods
@@ -205,7 +203,7 @@ namespace pd80_correctcontrast
 
     float4 PS_CorrectContrast(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
-        float4 color       = tex2D( samplerColorBuffer, texcoord );
+        float4 color       = tex2D( ReShade::BackBuffer, texcoord );
         float3 minValue    = tex2D( samplerDS_1x1, float2( texcoord.x / 4.0f, texcoord.y )).xyz;
         float3 maxValue    = tex2D( samplerDS_1x1, float2(( texcoord.x + 2.0f ) / 4.0f, texcoord.y )).xyz;
         // Black/White Point Change

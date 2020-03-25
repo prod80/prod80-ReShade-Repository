@@ -29,6 +29,9 @@
 #include "ReShade.fxh"
 #include "ReShadeUI.fxh"
 #include "PD80_00_Noise_Samplers.fxh"
+#include "PD80_00_Blend_Modes.fxh"
+#include "PD80_00_Color_Spaces.fxh"
+#include "PD80_00_Base_Effects.fxh"
 
 namespace pd80_magicalrectangle
 {
@@ -109,7 +112,7 @@ namespace pd80_magicalrectangle
         ui_category = "Shape Manipulation";
         ui_min = 0.0f;
         ui_max = 10.0f;
-        > = 3.0;
+        > = 0.0;
     uniform float intensity <
         ui_text = "-------------------------------------\n"
                   "Use Opacity and Blend Mode to adjust\n"
@@ -228,11 +231,9 @@ namespace pd80_magicalrectangle
         ui_max = 1.0;
         > = 1.0;
     //// TEXTURES ///////////////////////////////////////////////////////////////////
-    texture texColorBuffer : COLOR;
     texture texMagicRectangle { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
 
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
-    sampler samplerColor { Texture = texColorBuffer; };
     sampler samplerMagicRectangle { Texture = texMagicRectangle; };
 
     //// DEFINES ////////////////////////////////////////////////////////////////////
@@ -240,166 +241,6 @@ namespace pd80_magicalrectangle
 
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
     uniform bool hasdepth < source = "bufready_depth"; >;
-
-    float getLuminance( in float3 x )
-    {
-        return dot( x, float3( 0.212656, 0.715158, 0.072186 ));
-    }
-
-    float3 HUEToRGB( in float H )
-    {
-        return saturate( float3( abs( H * 6.0f - 3.0f ) - 1.0f,
-                                 2.0f - abs( H * 6.0f - 2.0f ),
-                                 2.0f - abs( H * 6.0f - 4.0f )));
-    }
-
-    float3 RGBToHCV( in float3 RGB )
-    {
-        // Based on work by Sam Hocevar and Emil Persson
-        float4 P         = ( RGB.g < RGB.b ) ? float4( RGB.bg, -1.0f, 2.0f/3.0f ) : float4( RGB.gb, 0.0f, -1.0f/3.0f );
-        float4 Q1        = ( RGB.r < P.x ) ? float4( P.xyw, RGB.r ) : float4( RGB.r, P.yzx );
-        float C          = Q1.x - min( Q1.w, Q1.y );
-        float H          = abs(( Q1.w - Q1.y ) / ( 6.0f * C + 0.000001f ) + Q1.z );
-        return float3( H, C, Q1.x );
-    }
-
-    float3 RGBToHSL( in float3 RGB )
-    {
-        RGB.xyz          = max( RGB.xyz, 0.000001f );
-        float3 HCV       = RGBToHCV(RGB);
-        float L          = HCV.z - HCV.y * 0.5f;
-        float S          = HCV.y / ( 1.0f - abs( L * 2.0f - 1.0f ) + 0.000001f);
-        return float3( HCV.x, S, L );
-    }
-
-    float3 HSLToRGB( in float3 HSL )
-    {
-        float3 RGB       = HUEToRGB(HSL.x);
-        float C          = (1.0f - abs(2.0f * HSL.z - 1.0f)) * HSL.y;
-        return ( RGB - 0.5f ) * C + HSL.z;
-    }
-
-    // Collected from
-    // http://lolengine.net/blog/2013/07/27/rgb-to-hsv-in-glsl
-    float3 RGBToHSV(float3 c)
-    {
-        float4 K = float4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
-        float4 p = c.g < c.b ? float4(c.bg, K.wz) : float4(c.gb, K.xy);
-        float4 q = c.r < p.x ? float4(p.xyw, c.r) : float4(c.r, p.yzx);
-
-        float d = q.x - min(q.w, q.y);
-        float e = 1.0e-10;
-        return float3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
-    }
-
-    float3 HSVToRGB(float3 c)
-    {
-        float4 K = float4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-        float3 p = abs(frac(c.xxx + K.xyz) * 6.0 - K.www);
-        return c.z * lerp(K.xxx, saturate(p - K.xxx), c.y);
-    }
-
-    float getAvgColor( float3 col )
-    {
-        return dot( col.xyz, float3( 0.333333f, 0.333334f, 0.333333f ));
-    }
-
-    // nVidia blend modes
-    // Source: https://www.khronos.org/registry/OpenGL/extensions/NV/NV_blend_equation_advanced.txt
-    float3 ClipColor( float3 color )
-    {
-        float lum         = getAvgColor( color.xyz );
-        float mincol      = min( min( color.x, color.y ), color.z );
-        float maxcol      = max( max( color.x, color.y ), color.z );
-        color.xyz         = ( mincol < 0.0f ) ? lum + (( color.xyz - lum ) * lum ) / ( lum - mincol ) : color.xyz;
-        color.xyz         = ( maxcol > 1.0f ) ? lum + (( color.xyz - lum ) * ( 1.0f - lum )) / ( maxcol - lum ) : color.xyz;
-        return color;
-    }
-    
-    // Luminosity: base, blend
-    // Color: blend, base
-    float3 blendLuma( float3 base, float3 blend )
-    {
-        float lumbase     = getAvgColor( base.xyz );
-        float lumblend    = getAvgColor( blend.xyz );
-        float ldiff       = lumblend - lumbase;
-        float3 col        = base.xyz + ldiff;
-        return ClipColor( col.xyz );
-    }
-
-    // Hue: blend, base, base
-    // Saturation: base, blend, base
-    float3 blendColor( float3 base, float3 blend, float3 lum )
-    {
-        float minbase     = min( min( base.x, base.y ), base.z );
-        float maxbase     = max( max( base.x, base.y ), base.z );
-        float satbase     = maxbase - minbase;
-        float minblend    = min( min( blend.x, blend.y ), blend.z );
-        float maxblend    = max( max( blend.x, blend.y ), blend.z );
-        float satblend    = maxblend - minblend;
-        float3 color      = ( satbase > 0.0f ) ? ( base.xyz - minbase ) * satblend / satbase : 0.0f;
-        return blendLuma( color.xyz, lum.xyz );
-    }
-    
-    float3 darken(float3 c, float3 b)       { return min(c,b);}
-    float3 multiply(float3 c, float3 b) 	{ return c*b;}
-    float3 linearburn(float3 c, float3 b) 	{ return max(c+b-1.0f,0.0f);}
-    float3 colorburn(float3 c, float3 b)    { return b<=0.0f ? b:saturate(1.0f-((1.0f-c)/b)); }
-    float3 lighten(float3 c, float3 b) 		{ return max(b,c);}
-    float3 screen(float3 c, float3 b) 		{ return 1.0f-(1.0f-c)*(1.0f-b);}
-    float3 colordodge(float3 c, float3 b) 	{ return b>=1.0f ? b:saturate(c/(1.0f-b));}
-    float3 lineardodge(float3 c, float3 b) 	{ return min(c+b,1.0f);}
-    float3 overlay(float3 c, float3 b) 		{ return c<0.5f ? 2.0f*c*b:(1.0f-2.0f*(1.0f-c)*(1.0f-b));}
-    float3 softlight(float3 c, float3 b) 	{ return b<0.5f ? (2.0f*c*b+c*c*(1.0f-2.0f*b)):(sqrt(c)*(2.0f*b-1.0f)+2.0f*c*(1.0f-b));}
-    float3 vividlight(float3 c, float3 b) 	{ return b<0.5f ? colorburn(c,(2.0f*b)):colordodge(c,(2.0f*(b-0.5f)));}
-    float3 linearlight(float3 c, float3 b) 	{ return b<0.5f ? linearburn(c,(2.0f*b)):lineardodge(c,(2.0f*(b-0.5f)));}
-    float3 pinlight(float3 c, float3 b) 	{ return b<0.5f ? darken(c,(2.0f*b)):lighten(c, (2.0f*(b-0.5f)));}
-    float3 hardmix(float3 c, float3 b)      { return vividlight(c,b)<0.5f ? float3(0.0,0.0,0.0):float3(1.0,1.0,1.0);}
-    float3 reflect(float3 c, float3 b)      { return b>=1.0f ? b:saturate(c*c/(1.0f-b));}
-    float3 glow(float3 c, float3 b)         { return reflect(b,c);}
-    float3 blendhue(float3 c, float3 b)         { return blendColor(b,c,c);}
-    float3 blendsaturation(float3 c, float3 b)  { return blendColor(c,b,c);}
-    float3 blendcolor(float3 c, float3 b)       { return blendLuma(b,c);}
-    float3 blendluminosity(float3 c, float3 b)  { return blendLuma(c,b);}
-    
-    float3 exposure( float3 res, float x, float factor )
-    {
-        float b = 0.0f;
-        b = x < 0.0f ? b = x * 0.333f : b = x;
-        return lerp( res.xyz, saturate( res.xyz * ( b * ( 1.0f - res.xyz ) + 1.0f )), factor );
-    }
-
-    float3 con( float3 res, float x )
-    {
-        //softlight
-        float3 c = softlight( res.xyz, res.xyz );
-        float b = 0.0f;
-        b = x < 0.0f ? b = x * 0.5f : b = x;
-        return saturate( lerp( res.xyz, c.xyz, b ));
-    }
-
-    float3 bri( float3 res, float x )
-    {
-        //screen
-        float3 c = 1.0f - ( 1.0f - res.xyz ) * ( 1.0f - res.xyz );
-        float b = 0.0f;
-        b = x < 0.0f ? b = x * 0.5f : b = x;
-        return saturate( lerp( res.xyz, c.xyz, b ));   
-    }
-
-    float3 sat( float3 res, float x )
-    {
-        return min( lerp( getLuminance( res.xyz ), res.xyz, x + 1.0f ), 1.0f );
-    }
-
-    float3 vib( float3 res, float x )
-    {
-        float4 sat = 0.0f;
-        sat.xy = float2( min( min( res.x, res.y ), res.z ), max( max( res.x, res.y ), res.z ));
-        sat.z = sat.y - sat.x;
-        sat.w = getLuminance( res.xyz );
-        return lerp( sat.w, res.xyz, 1.0f + ( x * ( 1.0f - sat.z )));
-    }
 
     float3 hue( float3 res, float shift, float x )
     {
@@ -412,57 +253,6 @@ namespace pd80_magicalrectangle
     float curve( float x )
     {
         return x * x * x * ( x * ( x * 6.0f - 15.0f ) + 10.0f );
-    }
-
-    float3 blendmode( float3 c, float3 b, int mode )
-    {
-        float3 ret;
-        switch( mode )
-        {
-            case 0:  // Default
-            { ret.xyz = b; } break;
-            case 1:  // Darken
-            { ret.xyz = darken( c, b ); } break;
-            case 2:  // Multiply
-            { ret.xyz = multiply( c, b ); } break;
-            case 3:  // Linearburn
-            { ret.xyz = linearburn( c, b ); } break;
-            case 4:  // Colorburn
-            { ret.xyz = colorburn( c, b ); } break;
-            case 5:  // Lighten
-            { ret.xyz = lighten( c, b ); } break;
-            case 6:  // Screen
-            { ret.xyz = screen( c, b ); } break;
-            case 7:  // Colordodge
-            { ret.xyz = colordodge( c, b ); } break;
-            case 8:  // Lineardodge
-            { ret.xyz = lineardodge( c, b ); } break;
-            case 9:  // Overlay
-            { ret.xyz = overlay( c, b ); } break;
-            case 10:  // Softlight
-            { ret.xyz = softlight( c, b ); } break;
-            case 11: // Vividlight
-            { ret.xyz = vividlight( c, b ); } break;
-            case 12: // Linearlight
-            { ret.xyz = linearlight( c, b ); } break;
-            case 13: // Pinlight
-            { ret.xyz = pinlight( c, b ); } break;
-            case 14: // Hard Mix
-            { ret.xyz = hardmix( c, b ); } break;
-            case 15: // Reflect
-            { ret.xyz = reflect( c, b ); } break;
-            case 16: // Glow
-            { ret.xyz = glow( c, b ); } break;
-            case 17: // Hue
-            { ret.xyz = blendhue( c, b ); } break;
-            case 18: // Saturation
-            { ret.xyz = blendsaturation( c, b ); } break;
-            case 19: // Color
-            { ret.xyz = blendcolor( c, b ); } break;
-            case 20: // Luminosity
-            { ret.xyz = blendluminosity( c, b ); } break;
-        }
-        return saturate( ret );
     }
 
     //// VERTEX SHADER //////////////////////////////////////////////////////////////
@@ -491,7 +281,7 @@ namespace pd80_magicalrectangle
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float4 PS_Layer_1( float4 pos : SV_Position, float2 texcoord : TEXCOORD, float2 texcoord2 : TEXCOORD2 ) : SV_Target
     {
-        float4 color      = tex2D( samplerColor, texcoord );
+        float4 color      = tex2D( ReShade::BackBuffer, texcoord );
         // Depth stuff
         float depth       = ReShade::GetLinearizedDepth( texcoord ).x;
         // Sizing
@@ -537,7 +327,7 @@ namespace pd80_magicalrectangle
 
     float4 PS_Blend(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
-        float4 orig       = tex2D( samplerColor, texcoord );
+        float4 orig       = tex2D( ReShade::BackBuffer, texcoord );
         float3 color;
         float4 layer_1    = saturate( tex2D( samplerMagicRectangle, texcoord ));
         // Dither
@@ -547,7 +337,7 @@ namespace pd80_magicalrectangle
         dnoise            -= 0.5f;
         layer_1.xyz       = saturate( layer_1.xyz + dnoise * 0.499f * ( dither_strength / 256.0f ));
 
-        orig.xyz          = exposure( orig.xyz, mr_exposure, layer_1.w );
+        orig.xyz          = exposure( orig.xyz, mr_exposure * layer_1.w );
         orig.xyz          = con( orig.xyz, mr_contrast * layer_1.w );
         orig.xyz          = bri( orig.xyz, mr_brightness * layer_1.w );
         orig.xyz          = hue( orig.xyz, mr_hue, layer_1.w );
@@ -560,9 +350,7 @@ namespace pd80_magicalrectangle
         layer_1.xyz       = HSVToRGB( float3( sh_hue, sh_saturation, layer_1.z ));
         layer_1.xyz       = saturate( layer_1.xyz );
         // Blend mode with background
-        layer_1.xyz       = blendmode( orig.xyz, layer_1.xyz, blendmode_1 );
-        // Opacity
-        color.xyz         = lerp( orig.xyz, layer_1.xyz, saturate( layer_1.w ) * opacity );
+        color.xyz         = blendmode( orig.xyz, layer_1.xyz, blendmode_1, saturate( layer_1.w ) * opacity );
         // Output to screen
         return float4( color.xyz, 1.0f );
     }

@@ -67,19 +67,20 @@ namespace pd80_filmicadaptation
         > = 1.0;
 
     //// TEXTURES ///////////////////////////////////////////////////////////////////
-    texture texColorBuffer : COLOR;
     texture texLuma { Width = 256; Height = 256; Format = R16F; MipLevels = 8; };
     texture texAvgLuma { Format = R16F; };
     texture texPrevAvgLuma { Format = R16F; };
+
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
-    sampler samplerColor { Texture = texColorBuffer; };
-    sampler samplerLinColor { Texture = texColorBuffer; SRGBTexture = true; };
+    sampler samplerLinColor { Texture = ReShade::BackBufferTex; SRGBTexture = true; };
     sampler samplerLuma { Texture = texLuma; };
     sampler samplerAvgLuma { Texture = texAvgLuma; };
     sampler samplerPrevAvgLuma { Texture = texPrevAvgLuma; };
+
     //// DEFINES ////////////////////////////////////////////////////////////////////
     #define LumCoeff float3(0.212656, 0.715158, 0.072186)
     uniform float Frametime < source = "frametime"; >;
+
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
     float getLuminance( in float3 x )
     {
@@ -124,7 +125,7 @@ namespace pd80_filmicadaptation
     	float E          = 0.05f;
     	float F          = 0.57f;
     	float W          = 1.0f; // working in LDR space, white should be 1.0
-        float4 color     = tex2D( samplerColor, texcoord );
+        float4 color     = tex2D( ReShade::BackBuffer, texcoord );
         float luma       = tex2D( samplerAvgLuma, float2( 0.5f, 0.5f )).x;
         float exp        = lerp( 1.0f, 8.0f, luma ); // Increase Toe when brightness goes up (increase contrast)
         float toe        = max( D * exp, D ); // Increase toe, effect is mild even though there's a potential 8x increase here

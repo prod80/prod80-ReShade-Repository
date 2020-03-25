@@ -342,10 +342,8 @@ namespace pd80_curvedlevels
         > = 255.0;
 #endif
     //// TEXTURES ///////////////////////////////////////////////////////////////////
-    texture texColorBuffer : COLOR;
     
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
-    sampler samplerColor { Texture = texColorBuffer; };
 
     //// STRUCTURES /////////////////////////////////////////////////////////////////
     struct TonemapParams
@@ -358,13 +356,6 @@ namespace pd80_curvedlevels
 
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
     uniform float2 pingpong < source = "pingpong"; min = 0; max = 128; step = 1; >;
-    
-    float LinearTosRGB( float c )
-    {
-        float x         = c * 12.92f;
-        float y         = 1.055f * pow( saturate( c ), 1.0f / 2.4f ) - 0.055f;
-        return ( c < 0.0031308f ) ? x : y;
-    }
 
     float3 Tonemap(const TonemapParams tc, float3 x)
     {
@@ -434,7 +425,7 @@ namespace pd80_curvedlevels
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float4 PS_CurvedLevels(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
-        float4 color      = tex2D( samplerColor, texcoord );
+        float4 color      = tex2D( ReShade::BackBuffer, texcoord );
         float2 coords     = float2(( texcoord.x - 0.75f ) * 4.0f, ( 1.0f - texcoord.y ) * 4.0f ); // For vizualization
         // Dither
         float2 uv         = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / 512.0f;

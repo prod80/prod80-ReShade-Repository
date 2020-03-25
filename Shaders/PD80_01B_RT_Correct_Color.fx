@@ -197,7 +197,6 @@ namespace pd80_correctcolor
         > = 0.5;
 
     //// TEXTURES ///////////////////////////////////////////////////////////////////
-    texture texColorBuffer : COLOR;
     texture texColor { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; MipLevels = 5; };
     texture texDS_1_Max { Width = 32; Height = 32; Format = RGBA16F; };
     texture texDS_1_Min { Width = 32; Height = 32; Format = RGBA16F; };
@@ -206,7 +205,6 @@ namespace pd80_correctcolor
     texture texPrevious { Width = 6; Height = 2; Format = RGBA16F; };
 
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
-    sampler samplerColorBuffer { Texture = texColorBuffer; };
     sampler samplerColor { Texture = texColor; };
     sampler samplerDS_1_Max
     { 
@@ -256,7 +254,7 @@ namespace pd80_correctcolor
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float4 PS_WriteColor(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
-        return tex2D( samplerColorBuffer, texcoord );
+        return tex2D( ReShade::BackBuffer, texcoord );
     }
     //Downscale to 32x32 min/max color matrix
     void PS_MinMax_1( float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 minValue : SV_Target0, out float4 maxValue : SV_Target1, out float4 midValue : SV_Target2 )

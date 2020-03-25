@@ -119,10 +119,8 @@ namespace pd80_colorbalance
         > = 0.0;
 
     //// TEXTURES ///////////////////////////////////////////////////////////////////
-    texture texColorBuffer : COLOR;
     
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
-    sampler samplerColor { Texture = texColorBuffer; };
 
     //// DEFINES ////////////////////////////////////////////////////////////////////
     #define ES_RGB   float3( 1.0 - float3( 0.299, 0.587, 0.114 ))
@@ -201,7 +199,7 @@ namespace pd80_colorbalance
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float4 PS_ColorBalance(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
-        float4 color      = tex2D( samplerColor, texcoord );
+        float4 color      = tex2D( ReShade::BackBuffer, texcoord );
         color.xyz         = saturate( color.xyz );
         color.xyz         = ColorBalance( color.xyz, float3( s_RedShift, s_GreenShift, s_BlueShift ), 
                                                      float3( m_RedShift, m_GreenShift, m_BlueShift ),

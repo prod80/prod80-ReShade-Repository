@@ -97,10 +97,8 @@ namespace pd80_technicolor
         > = 1.0;
 
     //// TEXTURES ///////////////////////////////////////////////////////////////////
-    texture texColorBuffer : COLOR;
     
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
-    sampler samplerColor { Texture = texColorBuffer; };
 
     //// DEFINES ////////////////////////////////////////////////////////////////////
 
@@ -132,7 +130,7 @@ namespace pd80_technicolor
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float4 PS_Technicolor(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
-        float4 color      = tex2D( samplerColor, texcoord );
+        float4 color      = tex2D( ReShade::BackBuffer, texcoord );
         color.xyz         = saturate( color.xyz );
         float3 root3      = 0.57735f;
         float3 keyC       = 0.0f;

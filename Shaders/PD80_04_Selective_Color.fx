@@ -32,6 +32,7 @@
 
 #include "ReShade.fxh"
 #include "ReShadeUI.fxh"
+#include "PD80_00_Base_Effects.fxh"
 
 namespace pd80_selectivecolor
 {
@@ -500,10 +501,8 @@ namespace pd80_selectivecolor
         > = 0.0;
 
     //// TEXTURES ///////////////////////////////////////////////////////////////////
-    texture texColorBuffer : COLOR;
     
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
-    sampler samplerColor { Texture = texColorBuffer; };
 
     //// DEFINES ////////////////////////////////////////////////////////////////////
 
@@ -527,29 +526,10 @@ namespace pd80_selectivecolor
         return clamp((( -1.0f - adjust ) * bk - adjust ) * ( 1.0f - colorvalue * method ), -colorvalue, 1.0f - colorvalue) * scale;
     }
 
-    float getLuminance( float3 x )
-    {
-        return dot( x.xyz, float3( 0.212656f, 0.715158f, 0.072186f ));
-    }
-
-    float3 sat( float3 color, float x )
-    {
-        return saturate( lerp( getLuminance( color.xyz ), color.xyz, x + 1.0f ));
-    }
-
-    float3 vib( float3 color, float x )
-    {
-        float4 sat = 0.0f;
-        sat.xy = float2( min( min( color.x, color.y ), color.z ), max( max( color.x, color.y ), color.z ));
-        sat.z = sat.y - sat.x;
-        sat.w = getLuminance( color.xyz );
-        return saturate( lerp( sat.w, color.xyz, 1.0f + ( x * ( 1.0f - sat.z ))));
-    }
-
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float4 PS_SelectiveColor(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
-        float4 color      = tex2D( samplerColor, texcoord );
+        float4 color      = tex2D( ReShade::BackBuffer, texcoord );
 
         // Clamp 0..1
         color.xyz         = saturate( color.xyz );

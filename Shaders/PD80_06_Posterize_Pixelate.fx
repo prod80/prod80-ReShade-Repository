@@ -86,11 +86,9 @@ namespace pd80_posterizepixelate
         ui_max = 10.0f;
         > = 3.0;
     //// TEXTURES ///////////////////////////////////////////////////////////////////
-    texture texColorBuffer : COLOR;
     texture texMipMe { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; MipLevels = 9; };
     
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
-    sampler samplerColor { Texture = texColorBuffer; };
     sampler samplerMipMe
     {
         Texture = texMipMe;
@@ -98,7 +96,7 @@ namespace pd80_posterizepixelate
         MinFilter = POINT;
         MagFilter = POINT;
     };
-
+	
     //// DEFINES ////////////////////////////////////////////////////////////////////
     #define aspect      float( BUFFER_WIDTH * BUFFER_RCP_HEIGHT )
     
@@ -108,7 +106,7 @@ namespace pd80_posterizepixelate
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float4 PS_MipMe(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
-        return tex2D( samplerColor, texcoord );
+        return tex2D( ReShade::BackBuffer, texcoord );
     }
 
     float4 PS_Posterize(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target

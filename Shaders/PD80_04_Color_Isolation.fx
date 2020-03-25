@@ -28,6 +28,7 @@
 
 #include "ReShade.fxh"
 #include "ReShadeUI.fxh"
+#include "PD80_00_Color_Spaces.fxh"
 
 namespace pd80_ColorIsolation
 {
@@ -66,10 +67,8 @@ namespace pd80_ColorIsolation
         > = 1.0;
 
     //// TEXTURES ///////////////////////////////////////////////////////////////////
-    texture texColorBuffer : COLOR;
 
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
-    sampler samplerColor { Texture = texColorBuffer; };
 
     //// DEFINES ////////////////////////////////////////////////////////////////////
     #define LumCoeff float3(0.212656, 0.715158, 0.072186)
@@ -80,26 +79,6 @@ namespace pd80_ColorIsolation
         return dot( x, LumCoeff );
     }
 
-    // Collected from
-    // http://lolengine.net/blog/2013/07/27/rgb-to-hsv-in-glsl
-    float3 RGBToHSV(float3 c)
-    {
-        float4 K = float4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
-        float4 p = c.g < c.b ? float4(c.bg, K.wz) : float4(c.gb, K.xy);
-        float4 q = c.r < p.x ? float4(p.xyw, c.r) : float4(c.r, p.yzx);
-
-        float d = q.x - min(q.w, q.y);
-        float e = 1.0e-10;
-        return float3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
-    }
-
-    float3 HSVToRGB(float3 c)
-    {
-        float4 K = float4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-        float3 p = abs(frac(c.xxx + K.xyz) * 6.0 - K.www);
-        return c.z * lerp(K.xxx, saturate(p - K.xxx), c.y);
-    }
-
     float smootherstep( float x )
     {
         return x * x * x * ( x * ( x * 6.0f - 15.0f ) + 10.0f );
@@ -108,7 +87,7 @@ namespace pd80_ColorIsolation
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float4 PS_ColorIso(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
-        float4 color     = tex2D( samplerColor, texcoord );
+        float4 color     = tex2D( ReShade::BackBuffer, texcoord );
         color.xyz        = saturate( color.xyz ); //Can't work with HDR
         
         float grey       = getLuminance( color.xyz );
