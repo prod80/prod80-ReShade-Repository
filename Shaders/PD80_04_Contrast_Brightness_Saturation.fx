@@ -36,6 +36,19 @@
 namespace pd80_conbrisat
 {
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
+    uniform bool enable_dither <
+        ui_label = "Enable Dithering";
+        ui_tooltip = "Enable Dithering";
+        ui_category = "Global";
+        > = true;
+    uniform float dither_strength <
+        ui_type = "slider";
+        ui_label = "Dither Strength";
+        ui_tooltip = "Dither Strength";
+        ui_category = "Global";
+        ui_min = 0.0f;
+        ui_max = 10.0f;
+        > = 2.0;
     uniform float tint <
         ui_label = "Tint";
         ui_tooltip = "Tint";
@@ -307,13 +320,16 @@ namespace pd80_conbrisat
     float4 PS_CBS(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color     = tex2D( ReShade::BackBuffer, texcoord );
+        // Dither
+        // Input: sampler, texcoord, variance(int), enable_dither(bool), dither_strength(float), motion(bool), swing(float)
+        float4 dnoise      = dither( samplerRGBNoise, texcoord.xy, 7, enable_dither, dither_strength, 1, 0.5f );
+        color.xyz          = saturate( color.xyz + dnoise.xyz );
+
         float depth      = ReShade::GetLinearizedDepth( texcoord ).x;
         depth            = smoothstep( depthStart, depthEnd, depth );
         depth            = pow( depth, depthCurve );
-        float2 uv        = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / float2( 512.0f, 512.0f );
-        uv.xy            = uv.xy * texcoord.xy;
-        float noise      = tex2D( samplerGaussNoise, uv ).x;
-        depth            = saturate( depth + lerp( -1.0/255, 1.0/255, noise ));
+        float4 dnoise2   = dither( samplerGaussNoise, texcoord.xy, 0, 1, 2.0f, 0, 1.0f );
+        depth            = saturate( depth + dnoise2.x );
         
         color.xyz        = saturate( color.xyz );
 

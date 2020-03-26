@@ -59,7 +59,7 @@ namespace pd80_SMH
         ui_category = "Global";
         ui_min = 0.0f;
         ui_max = 10.0f;
-        > = 3.0;
+        > = 2.0;
     uniform float exposure_s <
         ui_label = "Exposure";
         ui_tooltip = "Shadow Exposure";
@@ -290,12 +290,9 @@ namespace pd80_SMH
         color.xyz         = saturate( color.xyz );
 
         // Dither
-        float2 uv          = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / 512.0f;
-        uv.xy              *= texcoord.xy;
-        float3 dnoise      = tex2D( samplerRGBNoise, uv ).xyz;
-        dnoise.xyz         = frac( dnoise.xyz + 0.61803398875f * ( pingpong.x + 3 ));
-        dnoise.xyz         -= 0.5f;
-        color.xyz          = enable_dither ? saturate( color.xyz + dnoise.xyz * 0.499f * ( dither_strength / 256.0f )) : color.xyz;   
+        // Input: sampler, texcoord, variance(int), enable_dither(bool), dither_strength(float), motion(bool), swing(float)
+        float4 dnoise      = dither( samplerRGBNoise, texcoord.xy, 4, enable_dither, dither_strength, 1, 0.5f );
+        color.xyz          = saturate( color.xyz + dnoise.xyz );
 
         float pLuma       = 0.0f;
         switch( luma_mode )

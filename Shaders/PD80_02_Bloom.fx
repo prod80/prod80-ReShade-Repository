@@ -457,12 +457,9 @@ namespace pd80_hqbloom
         #endif
         float4 color     = tex2D( ReShade::BackBuffer, texcoord );
         // Dither
-        float2 uv        = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / 512.0f;
-        uv.xy            *= texcoord.xy;
-        float dnoise     = tex2D( samplerNoise, uv ).x;
-        dnoise           = frac( dnoise + 0.61803398875f * ( pingpong.x + 1 ));
-        dnoise           -= 0.5f;
-        bloom.xyz        = saturate( bloom.xyz + dnoise * 0.499f * ( dither_strength / 256.0f ));
+        // Input: sampler, texcoord, variance(int), enable_dither(bool), dither_strength(float), motion(bool), swing(float)
+        float4 dnoise      = dither( samplerRGBNoise, texcoord.xy, 1, 1, dither_strength, 1, 1.0f );
+        bloom.xyz          = saturate( bloom.xyz + dnoise.xyz );
 
         #if( BLOOM_ENABLE_CA == 0 )
         if( enableBKelvin )

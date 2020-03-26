@@ -84,7 +84,7 @@ namespace pd80_posterizepixelate
         ui_category = "Posterize Pixelate";
         ui_min = 0.0f;
         ui_max = 10.0f;
-        > = 3.0;
+        > = 1.0;
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texMipMe { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; MipLevels = 9; };
     
@@ -119,10 +119,10 @@ namespace pd80_posterizepixelate
         float2 tx         = bwbh.xy / 512.0f;
         tx.xy             *= texcoord.xy;
         float dnoise      = tex2D( samplerNoise, tx ).x;
-        float mot         = dither_motion ? pingpong.x + 6 : 1.0f;
+        float mot         = dither_motion ? pingpong.x + 9 : 1.0f;
         dnoise            = frac( dnoise + 0.61803398875f * mot );
-        dnoise            -= 0.5f;
-        color.xyz         = enable_dither ? saturate( color.xyz + dnoise * 0.499f * ( dither_strength / number_of_levels )) : color.xyz;
+        dnoise            = dnoise * 2.0f - 1.0f;
+        color.xyz         = enable_dither ? saturate( color.xyz + dnoise * ( dither_strength / number_of_levels )) : color.xyz;
         // Dither end
         float3 orig       = color.xyz;
         color.xyz         = floor( color.xyz * number_of_levels ) / ( number_of_levels - 1 );

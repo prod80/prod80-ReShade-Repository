@@ -355,8 +355,6 @@ namespace pd80_curvedlevels
     };
 
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
-    uniform float2 pingpong < source = "pingpong"; min = 0; max = 128; step = 1; >;
-
     float3 Tonemap(const TonemapParams tc, float3 x)
     {
         float3 toe = - tc.mToe.x / (x + tc.mToe.y) + tc.mToe.z;
@@ -428,13 +426,9 @@ namespace pd80_curvedlevels
         float4 color      = tex2D( ReShade::BackBuffer, texcoord );
         float2 coords     = float2(( texcoord.x - 0.75f ) * 4.0f, ( 1.0f - texcoord.y ) * 4.0f ); // For vizualization
         // Dither
-        float2 uv         = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / 512.0f;
-        uv.xy             *= texcoord.xy;
-        float4 dnoise     = tex2D( samplerRGBNoise, uv );
-        dnoise.xyzw       = frac( dnoise.xyzw + 0.61803398875f * ( pingpong.x + 2 ));
-        dnoise.xyzw       -= 0.5f;
-        dnoise.xyzw       = enable_dither ? dnoise.xyzw * 0.499f * ( dither_strength / 256.0f ) : float4( 0.0f, 0.0f, 0.0f, 0.0f );
-        color.xyz         = saturate( color.xyz + dnoise.yzx );
+        // Input: sampler, texcoord, variance(int), enable_dither(bool), dither_strength(float), motion(bool), swing(float)
+        float4 dnoise      = dither( samplerRGBNoise, texcoord.xy, 2, enable_dither, dither_strength, 1, 0.5f );
+        color.xyz          = saturate( color.xyz + dnoise.yzx );
 
         #if( CURVEDCONTRASTS_VISUALIZE == 1 )
         int def_bi        = 0;

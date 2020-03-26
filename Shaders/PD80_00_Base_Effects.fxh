@@ -18,26 +18,24 @@ float getLum( in float3 x )
 float3 exposure( float3 res, float x )
 {
     float b = 0.0f;
-    b = x < 0.0f ? b = x * 0.333f : b = x;
-    return saturate( res.xyz * ( b * ( 1.0f - res.xyz ) + 1.0f ));
+    x = x < 0.0f ? x * 0.333f : x;
+    return saturate( res.xyz * ( x * ( 1.0f - res.xyz ) + 1.0f ));
 }
 
 float3 con( float3 res, float x )
 {
     //softlight
     float3 c = sl( res.xyz, res.xyz );
-    float b = 0.0f;
-    b = x < 0.0f ? b = x * 0.5f : b = x;
-    return saturate( lerp( res.xyz, c.xyz, b ));
+    x = ( x < 0.0f ) ? x * 0.5f : x;
+    return saturate( lerp( res.xyz, c.xyz, x ));
 }
 
 float3 bri( float3 res, float x )
 {
     //screen
     float3 c = 1.0f - ( 1.0f - res.xyz ) * ( 1.0f - res.xyz );
-    float b = 0.0f;
-    b = x < 0.0f ? b = x * 0.5f : b = x;
-    return saturate( lerp( res.xyz, c.xyz, b ));   
+    x = ( x < 0.0f ) ? x * 0.5f : x;
+    return saturate( lerp( res.xyz, c.xyz, x ));   
 }
 
 float3 sat( float3 res, float x )

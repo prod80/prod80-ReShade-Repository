@@ -244,7 +244,6 @@ namespace pd80_correctcolor
 
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
     uniform float frametime < source = "frametime"; >;
-    uniform float2 pingpong < source = "pingpong"; min = 0; max = 256; step = 1; >;
 
     float3 interpolate( float3 o, float3 n, float factor, float ft )
     {
@@ -397,12 +396,9 @@ namespace pd80_correctcolor
     {
         float4 color       = tex2D( samplerColor, texcoord );
         // Dither
-        float2 uv          = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / 512.0f;
-        uv.xy              *= texcoord.xy;
-        float3 dnoise      = tex2D( samplerRGBNoise, uv ).xyz;
-        dnoise.xyz         = frac( dnoise.xyz + 0.61803398875f * ( pingpong.x ));
-        dnoise.xyz         -= 0.5f;
-        color.xyz          = enable_dither ? saturate( color.xyz + dnoise.xyz * 0.499f * ( dither_strength / 256.0f )) : color.xyz;
+        // Input: sampler, texcoord, variance(int), enable_dither(bool), dither_strength(float), motion(bool), swing(float)
+        float4 dnoise      = dither( samplerRGBNoise, texcoord.xy, 0, enable_dither, dither_strength, 1, 0.5f );
+        color.xyz          = saturate( color.xyz + dnoise.xyz );
         // Grab min, max, mid values
         float3 minValue    = tex2D( samplerDS_1x1, float2( texcoord.x / 6.0f, texcoord.y )).xyz;
         float3 midValue    = tex2D( samplerDS_1x1, float2(( texcoord.x + 2.0f ) / 6.0f, texcoord.y )).xyz;

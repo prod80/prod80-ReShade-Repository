@@ -48,7 +48,7 @@ namespace pd80_blackandwhite
         ui_category = "Global";
         ui_min = 0.0f;
         ui_max = 10.0f;
-        > = 3.0;
+        > = 1.5;
     uniform float curve_str <
         ui_type = "slider";
         ui_label = "Contrast Smoothness";
@@ -191,13 +191,9 @@ namespace pd80_blackandwhite
         color.xyz         = saturate( color.xyz );
 
         // Dither
-        float2 uv          = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / 512.0f;
-        uv.xy              *= texcoord.xy;
-        float4 dnoise      = tex2D( samplerRGBNoise, uv );
-        dnoise.xyzw        = frac( dnoise.xyzw + 0.61803398875f * ( pingpong.x + 4 ));
-        dnoise.xyzw        -= 0.5f;
-        dnoise.xyzw        = enable_dither ? dnoise.xyzw * 0.499f * ( dither_strength / 256.0f ) : float4( 0.0f, 0.0f, 0.0f, 0.0f );
-        color.xyz          = saturate( color.xyz + dnoise.w );
+        // Input: sampler, texcoord, variance(int), enable_dither(bool), dither_strength(float), motion(bool), swing(float)
+        float4 dnoise      = dither( samplerRGBNoise, texcoord.xy, 5, enable_dither, dither_strength, 1, 0.5f );
+        color.xyz          = saturate( color.xyz + dnoise.zyx );
         
         float red;  float yellow; float green;
         float cyan; float blue;   float magenta;

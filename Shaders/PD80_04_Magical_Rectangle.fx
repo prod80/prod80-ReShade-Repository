@@ -331,11 +331,9 @@ namespace pd80_magicalrectangle
         float3 color;
         float4 layer_1    = saturate( tex2D( samplerMagicRectangle, texcoord ));
         // Dither
-        float2 uv         = float2( BUFFER_WIDTH, BUFFER_HEIGHT) / 512.0f;
-        uv.xy             *= texcoord.xy;
-        float dnoise      = tex2D( samplerNoise, uv ).x;
-        dnoise            -= 0.5f;
-        layer_1.xyz       = saturate( layer_1.xyz + dnoise * 0.499f * ( dither_strength / 256.0f ));
+        // Input: sampler, texcoord, variance(int), enable_dither(bool), dither_strength(float), motion(bool), swing(float)
+        float4 dnoise     = dither( samplerRGBNoise, texcoord.xy, 8, 1, dither_strength, 1, 0.5f );
+        layer_1.xyz       = saturate( layer_1.xyz + dnoise.xyz );
 
         orig.xyz          = exposure( orig.xyz, mr_exposure * layer_1.w );
         orig.xyz          = con( orig.xyz, mr_contrast * layer_1.w );
