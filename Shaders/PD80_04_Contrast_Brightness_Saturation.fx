@@ -48,7 +48,7 @@ namespace pd80_conbrisat
         ui_category = "Global";
         ui_min = 0.0f;
         ui_max = 10.0f;
-        > = 2.0;
+        > = 1.0;
     uniform float tint <
         ui_label = "Tint";
         ui_tooltip = "Tint";

@@ -48,7 +48,7 @@ namespace pd80_blackandwhite
         ui_category = "Global";
         ui_min = 0.0f;
         ui_max = 10.0f;
-        > = 1.5;
+        > = 1.0;
     uniform float curve_str <
         ui_type = "slider";
         ui_label = "Contrast Smoothness";
