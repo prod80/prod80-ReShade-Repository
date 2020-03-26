@@ -106,7 +106,7 @@ namespace pd80_correctcolor
         ui_category = "Global: Remove Tint";
         ui_min = 0.0f;
         ui_max = 10.0f;
-        > = 2.0;
+        > = 1.0;
     uniform bool rt_enable_whitepoint_correction <
         ui_text = "----------------------------------------------";
         ui_label = "Enable Whitepoint Correction";
