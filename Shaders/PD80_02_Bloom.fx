@@ -70,7 +70,7 @@ namespace pd80_hqbloom
         ui_type = "slider";
         ui_min = 0.0;
         ui_max = 10.0;
-        > = 2.0;
+        > = 1.0;
     uniform float BloomMix <
         ui_label = "Bloom Mix";
         ui_tooltip = "Bloom Mix";
@@ -460,7 +460,8 @@ namespace pd80_hqbloom
         float2 uv        = float2( BUFFER_WIDTH, BUFFER_HEIGHT ) / 512.0f;
         uv.xy            *= texcoord.xy;
         float4 dnoise    = tex2D( samplerGaussNoise, uv );
-        bloom.xyz        = saturate( bloom.xyz + lerp( -dither_strength/255, dither_strength/255, dnoise.x ));
+        float bits       = max( 1.0f - BloomLimit, 0.004f ) * 256.0f;
+        bloom.xyz        = saturate( bloom.xyz + lerp( -dither_strength/bits, dither_strength/bits, dnoise.x ));
 
         #if( BLOOM_ENABLE_CA == 0 )
         if( enableBKelvin )
