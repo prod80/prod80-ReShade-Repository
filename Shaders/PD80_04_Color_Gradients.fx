@@ -104,7 +104,8 @@ namespace pd80_ColorGradients
         > = float3( 0.0,  0.365, 1.0 );
     uniform int blendmode_ls_s < __UNIFORM_COMBO_INT1
         ui_label = "Blendmode";
-        ui_category = "Light Scene: Shadow Color Blendmode";
+        ui_tooltip = "Light Scene: Shadow Color Blendmode";
+        ui_category = "Light Scene: Shadow Color";
         ui_items = "Default\0Darken\0Multiply\0Linearburn\0Colorburn\0Lighten\0Screen\0Colordodge\0Lineardodge\0Overlay\0Softlight\0Vividlight\0Linearlight\0Pinlight\0Hardmix\0Reflect\0Glow\0Hue\0Saturation\0Color\0Luminosity\0";
         > = 5;
     uniform float opacity_ls_s <

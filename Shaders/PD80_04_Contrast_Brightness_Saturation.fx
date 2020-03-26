@@ -328,7 +328,7 @@ namespace pd80_conbrisat
         float depth      = ReShade::GetLinearizedDepth( texcoord ).x;
         depth            = smoothstep( depthStart, depthEnd, depth );
         depth            = pow( depth, depthCurve );
-        float4 dnoise2   = dither( samplerGaussNoise, texcoord.xy, 0, 1, 2.0f, 0, 1.0f );
+        float4 dnoise2   = dither( samplerGaussNoise, texcoord.xy, 0, 1, 1.0f, 0, 1.0f );
         depth            = saturate( depth + dnoise2.x );
         
         color.xyz        = saturate( color.xyz );

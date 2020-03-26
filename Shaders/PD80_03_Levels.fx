@@ -189,17 +189,17 @@ namespace pd80_levels
         color.xyz        = saturate( color.xyz + dnoise.w );
         float3 dcolor    = color.xyz;
         color.xyz        = levels( color.xyz,  saturate( ib.xyz + dnoise.xyz ),
-                                               saturate( iw.xyz + dnoise.xyz ),
+                                               saturate( iw.xyz + dnoise.yzx ),
                                                ig, 
-                                               saturate( ob.xyz + dnoise.xyz ), 
-                                               saturate( ow.xyz + dnoise.xyz ));
+                                               saturate( ob.xyz + dnoise.zxy ), 
+                                               saturate( ow.xyz + dnoise.wxz ));
         
         #if( LEVELS_USE_DEPTH == 1 )
         dcolor.xyz       = levels( dcolor.xyz, saturate( ibd.xyz + dnoise.xyz ),
-                                               saturate( iwd.xyz + dnoise.xyz ),
+                                               saturate( iwd.xyz + dnoise.yzx ),
                                                igd, 
-                                               saturate( obd.xyz + dnoise.xyz ), 
-                                               saturate( owd.xyz + dnoise.xyz ));
+                                               saturate( obd.xyz + dnoise.zxy ), 
+                                               saturate( owd.xyz + dnoise.wxz ));
                                                
         color.xyz        = lerp( color.xyz, dcolor.xyz, depth );
         color.xyz        = lerp( color.xyz, depth.xxx, display_depth );

@@ -67,7 +67,7 @@ namespace pd80_filmicadaptation
         > = 1.0;
 
     //// TEXTURES ///////////////////////////////////////////////////////////////////
-    texture texLuma { Width = 256; Height = 256; Format = R16F; MipLevels = 8; };
+    texture texLuma { Width = 256; Height = 256; Format = R16F; MipLevels = 9; };
     texture texAvgLuma { Format = R16F; };
     texture texPrevAvgLuma { Format = R16F; };
 
