@@ -70,7 +70,7 @@ namespace pd80_hqbloom
         ui_type = "slider";
         ui_min = 0.0;
         ui_max = 10.0;
-        > = 3.0;
+        > = 2.0;
     uniform float BloomMix <
         ui_label = "Bloom Mix";
         ui_tooltip = "Bloom Mix";
@@ -457,9 +457,10 @@ namespace pd80_hqbloom
         #endif
         float4 color     = tex2D( ReShade::BackBuffer, texcoord );
         // Dither
-        // Input: sampler, texcoord, variance(int), enable_dither(bool), dither_strength(float), motion(bool), swing(float)
-        float4 dnoise      = dither( samplerRGBNoise, texcoord.xy, 1, 1, dither_strength, 1, 1.0f );
-        bloom.xyz          = saturate( bloom.xyz + dnoise.xyz );
+        float2 uv        = float2( BUFFER_WIDTH, BUFFER_HEIGHT ) / 512.0f;
+        uv.xy            *= texcoord.xy;
+        float4 dnoise    = tex2D( samplerGaussNoise, uv );
+        bloom.xyz        = saturate( bloom.xyz + lerp( -dither_strength/255, dither_strength/255, dnoise.x ));
 
         #if( BLOOM_ENABLE_CA == 0 )
         if( enableBKelvin )
