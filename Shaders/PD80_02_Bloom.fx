@@ -43,8 +43,9 @@ namespace pd80_hqbloom
     // Min: 0, Max: 3 | Bloom Quality, 0 is best quality (full screen) and values higher than that will progessively use lower resolution texture. Value 3 will use 1/4th screen resolution texture size
     // 0 = Fullscreen   - Ultra
     // 1 = 1/4th size   - High
-    // 2 = 1/8th size   - Medium
+    // 2 = 1/16th size  - Medium
     // Default = High quality (1) as difference is nearly impossible to tell during gameplay, and performance 60% faster than Ultra (0)
+    // Using medium quality can show some artifacts because of the low resolution of texture upscaled to fullscreen when using CA, however it's very fast
     #ifndef BLOOM_QUALITY_0_TO_2
         #define BLOOM_QUALITY_0_TO_2	1
     #endif
