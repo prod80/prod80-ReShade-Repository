@@ -40,19 +40,19 @@ namespace pd80_correctcontrast
         ui_tooltip = "Enable Time Based Fade";
         ui_category = "Global: Correct Contrasts";
         > = true;
-    uniform float transition_speed <
-        ui_type = "slider";
-        ui_label = "Time Based Fade Speed";
-        ui_tooltip = "Time Based Fade Speed";
-        ui_category = "Global: Remove Tint";
-        ui_min = 0.0f;
-        ui_max = 1.0f;
-        > = 0.5;
     uniform bool freeze <
         ui_label = "Freeze Correction";
         ui_tooltip = "Freeze Correction";
         ui_category = "Global: Correct Contrasts";
         > = false;
+    uniform float transition_speed <
+        ui_type = "slider";
+        ui_label = "Time Based Fade Speed";
+        ui_tooltip = "Time Based Fade Speed";
+        ui_category = "Global: Correct Contrasts";
+        ui_min = 0.0f;
+        ui_max = 1.0f;
+        > = 0.5;
     uniform bool rt_enable_whitepoint_correction <
         ui_text = "----------------------------------------------";
         ui_label = "Enable Whitepoint Correction";

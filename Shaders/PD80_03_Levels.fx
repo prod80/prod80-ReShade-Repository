@@ -177,7 +177,7 @@ namespace pd80_levels
         float4 color     = tex2D( ReShade::BackBuffer, texcoord );
         // Dither
         // Input: sampler, texcoord, variance(int), enable_dither(bool), dither_strength(float), motion(bool), swing(float)
-        float4 dnoise      = dither( samplerRGBNoise, texcoord.xy, 3, enable_dither, dither_strength, 1, 0.5f );
+        float4 dnoise      = dither( samplerRGBNoise, texcoord.xy, 2, enable_dither, dither_strength, 1, 0.5f );
 
         #if( LEVELS_USE_DEPTH == 1 )
         float depth      = ReShade::GetLinearizedDepth( texcoord ).x;

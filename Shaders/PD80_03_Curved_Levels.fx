@@ -427,7 +427,7 @@ namespace pd80_curvedlevels
         float2 coords     = float2(( texcoord.x - 0.75f ) * 4.0f, ( 1.0f - texcoord.y ) * 4.0f ); // For vizualization
         // Dither
         // Input: sampler, texcoord, variance(int), enable_dither(bool), dither_strength(float), motion(bool), swing(float)
-        float4 dnoise      = dither( samplerRGBNoise, texcoord.xy, 2, enable_dither, dither_strength, 1, 0.5f );
+        float4 dnoise      = dither( samplerRGBNoise, texcoord.xy, 1, enable_dither, dither_strength, 1, 0.5f );
         color.xyz          = saturate( color.xyz + dnoise.yzx );
 
         #if( CURVEDCONTRASTS_VISUALIZE == 1 )

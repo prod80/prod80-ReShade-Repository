@@ -235,7 +235,7 @@ namespace pd80_ColorGradients
 
         // Dither
         // Input: sampler, texcoord, variance(int), enable_dither(bool), dither_strength(float), motion(bool), swing(float)
-        float4 dnoise      = dither( samplerRGBNoise, texcoord.xy, 6, enable_dither, dither_strength, 1, 0.5f );
+        float4 dnoise      = dither( samplerRGBNoise, texcoord.xy, 5, enable_dither, dither_strength, 1, 0.5f );
         color.xyz          = saturate( color.xyz + dnoise.xyz ); 
         
         // Weights

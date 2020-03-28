@@ -47,7 +47,7 @@ static const float2 dither_uv = float2( BUFFER_WIDTH, BUFFER_HEIGHT ) / 512.0f;
 float4 dither( sampler2D tex, float2 coords, int var, bool enabler, float str, bool motion, float swing )
 {
     coords.xy    *= dither_uv.xy;
-    float4 noise  = tex2D( tex, coords );
+    float4 noise  = tex2D( tex, coords.xy );
     float mot     = motion ? pp.x + var : 1.0f;
     noise         = frac( noise + 0.61803398875f * mot );
     noise         = ( noise * 2.0f - 1.0f ) * swing;

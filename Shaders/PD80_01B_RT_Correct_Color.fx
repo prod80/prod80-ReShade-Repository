@@ -81,6 +81,11 @@ namespace pd80_correctcolor
         ui_tooltip = "Enable Time Based Fade";
         ui_category = "Global: Remove Tint";
         > = true;
+    uniform bool freeze <
+        ui_label = "Freeze Correction";
+        ui_tooltip = "Freeze Correction";
+        ui_category = "Global: Remove Tint";
+        > = false;
     uniform float transition_speed <
         ui_type = "slider";
         ui_label = "Time Based Fade Speed";
@@ -89,11 +94,6 @@ namespace pd80_correctcolor
         ui_min = 0.0f;
         ui_max = 1.0f;
         > = 0.5;
-    uniform bool freeze <
-        ui_label = "Freeze Correction";
-        ui_tooltip = "Freeze Correction";
-        ui_category = "Global: Remove Tint";
-        > = false;
     uniform bool enable_dither <
         ui_label = "Enable Dithering";
         ui_tooltip = "Enable Dithering";
