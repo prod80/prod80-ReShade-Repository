@@ -17,7 +17,6 @@ float getLum( in float3 x )
 
 float3 exposure( float3 res, float x )
 {
-    float b = 0.0f;
     x = x < 0.0f ? x * 0.333f : x;
     return saturate( res.xyz * ( x * ( 1.0f - res.xyz ) + 1.0f ));
 }

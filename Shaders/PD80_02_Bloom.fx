@@ -460,7 +460,7 @@ namespace pd80_hqbloom
         float2 uv        = float2( BUFFER_WIDTH, BUFFER_HEIGHT ) / 512.0f;
         uv.xy            *= texcoord.xy;
         float4 dnoise    = tex2D( samplerGaussNoise, uv );
-        float bits       = max( 1.0f - BloomLimit, 0.012f ) * 256.0f;
+        float bits       = max( 1.0f - BloomLimit, 0.012f ) * 255.0f;
         float3 steps     = smoothstep( 0.0f, 0.012f, bloom.xyz );
         bloom.xyz        = saturate( bloom.xyz + lerp( -dither_strength/bits, dither_strength/bits, dnoise.x ) * steps.xyz );
 

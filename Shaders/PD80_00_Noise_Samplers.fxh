@@ -48,8 +48,8 @@ float4 dither( sampler2D tex, float2 coords, int var, bool enabler, float str, b
 {
     coords.xy    *= dither_uv.xy;
     float4 noise  = tex2D( tex, coords.xy );
-    float mot     = motion ? pp.x + var : 1.0f;
+    float mot     = motion ? pp.x + var : 0.0f;
     noise         = frac( noise + 0.61803398875f * mot );
     noise         = ( noise * 2.0f - 1.0f ) * swing;
-    return ( enabler ) ? noise * ( str / 256.0f ) : float4( 0.0f, 0.0f, 0.0f, 0.0f );
+    return ( enabler ) ? noise * ( str / 255.0f ) : float4( 0.0f, 0.0f, 0.0f, 0.0f );
 }

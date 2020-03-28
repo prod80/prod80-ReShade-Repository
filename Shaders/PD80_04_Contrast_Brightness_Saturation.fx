@@ -322,16 +322,14 @@ namespace pd80_conbrisat
         float4 color     = tex2D( ReShade::BackBuffer, texcoord );
         // Dither
         // Input: sampler, texcoord, variance(int), enable_dither(bool), dither_strength(float), motion(bool), swing(float)
-        float4 dnoise      = dither( samplerRGBNoise, texcoord.xy, 6, enable_dither, dither_strength, 1, 0.5f );
-        color.xyz          = saturate( color.xyz + dnoise.xyz );
+        float4 dnoise    = dither( samplerRGBNoise, texcoord.xy, 6, enable_dither, dither_strength, 1, 0.5f );
+        color.xyz        = saturate( color.xyz + dnoise.xyz );
 
         float depth      = ReShade::GetLinearizedDepth( texcoord ).x;
         depth            = smoothstep( depthStart, depthEnd, depth );
         depth            = pow( depth, depthCurve );
         float4 dnoise2   = dither( samplerGaussNoise, texcoord.xy, 0, 1, 1.0f, 0, 1.0f );
         depth            = saturate( depth + dnoise2.x );
-        
-        color.xyz        = saturate( color.xyz );
 
         float3 cold      = float3( 0.0f,  0.365f, 1.0f ); //LBB
         float3 warm      = float3( 0.98f, 0.588f, 0.0f ); //LBA
