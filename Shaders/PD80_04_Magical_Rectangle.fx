@@ -113,35 +113,17 @@ namespace pd80_magicalrectangle
         ui_min = 0.0f;
         ui_max = 10.0f;
         > = 0.0;
-    uniform float intensity <
+    uniform float3 reccolor <
         ui_text = "-------------------------------------\n"
                   "Use Opacity and Blend Mode to adjust\n"
                   "Shape controls the Shape coloring\n"
                   "Image controls the underlying picture\n"
                   "-------------------------------------";
-        ui_type = "slider";
-        ui_label = "Shape: Lightness";
-        ui_tooltip = "Shape: Lightness";
+        ui_type = "color";
+        ui_label = "Shape: Color";
+        ui_tooltip = "Shape: Color";
         ui_category = "Shape Coloration";
-        ui_min = 0.0;
-        ui_max = 1.0;
-        > = 0.5;
-    uniform float sh_hue <
-        ui_type = "slider";
-        ui_label = "Shape: Hue";
-        ui_tooltip = "Shape: Hue";
-        ui_category = "Shape Coloration";
-        ui_min = 0.0;
-        ui_max = 1.0;
-        > = 0.083;
-    uniform float sh_saturation <
-        ui_type = "slider";
-        ui_label = "Shape: Saturation";
-        ui_tooltip = "Shape: Saturation";
-        ui_category = "Shape Coloration";
-        ui_min = 0.0;
-        ui_max = 1.0;
-        > = 0.0;
+        > = float3( 0.5, 0.5, 0.5 );
     uniform float mr_exposure <
         ui_type = "slider";
         ui_label = "Image: Exposure";
@@ -320,6 +302,7 @@ namespace pd80_magicalrectangle
         float R           = bl.x * bl.y * tr.x * tr.y * depthfade;
         R                 = ( invert_shape ) ? 1.0f - R : R;
         // Blend the borders
+        float intensity   = RGBToHSV( reccolor.xyz ).z;
         color.xyz         = lerp( color.xyz, saturate( color.xyz * saturate( 1.0f - R ) + R * intensity ), R );
         // Add to color, use R for Alpha
         return float4( color.xyz, R );
@@ -345,7 +328,8 @@ namespace pd80_magicalrectangle
         // Doing some HSL color space conversions to colorize
         layer_1.xyz       = saturate( layer_1.xyz * intensity_boost );
         layer_1.xyz       = RGBToHSV( layer_1.xyz );
-        layer_1.xyz       = HSVToRGB( float3( sh_hue, sh_saturation, layer_1.z ));
+        float2 huesat     = RGBToHSV( reccolor.xyz ).xy;
+        layer_1.xyz       = HSVToRGB( float3( huesat.xy, layer_1.z ));
         layer_1.xyz       = saturate( layer_1.xyz );
         // Blend mode with background
         color.xyz         = blendmode( orig.xyz, layer_1.xyz, blendmode_1, saturate( layer_1.w ) * opacity );
