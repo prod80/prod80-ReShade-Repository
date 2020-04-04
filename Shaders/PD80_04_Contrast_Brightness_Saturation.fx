@@ -281,16 +281,25 @@ namespace pd80_conbrisat
     {
         float desat        = getLuminance( col.xyz );
 
-        //Get weights
-        float weight_r     = curve( max( 1.0f - abs(  hue            * 8.0f ), 0.0f )) +
-                             curve( max( 1.0f - abs(( hue - 1.0f   ) * 8.0f ), 0.0f ));
-        float weight_o     = curve( max( 1.0f - abs(( hue - 0.125f ) * 8.0f ), 0.0f ));
-        float weight_y     = curve( max( 1.0f - abs(( hue - 0.25f  ) * 8.0f ), 0.0f ));
-        float weight_g     = curve( max( 1.0f - abs(( hue - 0.375f ) * 8.0f ), 0.0f ));
-        float weight_a     = curve( max( 1.0f - abs(( hue - 0.5f   ) * 8.0f ), 0.0f ));
-        float weight_b     = curve( max( 1.0f - abs(( hue - 0.625f ) * 8.0f ), 0.0f ));
-        float weight_p     = curve( max( 1.0f - abs(( hue - 0.75f  ) * 8.0f ), 0.0f ));
-        float weight_m     = curve( max( 1.0f - abs(( hue - 0.875f ) * 8.0f ), 0.0f ));
+        // Red          : 0.0
+        // Orange       : 0.083
+        // Yellow       : 0.167
+        // Green        : 0.333
+        // Cyan/Aqua    : 0.5
+        // Blue         : 0.667
+        // Purple       : 0.75
+        // Magenta      : 0.833
+
+        float weight_r     = curve( max( 1.0f - abs(  hue               * 8.0f ), 0.0f )) +
+                             curve( max( 1.0f - abs(( hue - 1.0f      ) * 8.0f ), 0.0f ));
+        float weight_o     = curve( max( 1.0f - abs(( hue - 0.083333f ) * 8.0f ), 0.0f )) +
+                             curve( max( 1.0f - abs(( hue - 1.083333f ) * 8.0f ), 0.0f ));
+        float weight_y     = curve( max( 1.0f - abs(( hue - 0.166667f ) * 8.0f ), 0.0f ));
+        float weight_g     = curve( max( 1.0f - abs(( hue - 0.333333f ) * 8.0f ), 0.0f ));
+        float weight_a     = curve( max( 1.0f - abs(( hue - 0.5f      ) * 8.0f ), 0.0f ));
+        float weight_b     = curve( max( 1.0f - abs(( hue - 0.666667f ) * 8.0f ), 0.0f ));
+        float weight_p     = curve( max( 1.0f - abs(( hue - 0.75f     ) * 8.0f ), 0.0f ));
+        float weight_m     = curve( max( 1.0f - abs(( hue - 0.833333f ) * 8.0f ), 0.0f ));
 
         col.xyz            = lerp( desat, col.xyz, clamp( 1.0f + r * weight_r, 0.0f, 2.0f ));
         col.xyz            = lerp( desat, col.xyz, clamp( 1.0f + o * weight_o, 0.0f, 2.0f ));

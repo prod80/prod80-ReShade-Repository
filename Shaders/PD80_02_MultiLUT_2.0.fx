@@ -26,11 +26,11 @@
 	#define PD80_TileAmount     64      // Number of tiles / LUT
 #endif
 #ifndef PD80_LutAmount
-	#define PD80_LutAmount      15      // Number of LUTs
+	#define PD80_LutAmount      17      // Number of LUTs
 #endif
 
 // Example: "LUT Name 01\0LUT Name 02\0LUT Name 03\0LUT Name 04\0LUT Name 05\0"
-#define PD80_DropDownMenu       "PD80 Cinematic 01\0PD80 Cinematic 02\0PD80 Cinematic 03\0PD80 Cinematic 04\0PD80 Cinematic 05\0PD80 Cinematic 06\0PD80 Cinematic 07\0PD80 Cinematic 08\0PD80 Cinematic 09\0PD80 Cinematic 10\0PD80 Cinematic 11\0PD80 Cinematic 12\0PD80 Cinematic 13\0PD80 Cinematic 14\0PD80 Cinematic 15\0"    
+#define PD80_DropDownMenu       "PD80 Cinematic 01\0PD80 Cinematic 02\0PD80 Cinematic 03\0PD80 Cinematic 04\0PD80 Cinematic 05\0PD80 Cinematic 06\0PD80 Cinematic 07\0PD80 Cinematic 08\0PD80 Cinematic 09\0PD80 Cinematic 10\0PD80 Cinematic 11\0PD80 Cinematic 12\0PD80 Cinematic 13\0PD80 Cinematic 14\0PD80 Cinematic 15\0PD80 Cinematic 16\0PD80 Cinematic 17\0"    
 
 #include "ReShade.fxh"
 #include "PD80_00_Noise_Samplers.fxh"
