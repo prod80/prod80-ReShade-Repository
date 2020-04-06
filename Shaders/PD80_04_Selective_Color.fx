@@ -558,18 +558,22 @@ namespace pd80_selectivecolor
 
         This solution is not fool proof, but gives acceptable results almost always.
         */
+        
+        // Red is when maxvalue = x
         float r_d_m       = orig.x - orig.z;
         float r_d_y       = orig.x - orig.y;
-        float y_d_r       = mid_value - orig.z;
-        float y_d_g       = r_d_y;
+        // Yellow is when minvalue = z
+        float y_d         = mid_value - orig.z;
+        // Green is when maxvalue = y
         float g_d_y       = orig.y - orig.x;
         float g_d_c       = orig.y - orig.z;
-        float c_d_g       = mid_value - orig.x;
-        float c_d_b       = g_d_c;
+        // Cyan is when minvalue = x
+        float c_d         = mid_value - orig.x;
+        // Blue is when maxvalue = z
         float b_d_c       = orig.z - orig.y;
         float b_d_m       = orig.z - orig.x;
-        float m_d_b       = mid_value - orig.y;
-        float m_d_r       = b_d_m;
+        // Magenta is when minvalue = y
+        float m_d         = mid_value - orig.y;
         
         float r_delta     = 1.0f;
         float y_delta     = 1.0f;
@@ -581,11 +585,11 @@ namespace pd80_selectivecolor
         if( corr_method2 ) // Relative saturation
         {
             r_delta       = min( r_d_m, r_d_y );
-            y_delta       = max( y_d_r, y_d_g );
+            y_delta       = y_d;
             g_delta       = min( g_d_y, g_d_c );
-            c_delta       = max( c_d_g, c_d_b );
+            c_delta       = c_d;
             b_delta       = min( b_d_c, b_d_m );
-            m_delta       = max( m_d_b, m_d_r );
+            m_delta       = m_d;
         } 
 
         // Selective Color
