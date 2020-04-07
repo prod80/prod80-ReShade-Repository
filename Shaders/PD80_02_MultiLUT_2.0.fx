@@ -9,7 +9,8 @@
 // Edit by prod80 | 2020 | https://github.com/prod80/prod80-ReShade-Repository
 // Removed blend modes (luma/chroma)
 // Help identifying blending issues by kingeric1992
-// Added dithering
+// Added Dither
+// Added Levels
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 // Please provide the details of your LUT below (size, dimensions, numbers)
@@ -27,6 +28,9 @@
 #endif
 #ifndef PD80_LutAmount
 	#define PD80_LutAmount      32      // Number of LUTs
+#endif
+#ifndef PD80_UseLevels
+    #define PD80_UseLevels      0
 #endif
 
 // Example: "LUT Name 01\0LUT Name 02\0LUT Name 03\0LUT Name 04\0LUT Name 05\0"
@@ -57,13 +61,47 @@ namespace pd80_multilut2
         ui_items= PD80_DropDownMenu;
         ui_label = "LUT Selection";
         ui_tooltip = "The LUT to use for color transformation.";
-    > = 0;
+        > = 0;
     uniform float PD80_Intensity <
         ui_type = "slider";
         ui_min = 0.00; ui_max = 1.00;
         ui_label = "LUT Intensity";
         ui_tooltip = "Intensity of LUT effect";
-    > = 1.00;
+        > = 1.00;
+#if( PD80_UseLevels )
+    uniform float3 ib <
+        ui_type = "color";
+        ui_label = "LUT Black IN Level";
+        ui_tooltip = "LUT Black IN Level";
+        ui_category = "LUT Levels";
+        > = float3(0.0, 0.0, 0.0);
+    uniform float3 iw <
+        ui_type = "color";
+        ui_label = "LUT White IN Level";
+        ui_tooltip = "LUT White IN Level";
+        ui_category = "LUT Levels";
+        > = float3(1.0, 1.0, 1.0);
+    uniform float3 ob <
+        ui_type = "color";
+        ui_label = "LUT Black OUT Level";
+        ui_tooltip = "LUT Black OUT Level";
+        ui_category = "LUT Levels";
+        > = float3(0.0, 0.0, 0.0);
+    uniform float3 ow <
+        ui_type = "color";
+        ui_label = "LUT White OUT Level";
+        ui_tooltip = "LUT White OUT Level";
+        ui_category = "LUT Levels";
+        > = float3(1.0, 1.0, 1.0);
+    uniform float ig <
+        ui_label = "LUT Gamma Adjustment";
+        ui_tooltip = "LUT Gamma Adjustment";
+        ui_category = "LUT Levels";
+        ui_type = "slider";
+        ui_min = 0.05;
+        ui_max = 10.0;
+        > = 1.0;
+#endif
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     //
@@ -71,6 +109,14 @@ namespace pd80_multilut2
 
     texture texMultiLUT < source = PD80_TextureName; > { Width = PD80_TileSizeXY * PD80_TileAmount; Height = PD80_TileSizeXY * PD80_LutAmount; Format = RGBA8; };
     sampler	SamplerMultiLUT { Texture = texMultiLUT; };
+
+    float3 levels( float3 color, float3 blackin, float3 whitein, float gamma, float3 outblack, float3 outwhite )
+    {
+        float3 ret       = saturate( color.xyz - blackin.xyz ) / max( whitein.xyz - blackin.xyz, 0.000001f );
+        ret.xyz          = pow( ret.xyz, gamma );
+        ret.xyz          = ret.xyz * saturate( outwhite.xyz - outblack.xyz ) + outblack.xyz;
+        return ret;
+    }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     //
@@ -94,6 +140,13 @@ namespace pd80_multilut2
         lutcoord.x      += ( lutcoord.z - lerpfact ) * texelsize.y;
 
         float3 lutcolor  = lerp( tex2D( SamplerMultiLUT, lutcoord.xy ).xyz, tex2D( SamplerMultiLUT, float2( lutcoord.x + texelsize.y, lutcoord.y )).xyz, lerpfact );
+#if( PD80_UseLevels )
+        lutcolor.xyz     = levels( lutcolor.xyz,    saturate( ib.xyz + dnoise.xyz ),
+                                                    saturate( iw.xyz + dnoise.yzx ),
+                                                    ig, 
+                                                    saturate( ob.xyz + dnoise.zxy ), 
+                                                    saturate( ow.xyz + dnoise.wxz ));
+#endif
         color.xyz        = lerp( color.xyz, saturate( lutcolor.xyz + dnoise.wzx ), PD80_Intensity );
     }
 
