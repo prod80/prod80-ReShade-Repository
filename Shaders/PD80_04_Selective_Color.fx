@@ -855,7 +855,6 @@ namespace pd80_selectivecolor
         float mid_value   = mid( color.xyz );
         float avg_value   = dot( color.xyz, float3( 0.333333f, 0.333334f, 0.333333f ));
         avg_value         = smooth( avg_value );
-        float n_curve     = 1.0f - abs( min_value * 2.0f - 1.0f );
         
         // Used for determining which pixels to adjust regardless of prior changes to color
         float3 orig       = color.xyz;
@@ -863,6 +862,7 @@ namespace pd80_selectivecolor
         // Scales
         float sRGB        = max_value - mid_value;
         float sCMY        = mid_value - min_value;
+        float sALT        = max_value - min_value;
         float sNeutrals   = 1.0f - ( abs( max_value - 0.5f ) + abs( min_value - 0.5f ));
         float sWhites     = ( min_value - 0.5f ) * 2.0f;
         float sBlacks     = ( 0.5f - max_value ) * 2.0f;
@@ -951,9 +951,9 @@ namespace pd80_selectivecolor
         color.xyz         = sc_sat( color.xyz, r_adj_sat * r_delta * w_r );
         color.xyz         = vib( color.xyz, r_adj_vib * r_delta * w_r );
         // Oranges
-        color.x           = color.x + adjustcolor( sRGB, color.x, o_adj_cya * w_o, o_adj_bla * w_o, corr_method );
-        color.y           = color.y + adjustcolor( sRGB, color.y, o_adj_mag * w_o, o_adj_bla * w_o, corr_method );
-        color.z           = color.z + adjustcolor( sRGB, color.z, o_adj_yel * w_o, o_adj_bla * w_o, corr_method );
+        color.x           = color.x + adjustcolor( sALT, color.x, o_adj_cya * w_o, o_adj_bla * w_o, corr_method );
+        color.y           = color.y + adjustcolor( sALT, color.y, o_adj_mag * w_o, o_adj_bla * w_o, corr_method );
+        color.z           = color.z + adjustcolor( sALT, color.z, o_adj_yel * w_o, o_adj_bla * w_o, corr_method );
         color.xyz         = sc_sat( color.xyz, o_adj_sat * r_delta * w_o );
         color.xyz         = vib( color.xyz, o_adj_vib * r_delta * w_o );
         // Yellows
@@ -963,9 +963,9 @@ namespace pd80_selectivecolor
         color.xyz         = sc_sat( color.xyz, y_adj_sat * y_delta * w_y );
         color.xyz         = vib( color.xyz, y_adj_vib * y_delta * w_y );
         // Yellow-Greens
-        color.x           = color.x + adjustcolor( sRGB, color.x, yg_adj_cya * w_yg, yg_adj_bla * w_yg, corr_method );
-        color.y           = color.y + adjustcolor( sRGB, color.y, yg_adj_mag * w_yg, yg_adj_bla * w_yg, corr_method );
-        color.z           = color.z + adjustcolor( sRGB, color.z, yg_adj_yel * w_yg, yg_adj_bla * w_yg, corr_method );
+        color.x           = color.x + adjustcolor( sALT, color.x, yg_adj_cya * w_yg, yg_adj_bla * w_yg, corr_method );
+        color.y           = color.y + adjustcolor( sALT, color.y, yg_adj_mag * w_yg, yg_adj_bla * w_yg, corr_method );
+        color.z           = color.z + adjustcolor( sALT, color.z, yg_adj_yel * w_yg, yg_adj_bla * w_yg, corr_method );
         color.xyz         = sc_sat( color.xyz, yg_adj_sat * r_delta * w_yg );
         color.xyz         = vib( color.xyz, yg_adj_vib * r_delta * w_yg );
         // Greens
@@ -975,9 +975,9 @@ namespace pd80_selectivecolor
         color.xyz         = sc_sat( color.xyz, g_adj_sat * g_delta * w_g );
         color.xyz         = vib( color.xyz, g_adj_vib * g_delta * w_g );
         // Green-Cyans
-        color.x           = color.x + adjustcolor( sRGB, color.x, gc_adj_cya * w_gc, gc_adj_bla * w_gc, corr_method );
-        color.y           = color.y + adjustcolor( sRGB, color.y, gc_adj_mag * w_gc, gc_adj_bla * w_gc, corr_method );
-        color.z           = color.z + adjustcolor( sRGB, color.z, gc_adj_yel * w_gc, gc_adj_bla * w_gc, corr_method );
+        color.x           = color.x + adjustcolor( sALT, color.x, gc_adj_cya * w_gc, gc_adj_bla * w_gc, corr_method );
+        color.y           = color.y + adjustcolor( sALT, color.y, gc_adj_mag * w_gc, gc_adj_bla * w_gc, corr_method );
+        color.z           = color.z + adjustcolor( sALT, color.z, gc_adj_yel * w_gc, gc_adj_bla * w_gc, corr_method );
         color.xyz         = sc_sat( color.xyz, gc_adj_sat * r_delta * w_gc );
         color.xyz         = vib( color.xyz, gc_adj_vib * r_delta * w_gc );
         // Cyans
@@ -987,9 +987,9 @@ namespace pd80_selectivecolor
         color.xyz         = sc_sat( color.xyz, c_adj_sat * c_delta * w_c );
         color.xyz         = vib( color.xyz, c_adj_vib * c_delta * w_c );
         // Cyan-Blues
-        color.x           = color.x + adjustcolor( sRGB, color.x, cb_adj_cya * w_cb, cb_adj_bla * w_cb, corr_method );
-        color.y           = color.y + adjustcolor( sRGB, color.y, cb_adj_mag * w_cb, cb_adj_bla * w_cb, corr_method );
-        color.z           = color.z + adjustcolor( sRGB, color.z, cb_adj_yel * w_cb, cb_adj_bla * w_cb, corr_method );
+        color.x           = color.x + adjustcolor( sALT, color.x, cb_adj_cya * w_cb, cb_adj_bla * w_cb, corr_method );
+        color.y           = color.y + adjustcolor( sALT, color.y, cb_adj_mag * w_cb, cb_adj_bla * w_cb, corr_method );
+        color.z           = color.z + adjustcolor( sALT, color.z, cb_adj_yel * w_cb, cb_adj_bla * w_cb, corr_method );
         color.xyz         = sc_sat( color.xyz, cb_adj_sat * r_delta * w_cb );
         color.xyz         = vib( color.xyz, cb_adj_vib * r_delta * w_cb );
         // Blues
@@ -999,9 +999,9 @@ namespace pd80_selectivecolor
         color.xyz         = sc_sat( color.xyz, b_adj_sat * b_delta * w_b );
         color.xyz         = vib( color.xyz, b_adj_vib * b_delta * w_b );
         // Blue-Magentas
-        color.x           = color.x + adjustcolor( sRGB, color.x, bm_adj_cya * w_bm, bm_adj_bla * w_bm, corr_method );
-        color.y           = color.y + adjustcolor( sRGB, color.y, bm_adj_mag * w_bm, bm_adj_bla * w_bm, corr_method );
-        color.z           = color.z + adjustcolor( sRGB, color.z, bm_adj_yel * w_bm, bm_adj_bla * w_bm, corr_method );
+        color.x           = color.x + adjustcolor( sALT, color.x, bm_adj_cya * w_bm, bm_adj_bla * w_bm, corr_method );
+        color.y           = color.y + adjustcolor( sALT, color.y, bm_adj_mag * w_bm, bm_adj_bla * w_bm, corr_method );
+        color.z           = color.z + adjustcolor( sALT, color.z, bm_adj_yel * w_bm, bm_adj_bla * w_bm, corr_method );
         color.xyz         = sc_sat( color.xyz, bm_adj_sat * r_delta * w_bm );
         color.xyz         = vib( color.xyz, bm_adj_vib * r_delta * w_bm );
         // Magentas
@@ -1011,9 +1011,9 @@ namespace pd80_selectivecolor
         color.xyz         = sc_sat( color.xyz, m_adj_sat * m_delta * w_m );
         color.xyz         = vib( color.xyz, m_adj_vib * m_delta * w_m );
         // Magenta-Reds
-        color.x           = color.x + adjustcolor( sRGB, color.x, mr_adj_cya * w_mr, mr_adj_bla * w_mr, corr_method );
-        color.y           = color.y + adjustcolor( sRGB, color.y, mr_adj_mag * w_mr, mr_adj_bla * w_mr, corr_method );
-        color.z           = color.z + adjustcolor( sRGB, color.z, mr_adj_yel * w_mr, mr_adj_bla * w_mr, corr_method );
+        color.x           = color.x + adjustcolor( sALT, color.x, mr_adj_cya * w_mr, mr_adj_bla * w_mr, corr_method );
+        color.y           = color.y + adjustcolor( sALT, color.y, mr_adj_mag * w_mr, mr_adj_bla * w_mr, corr_method );
+        color.z           = color.z + adjustcolor( sALT, color.z, mr_adj_yel * w_mr, mr_adj_bla * w_mr, corr_method );
         color.xyz         = sc_sat( color.xyz, mr_adj_sat * r_delta * w_mr );
         color.xyz         = vib( color.xyz, mr_adj_vib * r_delta * w_mr );
         // Whites
@@ -1052,5 +1052,3 @@ namespace pd80_selectivecolor
         }
     }
 }
-
-
