@@ -85,6 +85,22 @@ namespace pd80_selectivecolorv2
         ui_min = -1.0f;
         ui_max = 1.0f;
         > = 0.0;
+    uniform float r_adj_lig_curve <
+        ui_type = "slider";
+        ui_label = "Lightness Curve";
+        ui_tooltip = "Selective Color Reds: Lightness Curve";
+        ui_category = "Selective Color: Reds";
+        ui_min = -1.0f;
+        ui_max = 1.0f;
+        > = 0.0;
+    uniform float r_adj_lig <
+        ui_type = "slider";
+        ui_label = "Lightness";
+        ui_tooltip = "Selective Color Reds: Lightness";
+        ui_category = "Selective Color: Reds";
+        ui_min = -1.0f;
+        ui_max = 1.0f;
+        > = 0.0;
     
     // Oranges
     uniform float o_adj_cya <
@@ -123,6 +139,22 @@ namespace pd80_selectivecolorv2
         ui_type = "slider";
         ui_label = "Saturation";
         ui_tooltip = "Selective Color Oranges: Saturation";
+        ui_category = "Selective Color: Oranges";
+        ui_min = -1.0f;
+        ui_max = 1.0f;
+        > = 0.0;
+    uniform float o_adj_lig_curve <
+        ui_type = "slider";
+        ui_label = "Lightness Curve";
+        ui_tooltip = "Selective Color Oranges: Lightness Curve";
+        ui_category = "Selective Color: Oranges";
+        ui_min = -1.0f;
+        ui_max = 1.0f;
+        > = 0.0;
+    uniform float o_adj_lig <
+        ui_type = "slider";
+        ui_label = "Lightness";
+        ui_tooltip = "Selective Color Oranges: Lightness";
         ui_category = "Selective Color: Oranges";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -169,6 +201,22 @@ namespace pd80_selectivecolorv2
         ui_min = -1.0f;
         ui_max = 1.0f;
         > = 0.0;
+    uniform float y_adj_lig_curve <
+        ui_type = "slider";
+        ui_label = "Lightness Curve";
+        ui_tooltip = "Selective Color Yellows: Lightness Curve";
+        ui_category = "Selective Color: Yellows";
+        ui_min = -1.0f;
+        ui_max = 1.0f;
+        > = 0.0;
+    uniform float y_adj_lig <
+        ui_type = "slider";
+        ui_label = "Lightness";
+        ui_tooltip = "Selective Color Yellows: Lightness";
+        ui_category = "Selective Color: Yellows";
+        ui_min = -1.0f;
+        ui_max = 1.0f;
+        > = 0.0;
 
     // Yellow-Greens
     uniform float yg_adj_cya <
@@ -207,6 +255,22 @@ namespace pd80_selectivecolorv2
         ui_type = "slider";
         ui_label = "Saturation";
         ui_tooltip = "Selective Color Yellow-Greens: Saturation";
+        ui_category = "Selective Color: Yellow-Greens";
+        ui_min = -1.0f;
+        ui_max = 1.0f;
+        > = 0.0;
+    uniform float yg_adj_lig_curve <
+        ui_type = "slider";
+        ui_label = "Lightness Curve";
+        ui_tooltip = "Selective Color Yellow-Greens: Lightness Curve";
+        ui_category = "Selective Color: Yellow-Greens";
+        ui_min = -1.0f;
+        ui_max = 1.0f;
+        > = 0.0;
+    uniform float yg_adj_lig <
+        ui_type = "slider";
+        ui_label = "Lightness";
+        ui_tooltip = "Selective Color Yellow-Greens: Lightness";
         ui_category = "Selective Color: Yellow-Greens";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -253,6 +317,22 @@ namespace pd80_selectivecolorv2
         ui_min = -1.0f;
         ui_max = 1.0f;
         > = 0.0;
+    uniform float g_adj_lig_curve <
+        ui_type = "slider";
+        ui_label = "Lightness Curve";
+        ui_tooltip = "Selective Color Greens: Lightness Curve";
+        ui_category = "Selective Color: Greens";
+        ui_min = -1.0f;
+        ui_max = 1.0f;
+        > = 0.0;
+    uniform float g_adj_lig <
+        ui_type = "slider";
+        ui_label = "Lightness";
+        ui_tooltip = "Selective Color Greens: Lightness";
+        ui_category = "Selective Color: Greens";
+        ui_min = -1.0f;
+        ui_max = 1.0f;
+        > = 0.0;
 
     // Green-Cyans
     uniform float gc_adj_cya <
@@ -291,6 +371,22 @@ namespace pd80_selectivecolorv2
         ui_type = "slider";
         ui_label = "Saturation";
         ui_tooltip = "Selective Color Green-Cyans: Saturation";
+        ui_category = "Selective Color: Green-Cyans";
+        ui_min = -1.0f;
+        ui_max = 1.0f;
+        > = 0.0;
+    uniform float gc_adj_lig_curve <
+        ui_type = "slider";
+        ui_label = "Lightness Curve";
+        ui_tooltip = "Selective Color Green-Cyans: Lightness Curve";
+        ui_category = "Selective Color: Green-Cyans";
+        ui_min = -1.0f;
+        ui_max = 1.0f;
+        > = 0.0;
+    uniform float gc_adj_lig <
+        ui_type = "slider";
+        ui_label = "Lightness";
+        ui_tooltip = "Selective Color Green-Cyans: Lightness";
         ui_category = "Selective Color: Green-Cyans";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -337,6 +433,22 @@ namespace pd80_selectivecolorv2
         ui_min = -1.0f;
         ui_max = 1.0f;
         > = 0.0;
+    uniform float c_adj_lig_curve <
+        ui_type = "slider";
+        ui_label = "Lightness Curve";
+        ui_tooltip = "Selective Color Cyans: Lightness Curve";
+        ui_category = "Selective Color: Cyans";
+        ui_min = -1.0f;
+        ui_max = 1.0f;
+        > = 0.0;
+    uniform float c_adj_lig <
+        ui_type = "slider";
+        ui_label = "Lightness";
+        ui_tooltip = "Selective Color Cyans: Lightness";
+        ui_category = "Selective Color: Cyans";
+        ui_min = -1.0f;
+        ui_max = 1.0f;
+        > = 0.0;
 
     // Cyan-Blues
     uniform float cb_adj_cya <
@@ -375,6 +487,22 @@ namespace pd80_selectivecolorv2
         ui_type = "slider";
         ui_label = "Saturation";
         ui_tooltip = "Selective Color Cyan-Blues: Saturation";
+        ui_category = "Selective Color: Cyan-Blues";
+        ui_min = -1.0f;
+        ui_max = 1.0f;
+        > = 0.0;
+    uniform float cb_adj_lig_curve <
+        ui_type = "slider";
+        ui_label = "Lightness Curve";
+        ui_tooltip = "Selective Color Cyan-Blues: Lightness Curve";
+        ui_category = "Selective Color: Cyan-Blues";
+        ui_min = -1.0f;
+        ui_max = 1.0f;
+        > = 0.0;
+    uniform float cb_adj_lig <
+        ui_type = "slider";
+        ui_label = "Lightness";
+        ui_tooltip = "Selective Color Cyan-Blues: Lightness";
         ui_category = "Selective Color: Cyan-Blues";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -421,6 +549,22 @@ namespace pd80_selectivecolorv2
         ui_min = -1.0f;
         ui_max = 1.0f;
         > = 0.0;
+    uniform float b_adj_lig_curve <
+        ui_type = "slider";
+        ui_label = "Lightness Curve";
+        ui_tooltip = "Selective Color Blues: Lightness Curve";
+        ui_category = "Selective Color: Blues";
+        ui_min = -1.0f;
+        ui_max = 1.0f;
+        > = 0.0;
+    uniform float b_adj_lig <
+        ui_type = "slider";
+        ui_label = "Lightness";
+        ui_tooltip = "Selective Color Blues: Lightness";
+        ui_category = "Selective Color: Blues";
+        ui_min = -1.0f;
+        ui_max = 1.0f;
+        > = 0.0;
 
     // Blue-Magentas
     uniform float bm_adj_cya <
@@ -459,6 +603,22 @@ namespace pd80_selectivecolorv2
         ui_type = "slider";
         ui_label = "Saturation";
         ui_tooltip = "Selective Color Blue-Magentas: Saturation";
+        ui_category = "Selective Color: Blue-Magentas";
+        ui_min = -1.0f;
+        ui_max = 1.0f;
+        > = 0.0;
+    uniform float bm_adj_lig_curve <
+        ui_type = "slider";
+        ui_label = "Lightness Curve";
+        ui_tooltip = "Selective Color Blue-Magentas: Lightness Curve";
+        ui_category = "Selective Color: Blue-Magentas";
+        ui_min = -1.0f;
+        ui_max = 1.0f;
+        > = 0.0;
+    uniform float bm_adj_lig <
+        ui_type = "slider";
+        ui_label = "Lightness";
+        ui_tooltip = "Selective Color Blue-Magentas: Lightness";
         ui_category = "Selective Color: Blue-Magentas";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -505,6 +665,22 @@ namespace pd80_selectivecolorv2
         ui_min = -1.0f;
         ui_max = 1.0f;
         > = 0.0;
+    uniform float m_adj_lig_curve <
+        ui_type = "slider";
+        ui_label = "Lightness Curve";
+        ui_tooltip = "Selective Color Magentas: Lightness Curve";
+        ui_category = "Selective Color: Magentas";
+        ui_min = -1.0f;
+        ui_max = 1.0f;
+        > = 0.0;
+    uniform float m_adj_lig <
+        ui_type = "slider";
+        ui_label = "Lightness";
+        ui_tooltip = "Selective Color Magentas: Lightness";
+        ui_category = "Selective Color: Magentas";
+        ui_min = -1.0f;
+        ui_max = 1.0f;
+        > = 0.0;
 
     // Magenta-Reds
     uniform float mr_adj_cya <
@@ -543,6 +719,22 @@ namespace pd80_selectivecolorv2
         ui_type = "slider";
         ui_label = "Saturation";
         ui_tooltip = "Selective Color Magenta-Reds: Saturation";
+        ui_category = "Selective Color: Magenta-Reds";
+        ui_min = -1.0f;
+        ui_max = 1.0f;
+        > = 0.0;
+    uniform float mr_adj_lig_curve <
+        ui_type = "slider";
+        ui_label = "Lightness Curve";
+        ui_tooltip = "Selective Color Magenta-Reds: Lightness Curve";
+        ui_category = "Selective Color: Magenta-Reds";
+        ui_min = -1.0f;
+        ui_max = 1.0f;
+        > = 0.0;
+    uniform float mr_adj_lig <
+        ui_type = "slider";
+        ui_label = "Lightness";
+        ui_tooltip = "Selective Color Magenta-Reds: Lightness";
         ui_category = "Selective Color: Magenta-Reds";
         ui_min = -1.0f;
         ui_max = 1.0f;
@@ -689,6 +881,15 @@ namespace pd80_selectivecolorv2
         return sum - mn - mx;
     }
 
+    // Credit to user 'iq' from shadertoy
+    // See https://www.shadertoy.com/view/MdBfR1
+    float brightness_curve( float x, float k )
+    {
+        float s = sign( x - 0.5f );
+        float o = ( 1.0f + s ) / 2.0f;
+        return o - 0.5f * s * pow( 2.0f * ( o - s * x ), k );
+    }
+
     float curve( float x )
     {
         //return x * x * ( 3.0 - 2.0 * x );
@@ -833,64 +1034,140 @@ namespace pd80_selectivecolorv2
         
         // Reds
         curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
-        color.xyz         = ( r_adj_sat > 0.0f ) ? saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_r * r_adj_sat * ( 1.0f - curr_sat ))) :
-                                                   saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_r * r_adj_sat ));
+        color.xyz         = ( r_adj_sat > 0.0f ) ?  saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_r * r_adj_sat * ( 1.0f - curr_sat ))) :
+                                                    saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_r * r_adj_sat ));
         // Oranges
         curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
-        color.xyz         = ( o_adj_sat > 0.0f ) ? saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_o * o_adj_sat * ( 1.0f - curr_sat ))) :
-                                                   saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_o * o_adj_sat ));
+        color.xyz         = ( o_adj_sat > 0.0f ) ?  saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_o * o_adj_sat * ( 1.0f - curr_sat ))) :
+                                                    saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_o * o_adj_sat ));
         // Yellows
         curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
-        color.xyz         = ( y_adj_sat > 0.0f ) ? saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_y * y_adj_sat * ( 1.0f - curr_sat ))) :
-                                                   saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_y * y_adj_sat ));
+        color.xyz         = ( y_adj_sat > 0.0f ) ?  saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_y * y_adj_sat * ( 1.0f - curr_sat ))) :
+                                                    saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_y * y_adj_sat ));
         // Yellow-Greens
         curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
         color.xyz         = ( yg_adj_sat > 0.0f ) ? saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_yg * yg_adj_sat * ( 1.0f - curr_sat ))) :
-                                                   saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_yg * yg_adj_sat ));
+                                                    saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_yg * yg_adj_sat ));
         // Greens
         curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
-        color.xyz         = ( g_adj_sat > 0.0f ) ? saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_g * g_adj_sat * ( 1.0f - curr_sat ))) :
-                                                   saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_g * g_adj_sat ));
+        color.xyz         = ( g_adj_sat > 0.0f ) ?  saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_g * g_adj_sat * ( 1.0f - curr_sat ))) :
+                                                    saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_g * g_adj_sat ));
         // Green-Cyans
         curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
         color.xyz         = ( gc_adj_sat > 0.0f ) ? saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_gc * gc_adj_sat * ( 1.0f - curr_sat ))) :
-                                                   saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_gc * gc_adj_sat ));
+                                                    saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_gc * gc_adj_sat ));
         // Cyans
         curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
-        color.xyz         = ( c_adj_sat > 0.0f ) ? saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_c * c_adj_sat * ( 1.0f - curr_sat ))) :
-                                                   saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_c * c_adj_sat ));
+        color.xyz         = ( c_adj_sat > 0.0f ) ?  saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_c * c_adj_sat * ( 1.0f - curr_sat ))) :
+                                                    saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_c * c_adj_sat ));
         // Cyan-Blues
         curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
         color.xyz         = ( cb_adj_sat > 0.0f ) ? saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_cb * cb_adj_sat * ( 1.0f - curr_sat ))) :
-                                                   saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_cb * cb_adj_sat ));
+                                                    saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_cb * cb_adj_sat ));
         // Blues
         curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
-        color.xyz         = ( b_adj_sat > 0.0f ) ? saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_b * b_adj_sat * ( 1.0f - curr_sat ))) :
-                                                   saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_b * b_adj_sat ));
+        color.xyz         = ( b_adj_sat > 0.0f ) ?  saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_b * b_adj_sat * ( 1.0f - curr_sat ))) :
+                                                    saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_b * b_adj_sat ));
         // Blue-Magentas
         curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
         color.xyz         = ( bm_adj_sat > 0.0f ) ? saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_bm * bm_adj_sat * ( 1.0f - curr_sat ))) :
-                                                   saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_bm * bm_adj_sat ));
+                                                    saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_bm * bm_adj_sat ));
         // Magentas
         curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
-        color.xyz         = ( m_adj_sat > 0.0f ) ? saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_m * m_adj_sat * ( 1.0f - curr_sat ))) :
-                                                   saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_m * m_adj_sat ));
+        color.xyz         = ( m_adj_sat > 0.0f ) ?  saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_m * m_adj_sat * ( 1.0f - curr_sat ))) :
+                                                    saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_m * m_adj_sat ));
         // Magenta-Reds
         curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
         color.xyz         = ( mr_adj_sat > 0.0f ) ? saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_mr * mr_adj_sat * ( 1.0f - curr_sat ))) :
-                                                   saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_mr * mr_adj_sat ));
+                                                    saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sw_mr * mr_adj_sat ));
         // Whites
         curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
-        color.xyz         = ( w_adj_sat > 0.0f ) ? saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sWhites * w_adj_sat * ( 1.0f - curr_sat ))) :
-                                                   saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sWhites * w_adj_sat ));
+        color.xyz         = ( w_adj_sat > 0.0f ) ?  saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sWhites * w_adj_sat * ( 1.0f - curr_sat ))) :
+                                                    saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sWhites * w_adj_sat ));
         // Blacks
         curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
         color.xyz         = ( bk_adj_sat > 0.0f ) ? saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sBlacks * bk_adj_sat * ( 1.0f - curr_sat ))) :
-                                                   saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sBlacks * bk_adj_sat ));
+                                                    saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sBlacks * bk_adj_sat ));
         // Neutrals
         curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
-        color.xyz         = ( n_adj_sat > 0.0f ) ? saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sNeutrals * n_adj_sat * ( 1.0f - curr_sat ))) :
-                                                   saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sNeutrals * n_adj_sat ));
+        color.xyz         = ( n_adj_sat > 0.0f ) ?  saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sNeutrals * n_adj_sat * ( 1.0f - curr_sat ))) :
+                                                    saturate( lerp( dot( color.xyz, 0.333333f ), color.xyz, 1.0f + sNeutrals * n_adj_sat ));
+
+        // Lightness
+        float3 temp       = 0.0f;
+
+        // Reds
+        curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
+        temp.xyz          = RGBToHSL( color.xyz );
+        temp.z            = saturate( temp.z * ( 1.0f + r_adj_lig ));
+        temp.z            = brightness_curve( temp.z, max( r_adj_lig_curve, 0.001f ) + 1.0f );                                                   
+        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_r * smoothstep( 0.0f, 0.5f, curr_sat ));
+        // Oranges
+		curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
+        temp.xyz          = RGBToHSL( color.xyz );
+        temp.z            = saturate( temp.z * ( 1.0f + o_adj_lig ));
+        temp.z            = brightness_curve( temp.z, max( o_adj_lig_curve, 0.001f ) + 1.0f );                                                   
+        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_o * smoothstep( 0.0f, 0.5f, curr_sat ));
+        // Yellows
+        curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
+        temp.xyz          = RGBToHSL( color.xyz );
+        temp.z            = saturate( temp.z * ( 1.0f + y_adj_lig ));
+        temp.z            = brightness_curve( temp.z, max( y_adj_lig_curve, 0.001f ) + 1.0f );                                                   
+        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_y * smoothstep( 0.0f, 0.5f, curr_sat ));
+        // Yellow-Greens
+        curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
+        temp.xyz          = RGBToHSL( color.xyz );
+        temp.z            = saturate( temp.z * ( 1.0f + yg_adj_lig ));
+        temp.z            = brightness_curve( temp.z, max( yg_adj_lig_curve, 0.001f ) + 1.0f );                                                   
+        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_yg * smoothstep( 0.0f, 0.5f, curr_sat ));
+        // Greens
+        curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
+        temp.xyz          = RGBToHSL( color.xyz );
+        temp.z            = saturate( temp.z * ( 1.0f + g_adj_lig ));
+        temp.z            = brightness_curve( temp.z, max( g_adj_lig_curve, 0.001f ) + 1.0f );                                                   
+        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_g * smoothstep( 0.0f, 0.5f, curr_sat ));
+        // Green-Cyans
+        curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
+        temp.xyz          = RGBToHSL( color.xyz );
+        temp.z            = saturate( temp.z * ( 1.0f + gc_adj_lig ));
+        temp.z            = brightness_curve( temp.z, max( gc_adj_lig_curve, 0.001f ) + 1.0f );                                                   
+        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_gc * smoothstep( 0.0f, 0.5f, curr_sat ));
+        // Cyans
+        curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
+        temp.xyz          = RGBToHSL( color.xyz );
+        temp.z            = saturate( temp.z * ( 1.0f + c_adj_lig ));
+        temp.z            = brightness_curve( temp.z, max( c_adj_lig_curve, 0.001f ) + 1.0f );                                                   
+        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_c * smoothstep( 0.0f, 0.5f, curr_sat ));
+        // Cyan-Blues
+        curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
+        temp.xyz          = RGBToHSL( color.xyz );
+        temp.z            = saturate( temp.z * ( 1.0f + cb_adj_lig ));
+        temp.z            = brightness_curve( temp.z, max( cb_adj_lig_curve, 0.001f ) + 1.0f );                                                   
+        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_cb * smoothstep( 0.0f, 0.5f, curr_sat ));
+        // Blues
+        curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
+        temp.xyz          = RGBToHSL( color.xyz );
+        temp.z            = saturate( temp.z * ( 1.0f + b_adj_lig ));
+        temp.z            = brightness_curve( temp.z, max( b_adj_lig_curve, 0.001f ) + 1.0f );                                                   
+        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_b * smoothstep( 0.0f, 0.5f, curr_sat ));
+        // Blue-Magentas
+        curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
+        temp.xyz          = RGBToHSL( color.xyz );
+        temp.z            = saturate( temp.z * ( 1.0f + bm_adj_lig ));
+        temp.z            = brightness_curve( temp.z, max( bm_adj_lig_curve, 0.001f ) + 1.0f );                                                   
+        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_bm * smoothstep( 0.0f, 0.5f, curr_sat ));
+        // Magentas
+        curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
+        temp.xyz          = RGBToHSL( color.xyz );
+        temp.z            = saturate( temp.z * ( 1.0f + m_adj_lig ));
+        temp.z            = brightness_curve( temp.z, max( m_adj_lig_curve, 0.001f ) + 1.0f );                                                   
+        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_m * smoothstep( 0.0f, 0.5f, curr_sat ));
+        // Magenta-Reds
+        curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
+        temp.xyz          = RGBToHSL( color.xyz );
+        temp.z            = saturate( temp.z * ( 1.0f + mr_adj_lig ));
+        temp.z            = brightness_curve( temp.z, max( mr_adj_lig_curve, 0.001f ) + 1.0f );                                                   
+        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_mr * smoothstep( 0.0f, 0.5f, curr_sat ));
 
         return float4( color.xyz, 1.0f );
     }
