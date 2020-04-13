@@ -892,9 +892,7 @@ namespace pd80_selectivecolorv2
 
     float curve( float x )
     {
-        //return x * x * ( 3.0 - 2.0 * x );
-        //return x * x * x * ( x * ( x * 6.0f - 15.0f ) + 10.0f );
-        return x;
+        return x * x * ( 3.0 - 2.0 * x );
     }
 
     float smooth( float x )
@@ -1029,7 +1027,7 @@ namespace pd80_selectivecolorv2
         color.z           = color.z + adjustcolor( sNeutrals, color.z, n_adj_yel, n_adj_bla, corr_method );
 
         // Saturation
-        // Make to get current saturation in between each adjustment as there are overlaps
+        // Have to get current saturation in between each adjustment as there are overlaps
         float curr_sat    = 0.0f;
         
         // Reds
