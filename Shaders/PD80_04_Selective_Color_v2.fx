@@ -1099,73 +1099,73 @@ namespace pd80_selectivecolorv2
         temp.xyz          = RGBToHSL( color.xyz );
         temp.z            = saturate( temp.z * ( 1.0f + r_adj_lig ));
         temp.z            = brightness_curve( temp.z, max( r_adj_lig_curve, 0.001f ) + 1.0f );                                                   
-        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_r * smoothstep( 0.0f, 0.5f, curr_sat ));
+        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_r * smooth( curr_sat ));
         // Oranges
 		curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
         temp.xyz          = RGBToHSL( color.xyz );
         temp.z            = saturate( temp.z * ( 1.0f + o_adj_lig ));
         temp.z            = brightness_curve( temp.z, max( o_adj_lig_curve, 0.001f ) + 1.0f );                                                   
-        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_o * smoothstep( 0.0f, 0.5f, curr_sat ));
+        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_o * smooth( curr_sat ));
         // Yellows
         curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
         temp.xyz          = RGBToHSL( color.xyz );
         temp.z            = saturate( temp.z * ( 1.0f + y_adj_lig ));
         temp.z            = brightness_curve( temp.z, max( y_adj_lig_curve, 0.001f ) + 1.0f );                                                   
-        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_y * smoothstep( 0.0f, 0.5f, curr_sat ));
+        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_y * smooth( curr_sat ));
         // Yellow-Greens
         curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
         temp.xyz          = RGBToHSL( color.xyz );
         temp.z            = saturate( temp.z * ( 1.0f + yg_adj_lig ));
         temp.z            = brightness_curve( temp.z, max( yg_adj_lig_curve, 0.001f ) + 1.0f );                                                   
-        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_yg * smoothstep( 0.0f, 0.5f, curr_sat ));
+        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_yg * smooth( curr_sat ));
         // Greens
         curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
         temp.xyz          = RGBToHSL( color.xyz );
         temp.z            = saturate( temp.z * ( 1.0f + g_adj_lig ));
         temp.z            = brightness_curve( temp.z, max( g_adj_lig_curve, 0.001f ) + 1.0f );                                                   
-        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_g * smoothstep( 0.0f, 0.5f, curr_sat ));
+        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_g * smooth( curr_sat ));
         // Green-Cyans
         curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
         temp.xyz          = RGBToHSL( color.xyz );
         temp.z            = saturate( temp.z * ( 1.0f + gc_adj_lig ));
         temp.z            = brightness_curve( temp.z, max( gc_adj_lig_curve, 0.001f ) + 1.0f );                                                   
-        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_gc * smoothstep( 0.0f, 0.5f, curr_sat ));
+        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_gc * smooth( curr_sat ));
         // Cyans
         curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
         temp.xyz          = RGBToHSL( color.xyz );
         temp.z            = saturate( temp.z * ( 1.0f + c_adj_lig ));
         temp.z            = brightness_curve( temp.z, max( c_adj_lig_curve, 0.001f ) + 1.0f );                                                   
-        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_c * smoothstep( 0.0f, 0.5f, curr_sat ));
+        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_c * smooth( curr_sat ));
         // Cyan-Blues
         curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
         temp.xyz          = RGBToHSL( color.xyz );
         temp.z            = saturate( temp.z * ( 1.0f + cb_adj_lig ));
         temp.z            = brightness_curve( temp.z, max( cb_adj_lig_curve, 0.001f ) + 1.0f );                                                   
-        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_cb * smoothstep( 0.0f, 0.5f, curr_sat ));
+        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_cb * smooth( curr_sat ));
         // Blues
         curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
         temp.xyz          = RGBToHSL( color.xyz );
         temp.z            = saturate( temp.z * ( 1.0f + b_adj_lig ));
         temp.z            = brightness_curve( temp.z, max( b_adj_lig_curve, 0.001f ) + 1.0f );                                                   
-        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_b * smoothstep( 0.0f, 0.5f, curr_sat ));
+        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_b * smooth( curr_sat ));
         // Blue-Magentas
         curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
         temp.xyz          = RGBToHSL( color.xyz );
         temp.z            = saturate( temp.z * ( 1.0f + bm_adj_lig ));
         temp.z            = brightness_curve( temp.z, max( bm_adj_lig_curve, 0.001f ) + 1.0f );                                                   
-        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_bm * smoothstep( 0.0f, 0.5f, curr_sat ));
+        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_bm * smooth( curr_sat ));
         // Magentas
         curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
         temp.xyz          = RGBToHSL( color.xyz );
         temp.z            = saturate( temp.z * ( 1.0f + m_adj_lig ));
         temp.z            = brightness_curve( temp.z, max( m_adj_lig_curve, 0.001f ) + 1.0f );                                                   
-        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_m * smoothstep( 0.0f, 0.5f, curr_sat ));
+        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_m * smooth( curr_sat ));
         // Magenta-Reds
         curr_sat          = max( max( color.x, color.y ), color.z ) - min( min( color.x, color.y ), color.z );
         temp.xyz          = RGBToHSL( color.xyz );
         temp.z            = saturate( temp.z * ( 1.0f + mr_adj_lig ));
         temp.z            = brightness_curve( temp.z, max( mr_adj_lig_curve, 0.001f ) + 1.0f );                                                   
-        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_mr * smoothstep( 0.0f, 0.5f, curr_sat ));
+        color.xyz         = lerp( color.xyz, HSLToRGB( temp.xyz ), sw_mr * smooth( curr_sat ));
 
         return float4( color.xyz, 1.0f );
     }
