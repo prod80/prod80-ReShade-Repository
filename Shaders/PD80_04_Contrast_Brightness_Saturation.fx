@@ -129,14 +129,6 @@ namespace pd80_conbrisat
         ui_min = -2.0;
         ui_max = 2.0;
         > = 0.0;
-    uniform float sat_o <
-        ui_label = "Orange Saturation";
-        ui_tooltip = "Orange Saturation";
-        ui_category = "Color Saturation Adjustments";
-        ui_type = "slider";
-        ui_min = -2.0;
-        ui_max = 2.0;
-        > = 0.0;
     uniform float sat_y <
         ui_label = "Yellow Saturation";
         ui_tooltip = "Yellow Saturation";
@@ -277,7 +269,7 @@ namespace pd80_conbrisat
         return x * x * ( 3.0 - 2.0 * x );
     }
 
-    float3 channelsat( float3 col, float r, float o, float y, float g, float a, float b, float p, float m, float hue )
+    float3 channelsat( float3 col, float r, float y, float g, float a, float b, float p, float m, float hue )
     {
         float desat        = getLuminance( col.xyz );
 
@@ -290,19 +282,16 @@ namespace pd80_conbrisat
         // Purple       : 0.75
         // Magenta      : 0.833
 
-        float weight_r     = curve( max( 1.0f - abs(  hue               * 8.0f ), 0.0f )) +
-                             curve( max( 1.0f - abs(( hue - 1.0f      ) * 8.0f ), 0.0f ));
-        float weight_o     = curve( max( 1.0f - abs(( hue - 0.083333f ) * 8.0f ), 0.0f )) +
-                             curve( max( 1.0f - abs(( hue - 1.083333f ) * 8.0f ), 0.0f ));
-        float weight_y     = curve( max( 1.0f - abs(( hue - 0.166667f ) * 8.0f ), 0.0f ));
-        float weight_g     = curve( max( 1.0f - abs(( hue - 0.333333f ) * 8.0f ), 0.0f ));
-        float weight_a     = curve( max( 1.0f - abs(( hue - 0.5f      ) * 8.0f ), 0.0f ));
-        float weight_b     = curve( max( 1.0f - abs(( hue - 0.666667f ) * 8.0f ), 0.0f ));
-        float weight_p     = curve( max( 1.0f - abs(( hue - 0.75f     ) * 8.0f ), 0.0f ));
-        float weight_m     = curve( max( 1.0f - abs(( hue - 0.833333f ) * 8.0f ), 0.0f ));
+        float weight_r     = curve( max( 1.0f - abs(  hue               * 6.0f ), 0.0f )) +
+                             curve( max( 1.0f - abs(( hue - 1.0f      ) * 6.0f ), 0.0f ));
+        float weight_y     = curve( max( 1.0f - abs(( hue - 0.166667f ) * 6.0f ), 0.0f ));
+        float weight_g     = curve( max( 1.0f - abs(( hue - 0.333333f ) * 6.0f ), 0.0f ));
+        float weight_a     = curve( max( 1.0f - abs(( hue - 0.5f      ) * 6.0f ), 0.0f ));
+        float weight_b     = curve( max( 1.0f - abs(( hue - 0.666667f ) * 6.0f ), 0.0f ));
+        float weight_p     = curve( max( 1.0f - abs(( hue - 0.75f     ) * 6.0f ), 0.0f ));
+        float weight_m     = curve( max( 1.0f - abs(( hue - 0.833333f ) * 6.0f ), 0.0f ));
 
         col.xyz            = lerp( desat, col.xyz, clamp( 1.0f + r * weight_r, 0.0f, 2.0f ));
-        col.xyz            = lerp( desat, col.xyz, clamp( 1.0f + o * weight_o, 0.0f, 2.0f ));
         col.xyz            = lerp( desat, col.xyz, clamp( 1.0f + y * weight_y, 0.0f, 2.0f ));
         col.xyz            = lerp( desat, col.xyz, clamp( 1.0f + g * weight_g, 0.0f, 2.0f ));
         col.xyz            = lerp( desat, col.xyz, clamp( 1.0f + a * weight_a, 0.0f, 2.0f ));
@@ -362,7 +351,7 @@ namespace pd80_conbrisat
         color.xyz        = lerp( color.xyz, dcolor.xyz, enable_depth * depth ); // apply based on depth
 
         float chue       = RGBToHSL( color.xyz ).x;
-        color.xyz        = channelsat( color.xyz, sat_r, sat_o, sat_y, sat_g, sat_a, sat_b, sat_p, sat_m, chue );
+        color.xyz        = channelsat( color.xyz, sat_r, sat_y, sat_g, sat_a, sat_b, sat_p, sat_m, chue );
         color.xyz        = customsat( color.xyz, huemid, huerange, sat_custom, chue );
 
         color.xyz        = display_depth ? depth.xxx : color.xyz; // show depth
