@@ -30,6 +30,7 @@
 #include "ReShadeUI.fxh"
 #include "PD80_00_Noise_Samplers.fxh"
 #include "PD80_00_Color_Spaces.fxh"
+#include "PD80_00_Base_Effects.fxh"
 
 namespace pd80_hqbloom
 {
@@ -120,6 +121,14 @@ namespace pd80_hqbloom
         ui_min = 10.0;
         ui_max = 300.0;
         > = 30.0;
+    uniform float BloomSaturation <
+        ui_label = "Bloom Add Saturation";
+        ui_tooltip = "Bloom Add Saturation";
+        ui_category = "Bloom";
+        ui_type = "slider";
+        ui_min = 0.0;
+        ui_max = 2.0;
+        > = 0.0;
     #if( BLOOM_ENABLE_CA == 0 )
     uniform bool enableBKelvin <
         ui_label  = "Enable Bloom Color Temp (K)";
@@ -490,6 +499,8 @@ namespace pd80_hqbloom
             bloom.xyz      = HSLToRGB( float3( retHSV.xy, bLum.z ));
         }
         #endif
+        // Vibrance
+        bloom.xyz        = vib( bloom.xyz, BloomSaturation );
         float3 bcolor    = screen( color.xyz, bloom.xyz );
         color.xyz        = lerp( color.xyz, bcolor.xyz, BloomMix );
         color.xyz        = debugBloom ? bloom.xyz : color.xyz; // render only bloom to screen
@@ -505,12 +516,15 @@ namespace pd80_hqbloom
     //// TECHNIQUES /////////////////////////////////////////////////////////////////
     technique prod80_02_Bloom
         < ui_tooltip = "Bloom\n\n"
-			   "Bloom is an effect that causes diffraction of light around bright reflective or emittive sources\n"
-               "Preprocessor Settings\n"
-               "BLOOM_ENABLE_CA: Enables a chromatic aberration effect on bloom\n"
-               "BLOOM_QUALITY_0_TO_2: Sets the quality, 0 is full (and heavy!), 2 is low and very fast, 1 is high quality and best trade off between quality and performance\n"
-               "BLOOM_LOOPCOUNT: Limit to the amount of loops of the Width effect. Wider blooms may need higher values (eg. max width is 300, this value should be 300)\n"
-               "BLOOM_LIMITER: Limiter to the bloom. Wider blooms may need lower values or the bloom starts to look rectangular (eg. 0.0001 (default) is good to about width 100, after that start to decrease this value)";>
+			   "Bloom is an effect that causes diffraction of light around bright reflective or emittive sources\n\n"
+               "Preprocessor Settings\n\n"
+               "BLOOM_ENABLE_CA: Enables a chromatic aberration effect on bloom\n\n"
+               "BLOOM_QUALITY_0_TO_2: Sets the quality, 0 is full (and heavy!), 2 is low and very fast,\n"
+               "1 is high quality and best trade off between quality and performance\n\n"
+               "BLOOM_LOOPCOUNT: Limit to the amount of loops of the Width effect. Wider blooms may need higher\n"
+               "values (eg. max width is 300, this value should be 300)\n\n"
+               "BLOOM_LIMITER: Limiter to the bloom. Wider blooms may need lower values or the bloom starts to look\n"
+               "rectangular (eg. 0.0001 (default) is good to about width 100, after that start to decrease this value)";>
     {
         pass BLuma
         {
