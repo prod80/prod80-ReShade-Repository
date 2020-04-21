@@ -49,6 +49,14 @@ namespace pd80_hqbloom
     #ifndef BLOOM_QUALITY_0_TO_2
         #define BLOOM_QUALITY_0_TO_2	1
     #endif
+    
+    #ifndef BLOOM_LOOPCOUNT
+        #define BLOOM_LOOPCOUNT         300
+    #endif
+    
+    #ifndef BLOOM_LIMITER
+        #define BLOOM_LIMITER           0.0001
+    #endif
 
     // Dodgy code that should avoid some compilation errors that seem to happen sometimes for no particular reason
     #if( BLOOM_QUALITY_0_TO_2 > 2 )
@@ -71,7 +79,7 @@ namespace pd80_hqbloom
         ui_type = "slider";
         ui_min = 0.0;
         ui_max = 10.0;
-        > = 1.0;
+        > = 2.0;
     uniform float BloomMix <
         ui_label = "Bloom Mix";
         ui_tooltip = "Bloom Mix";
@@ -102,7 +110,7 @@ namespace pd80_hqbloom
         ui_category = "Bloom";
         ui_type = "slider";
         ui_min = -1.0;
-        ui_max = 1.0;
+        ui_max = 5.0;
         > = 0.0;
     uniform float BlurSigma <
         ui_label = "Bloom Width";
@@ -110,7 +118,7 @@ namespace pd80_hqbloom
         ui_category = "Bloom";
         ui_type = "slider";
         ui_min = 10.0;
-        ui_max = 100.0;
+        ui_max = 300.0;
         > = 30.0;
     #if( BLOOM_ENABLE_CA == 0 )
     uniform bool enableBKelvin <
@@ -199,8 +207,20 @@ namespace pd80_hqbloom
     sampler samplerBLuma { Texture = texBLuma; };
     sampler samplerBAvgLuma { Texture = texBAvgLuma; };
     sampler samplerBPrevAvgLuma { Texture = texBPrevAvgLuma; };
-    sampler samplerBloomIn { Texture = texBloomIn; };
-    sampler samplerBloomH { Texture = texBloomH; };
+    sampler samplerBloomIn
+    {
+        Texture = texBloomIn;
+        AddressU = BORDER;
+	    AddressV = BORDER;
+	    AddressW = BORDER;
+    };
+    sampler samplerBloomH
+    {
+        Texture = texBloomH;
+        AddressU = BORDER;
+	    AddressV = BORDER;
+	    AddressW = BORDER;
+    };
     #if( BLOOM_ENABLE_CA == 1 )
     sampler samplerCABloom { Texture = texCABloom; };
     #endif
@@ -209,7 +229,7 @@ namespace pd80_hqbloom
     uniform float frametime < source = "frametime"; >;
     #define LumCoeff float3(0.212656, 0.715158, 0.072186)
     #define PI 3.141592f
-    #define LOOPCOUNT 150.0f
+    #define LOOPCOUNT 500.0f
     #define aspect float( BUFFER_WIDTH * BUFFER_RCP_HEIGHT )
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
     float getLuminance( in float3 x )
@@ -306,7 +326,7 @@ namespace pd80_hqbloom
         Sigma.xy         *= Sigma.yz;
 
         [loop]
-        for( int i = 0; i < LOOPCOUNT && Sigma.x > 0.001f; ++i )
+        for( int i = 0; i < BLOOM_LOOPCOUNT && Sigma.x > BLOOM_LIMITER; ++i )
         {
             buffSigma.x  = Sigma.x * Sigma.y;
             buffSigma.y  = Sigma.x + buffSigma.x;
@@ -350,7 +370,7 @@ namespace pd80_hqbloom
         Sigma.xy         *= Sigma.yz;
 
         [loop]
-        for( int i = 0; i < LOOPCOUNT && Sigma.x > 0.001f; ++i )
+        for( int i = 0; i < BLOOM_LOOPCOUNT && Sigma.x > BLOOM_LIMITER; ++i )
         {
             buffSigma.x  = Sigma.x * Sigma.y;
             buffSigma.y  = Sigma.x + buffSigma.x;
@@ -457,12 +477,9 @@ namespace pd80_hqbloom
         #endif
         float4 color     = tex2D( ReShade::BackBuffer, texcoord );
         // Dither
-        float2 uv        = float2( BUFFER_WIDTH, BUFFER_HEIGHT ) / 512.0f;
-        uv.xy            *= texcoord.xy;
-        float4 dnoise    = tex2D( samplerGaussNoise, uv );
-        float bits       = max( 1.0f - BloomLimit, 0.012f ) * 255.0f;
+        float4 dnoise    = dither( samplerRGBNoise, texcoord.xy, 0, 1, dither_strength, 1, 2.0f - ( 1.0f - BloomLimit ) );
         float3 steps     = smoothstep( 0.0f, 0.012f, bloom.xyz );
-        bloom.xyz        = saturate( bloom.xyz + lerp( -dither_strength/bits, dither_strength/bits, dnoise.x ) * steps.xyz );
+        bloom.xyz        = saturate( bloom.xyz + dnoise.xyz * steps.xyz );
 
         #if( BLOOM_ENABLE_CA == 0 )
         if( enableBKelvin )
@@ -487,6 +504,13 @@ namespace pd80_hqbloom
 
     //// TECHNIQUES /////////////////////////////////////////////////////////////////
     technique prod80_02_Bloom
+        < ui_tooltip = "Bloom\n\n"
+			   "Bloom is an effect that causes diffraction of light around bright reflective or emittive sources\n"
+               "Preprocessor Settings\n"
+               "BLOOM_ENABLE_CA: Enables a chromatic aberration effect on bloom\n"
+               "BLOOM_QUALITY_0_TO_2: Sets the quality, 0 is full (and heavy!), 2 is low and very fast, 1 is high quality and best trade off between quality and performance\n"
+               "BLOOM_LOOPCOUNT: Limit to the amount of loops of the Width effect. Wider blooms may need higher values (eg. max width is 300, this value should be 300)\n"
+               "BLOOM_LIMITER: Limiter to the bloom. Wider blooms may need lower values or the bloom starts to look rectangular (eg. 0.0001 (default) is good to about width 100, after that start to decrease this value)";>
     {
         pass BLuma
         {
