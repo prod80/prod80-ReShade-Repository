@@ -380,7 +380,7 @@ namespace pd80_filmgrain
         float4 noise      = tex2D( samplerNoise, texcoord );
 #endif
         float4 color      = tex2D( ReShade::BackBuffer, texcoord );
-
+        
         // Unpack noise
         noise.xyz         = noise.xyz * 2.0f - 1.0f;
         
