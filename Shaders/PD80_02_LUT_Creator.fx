@@ -50,6 +50,18 @@
 
 #include "ReShade.fxh"
 
+#ifndef PD80_LC_TEXTURE_NAME
+    #define PD80_LC_TEXTURE_NAME    "pd80_neutral-lut.png"
+#endif
+
+#ifndef PD80_LC_TEXTURE_WIDTH
+    #define PD80_LC_TEXTURE_WIDTH   512.0
+#endif
+
+#ifndef PD80_LC_TEXTURE_HEIGHT
+    #define PD80_LC_TEXTURE_HEIGHT  512.0
+#endif
+
 namespace pd80_lutoverlay
 {
     //// PREPROCESSOR DEFINITIONS ///////////////////////////////////////////////////
@@ -57,7 +69,7 @@ namespace pd80_lutoverlay
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
 
     //// TEXTURES ///////////////////////////////////////////////////////////////////
-    texture texPicture < source = "pd80_neutral-lut.png"; > { Width = 512; Height = 512; Format = RGBA8; };
+    texture texPicture < source = PD80_LC_TEXTURE_NAME; > { Width = PD80_LC_TEXTURE_WIDTH; Height = PD80_LC_TEXTURE_HEIGHT; Format = RGBA8; };
     
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
     sampler samplerPicture {
@@ -74,11 +86,11 @@ namespace pd80_lutoverlay
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
     float4 PS_OverlayLUT(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
-        float2 coords   = float2( BUFFER_WIDTH, BUFFER_HEIGHT ) / 512.0f;
+        float2 coords   = float2( BUFFER_WIDTH, BUFFER_HEIGHT ) / float2( PD80_LC_TEXTURE_WIDTH, PD80_LC_TEXTURE_HEIGHT );
         coords.xy      *= texcoord.xy;
         float3 lut      = tex2D( samplerPicture, coords ).xyz;
         float3 color    = tex2D( ReShade::BackBuffer, texcoord ).xyz;
-        float2 cutoff   = float2( BUFFER_RCP_WIDTH * 512.0f, BUFFER_RCP_HEIGHT * 512.0f );
+        float2 cutoff   = float2( BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT ) * float2( PD80_LC_TEXTURE_WIDTH, PD80_LC_TEXTURE_HEIGHT );
         color           = ( texcoord.y > cutoff.y || texcoord.x > cutoff.x ) ? color : lut;
         
         return float4( color.xyz, 1.0f );
