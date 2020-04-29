@@ -151,11 +151,11 @@ float3 pd80_srgb_to_xyz( float3 c )
     // Source: http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
     // sRGB to XYZ (D65) - Standard sRGB reference white ( 0.95047, 1.0, 1.08883 )
     const float3x3 mat = float3x3(
-    0.4124564, 0.2126729, 0.0193339,
-    0.3575761, 0.7151521, 0.1191920,
-    0.1804375, 0.0721750, 0.9503041
+    0.4124564, 0.3575761, 0.1804375,
+    0.2126729, 0.7151522, 0.0721750,
+    0.0193339, 0.1191920, 0.9503041
     );
-    return mul( c, mat );
+    return mul( mat, c );
 }
 
 float3 pd80_xyz_to_srgb( float3 c )
@@ -163,11 +163,11 @@ float3 pd80_xyz_to_srgb( float3 c )
     // Source: http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
     // XYZ to sRGB (D65) - Standard sRGB reference white ( 0.95047, 1.0, 1.08883 )
     const float3x3 mat = float3x3(
-    3.2404542,-0.9692660, 0.0556434,
-   -1.5371385, 1.8760108,-0.2040259,
-   -0.4985314, 0.0415560, 1.0572252
+    3.2404542,-1.5371385,-0.4985314,
+   -0.9692660, 1.8760108, 0.0415560,
+    0.0556434,-0.2040259, 1.0572252
     );
-    return mul( c, mat );
+    return mul( mat, c );
 }
 
 // Maximum value in LAB, B channel is pure blue with 107.8602... divide by 108 to get 0..1 range values
