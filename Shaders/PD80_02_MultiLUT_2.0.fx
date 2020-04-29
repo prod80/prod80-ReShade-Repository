@@ -27,14 +27,14 @@
 	#define PD80_TileAmount     64      // Number of tiles / LUT
 #endif
 #ifndef PD80_LutAmount
-	#define PD80_LutAmount      38      // Number of LUTs
+	#define PD80_LutAmount      40      // Number of LUTs
 #endif
 #ifndef PD80_UseLevels
     #define PD80_UseLevels      0
 #endif
 
 // Example: "LUT Name 01\0LUT Name 02\0LUT Name 03\0LUT Name 04\0LUT Name 05\0"
-#define PD80_DropDownMenu       "PD80 Cinematic 01\0PD80 Cinematic 02\0PD80 Cinematic 03\0PD80 Cinematic 04\0PD80 Cinematic 05\0PD80 Cinematic 06\0PD80 Cinematic 07\0PD80 Cinematic 08\0PD80 Cinematic 09\0PD80 Cinematic 10\0PD80 Cinematic 11\0PD80 Cinematic 12\0PD80 Cinematic 13\0PD80 Cinematic 14\0PD80 Cinematic 15\0PD80 Cinematic 16\0PD80 Cinematic 17\0PD80 Cinematic 18\0PD80 Cinematic 19\0PD80 Cinematic 20\0PD80 Cinematic 21\0PD80 Cinematic 22\0PD80 Cinematic 23\0PD80 Cinematic 24\0PD80 Cinematic 25\0PD80 Cinematic 26\0PD80 Cinematic 27\0PD80 Cinematic 28\0PD80 Cinematic 29\0PD80 Cinematic 30\0PD80 Cinematic 31\0PD80 Cinematic 32\0PD80 Cinematic 33\0PD80 Cinematic 34\0PD80 Cinematic 35\0PD80 Cinematic 36\0PD80 Cinematic 37\0PD80 Cinematic 38\0"    
+#define PD80_DropDownMenu       "PD80 Cinematic 01\0PD80 Cinematic 02\0PD80 Cinematic 03\0PD80 Cinematic 04\0PD80 Cinematic 05\0PD80 Cinematic 06\0PD80 Cinematic 07\0PD80 Cinematic 08\0PD80 Cinematic 09\0PD80 Cinematic 10\0PD80 Cinematic 11\0PD80 Cinematic 12\0PD80 Cinematic 13\0PD80 Cinematic 14\0PD80 Cinematic 15\0PD80 Cinematic 16\0PD80 Cinematic 17\0PD80 Cinematic 18\0PD80 Cinematic 19\0PD80 Cinematic 20\0PD80 Cinematic 21\0PD80 Cinematic 22\0PD80 Cinematic 23\0PD80 Cinematic 24\0PD80 Cinematic 25\0PD80 Cinematic 26\0PD80 Cinematic 27\0PD80 Cinematic 28\0PD80 Cinematic 29\0PD80 Cinematic 30\0PD80 Cinematic 31\0PD80 Cinematic 32\0PD80 Cinematic 33\0PD80 Cinematic 34\0PD80 Cinematic 35\0PD80 Cinematic 36\0PD80 Cinematic 37\0PD80 Cinematic 38\0PD80 Cinematic 39\0PD80 Cinematic 40\0"    
 
 #include "ReShade.fxh"
 #include "PD80_00_Noise_Samplers.fxh"
