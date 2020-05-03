@@ -2,20 +2,15 @@
     Description : PD80 01 HQ Bloom for Reshade https://reshade.me/
     Author      : prod80 (Bas Veth)
     License     : MIT, Copyright (c) 2020 prod80
-
-
     MIT License
-
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
     in the Software without restriction, including without limitation the rights
     to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
     copies of the Software, and to permit persons to whom the Software is
     furnished to do so, subject to the following conditions:
-
     The above copyright notice and this permission notice shall be included in all
     copies or substantial portions of the Software.
-
     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
     IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -57,6 +52,10 @@ namespace pd80_hqbloom
     
     #ifndef BLOOM_LIMITER
         #define BLOOM_LIMITER           0.0001
+    #endif
+
+    #ifndef BLOOM_USE_FOCUS_BLOOM
+        #define BLOOM_USE_FOCUS_BLOOM   0
     #endif
 
     // Dodgy code that should avoid some compilation errors that seem to happen sometimes for no particular reason
@@ -113,11 +112,7 @@ namespace pd80_hqbloom
         ui_min = -1.0;
         ui_max = 5.0;
         > = 0.0;
-    uniform bool use_focus_bloom <
-        ui_label = "Enable Focus Bloom";
-        ui_tooltip = "Enable Focus Bloom";
-        ui_category = "Bloom";
-        > = false;
+#if( BLOOM_USE_FOCUS_BLOOM )
     uniform float fBloomStrength <
         ui_label = "Bloom Width (Focus Center) Bias";
         ui_tooltip = "Bloom Width (Focus Center) Bias";
@@ -125,15 +120,16 @@ namespace pd80_hqbloom
         ui_type = "slider";
         ui_min = 0.0;
         ui_max = 1.0;
-        > = 0.5;
+        > = 0.25;
     uniform float BlurSigmaNarrow <
         ui_label = "Bloom Width (Focus Center)";
         ui_tooltip = "Bloom Width (Focus Center)";
         ui_category = "Bloom";
         ui_type = "slider";
         ui_min = 10.0;
-        ui_max = 60.0;
+        ui_max = 40.0;
         > = 15.0;
+#endif
     uniform float BlurSigma <
         ui_label = "Bloom Width";
         ui_tooltip = "Bloom Width";
@@ -215,6 +211,11 @@ namespace pd80_hqbloom
         texture texBloomIn { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
         texture texBloomH { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
         texture texBloom { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
+        texture texBloomAll { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
+    #if( BLOOM_USE_FOCUS_BLOOM )
+        texture texBloomHF { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
+        texture texBloomF { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
+    #endif
         #define SWIDTH   BUFFER_WIDTH
         #define SHEIGHT  BUFFER_HEIGHT
     #elif( BLOOM_QUALITY_0_TO_2 == 1 )
@@ -223,12 +224,22 @@ namespace pd80_hqbloom
         texture texBloomIn { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
         texture texBloomH { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
         texture texBloom { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
+        texture texBloomAll { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
+    #if( BLOOM_USE_FOCUS_BLOOM )
+        texture texBloomF { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
+        texture texBloomHF { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
+    #endif
     #else
         #define SWIDTH   ( BUFFER_WIDTH / 4 )
         #define SHEIGHT  ( BUFFER_HEIGHT / 4 )
         texture texBloomIn { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
         texture texBloomH { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
         texture texBloom { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
+        texture texBloomAll { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
+    #if( BLOOM_USE_FOCUS_BLOOM )
+        texture texBloomF { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
+        texture texBloomHF { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
+    #endif
     #endif
 
     //// SAMPLERS ///////////////////////////////////////////////////////////////////
@@ -251,10 +262,21 @@ namespace pd80_hqbloom
 	    AddressV = BORDER;
 	    AddressW = BORDER;
     };
+    #if( BLOOM_USE_FOCUS_BLOOM )
+    sampler samplerBloomHF
+    {
+        Texture = texBloomHF;
+        AddressU = BORDER;
+	    AddressV = BORDER;
+	    AddressW = BORDER;
+    };
+    sampler samplerBloomF { Texture = texBloomF; };
+    #endif
     #if( BLOOM_ENABLE_CA == 1 )
     sampler samplerCABloom { Texture = texCABloom; };
     #endif
     sampler samplerBloom { Texture = texBloom; };
+    sampler samplerBloomAll { Texture = texBloomAll; };
     //// DEFINES ////////////////////////////////////////////////////////////////////
     uniform float frametime < source = "frametime"; >;
     #define LumCoeff float3(0.212656, 0.715158, 0.072186)
@@ -337,48 +359,35 @@ namespace pd80_hqbloom
         float2 buffSigma = 0.0f;
         #if( BLOOM_QUALITY_0_TO_2 == 0 )
             float bSigma = BlurSigma;
-            float bFocus = BlurSigmaNarrow;
         #elif( BLOOM_QUALITY_0_TO_2 == 1 )
             float bSigma = BlurSigma * 0.5f;
-            float bFocus = BlurSigmaNarrow * 0.5f;
         #else
             float bSigma = BlurSigma * 0.25f;
-            float bFocus = BlurSigmaNarrow * 0.25f;
         #endif
         //Gaussian Math
         float3 Sigma;
         Sigma.x          = 1.0f / ( sqrt( 2.0f * PI ) * bSigma );
         Sigma.y          = exp( -0.5f / ( bSigma * bSigma ));
         Sigma.z          = Sigma.y * Sigma.y;
-        //Focus Bloom
-        float3 fSigma;
-        fSigma.x         = 1.0f / ( sqrt( 2.0f * PI ) * bFocus );
-        fSigma.y         = exp( -0.5f / ( bFocus * bFocus ));
-        fSigma.z         = fSigma.y * fSigma.y;
-        fSigma.xyz       = use_focus_bloom ? fSigma.xyz : 0.0f;
-        fSigma.x         *= fBloomStrength;
 
         //Center Weight
-        color.xyz        *= ( Sigma.x + fSigma.x );
+        color.xyz        *= Sigma.x;
         //Adding to total sum of distributed weights
         SigmaSum         += Sigma.x;
         //Setup next weight
         Sigma.xy         *= Sigma.yz;
-        fSigma.xy        *= fSigma.yz;
 
         [loop]
         for( int i = 0; i < BLOOM_LOOPCOUNT && Sigma.x > BLOOM_LIMITER; ++i )
         {
-            buffSigma.x  = Sigma.x * Sigma.y + fSigma.x * fSigma.y;
-            buffSigma.y  = Sigma.x + fSigma.x + buffSigma.x;
+            buffSigma.x  = Sigma.x * Sigma.y;
+            buffSigma.y  = Sigma.x + buffSigma.x;
             color        += tex2Dlod( samplerBloomIn, float4( texcoord.xy + float2( pxlOffset * px, 0.0f ), 0, 0 )) * buffSigma.y;
             color        += tex2Dlod( samplerBloomIn, float4( texcoord.xy - float2( pxlOffset * px, 0.0f ), 0, 0 )) * buffSigma.y;
-            SigmaSum     += ( 2.0f * Sigma.x + 2.0f * buffSigma.x + 2.0f * fSigma.x );
+            SigmaSum     += ( 2.0f * Sigma.x + 2.0f * buffSigma.x );
             pxlOffset    += 2.0f;
             Sigma.xy     *= Sigma.yz;
             Sigma.xy     *= Sigma.yz;
-            fSigma.xy    *= fSigma.yz;
-            fSigma.xy    *= fSigma.yz;
         }
 
         color            /= SigmaSum;
@@ -394,59 +403,147 @@ namespace pd80_hqbloom
         float2 buffSigma = 0.0f;
         #if( BLOOM_QUALITY_0_TO_2 == 0 )
             float bSigma = BlurSigma;
-            float bFocus = BlurSigmaNarrow;
         #elif( BLOOM_QUALITY_0_TO_2 == 1 )
             float bSigma = BlurSigma * 0.5f;
-            float bFocus = BlurSigmaNarrow * 0.5f;
         #else
             float bSigma = BlurSigma * 0.25f;
-            float bFocus = BlurSigmaNarrow * 0.25f;
         #endif
         //Gaussian Math
         float3 Sigma;
         Sigma.x          = 1.0f / ( sqrt( 2.0f * PI ) * bSigma );
         Sigma.y          = exp( -0.5f / ( bSigma * bSigma ));
         Sigma.z          = Sigma.y * Sigma.y;
-        //Focus Bloom
-        float3 fSigma;
-        fSigma.x         = 1.0f / ( sqrt( 2.0f * PI ) * bFocus );
-        fSigma.y         = exp( -0.5f / ( bFocus * bFocus ));
-        fSigma.z         = fSigma.y * fSigma.y;
-        fSigma.xyz       = use_focus_bloom ? fSigma.xyz : 0.0f;
-        fSigma.x         *= fBloomStrength;
 
         //Center Weight
-        color.xyz        *= ( Sigma.x + fSigma.x );
+        color.xyz        *= Sigma.x;
         //Adding to total sum of distributed weights
         SigmaSum         += Sigma.x;
         //Setup next weight
         Sigma.xy         *= Sigma.yz;
-        fSigma.xy        *= fSigma.yz;
 
         [loop]
         for( int i = 0; i < BLOOM_LOOPCOUNT && Sigma.x > BLOOM_LIMITER; ++i )
         {
-            buffSigma.x  = Sigma.x * Sigma.y + fSigma.x * fSigma.y;
-            buffSigma.y  = Sigma.x + fSigma.x + buffSigma.x;
+            buffSigma.x  = Sigma.x * Sigma.y;
+            buffSigma.y  = Sigma.x + buffSigma.x;
             color        += tex2Dlod( samplerBloomH, float4( texcoord.xy + float2( 0.0f, pxlOffset * py ), 0, 0 )) * buffSigma.y;
             color        += tex2Dlod( samplerBloomH, float4( texcoord.xy - float2( 0.0f, pxlOffset * py ), 0, 0 )) * buffSigma.y;
-            SigmaSum     += ( 2.0f * Sigma.x + 2.0f * buffSigma.x + 2.0f * fSigma.x );
+            SigmaSum     += ( 2.0f * Sigma.x + 2.0f * buffSigma.x );
             pxlOffset    += 2.0f;
             Sigma.xy     *= Sigma.yz;
             Sigma.xy     *= Sigma.yz;
-            fSigma.xy    *= fSigma.yz;
-            fSigma.xy    *= fSigma.yz;
         }
 
         color            /= SigmaSum;
         return color;
-    }   
+    }
 
-    #if( BLOOM_ENABLE_CA == 1 )
+    #if( BLOOM_USE_FOCUS_BLOOM )
+    float4 PS_GaussianHF(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
+    {
+        float4 color     = tex2D( samplerBloomIn, texcoord );
+        float px         = rcp( SWIDTH );
+        float SigmaSum   = 0.0f;
+        float pxlOffset  = 1.5f;
+        float2 buffSigma = 0.0f;
+        #if( BLOOM_QUALITY_0_TO_2 == 0 )
+            float bSigma = BlurSigmaNarrow;
+        #elif( BLOOM_QUALITY_0_TO_2 == 1 )
+            float bSigma = BlurSigmaNarrow * 0.5f;
+        #else
+            float bSigma = BlurSigmaNarrow * 0.25f;
+        #endif
+        //Gaussian Math
+        float3 Sigma;
+        Sigma.x          = 1.0f / ( sqrt( 2.0f * PI ) * bSigma );
+        Sigma.y          = exp( -0.5f / ( bSigma * bSigma ));
+        Sigma.z          = Sigma.y * Sigma.y;
+
+        //Center Weight
+        color.xyz        *= Sigma.x;
+        //Adding to total sum of distributed weights
+        SigmaSum         += Sigma.x;
+        //Setup next weight
+        Sigma.xy         *= Sigma.yz;
+
+        [loop]
+        for( int i = 0; i < BLOOM_LOOPCOUNT && Sigma.x > BLOOM_LIMITER; ++i )
+        {
+            buffSigma.x  = Sigma.x * Sigma.y;
+            buffSigma.y  = Sigma.x + buffSigma.x;
+            color        += tex2Dlod( samplerBloomIn, float4( texcoord.xy + float2( pxlOffset * px, 0.0f ), 0, 0 )) * buffSigma.y;
+            color        += tex2Dlod( samplerBloomIn, float4( texcoord.xy - float2( pxlOffset * px, 0.0f ), 0, 0 )) * buffSigma.y;
+            SigmaSum     += ( 2.0f * Sigma.x + 2.0f * buffSigma.x );
+            pxlOffset    += 2.0f;
+            Sigma.xy     *= Sigma.yz;
+            Sigma.xy     *= Sigma.yz;
+        }
+
+        color            /= SigmaSum;
+        return color;
+    }
+
+    float4 PS_GaussianVF(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
+    {
+        float4 color     = tex2D( samplerBloomHF, texcoord );
+        float py         = rcp( SHEIGHT );
+        float SigmaSum   = 0.0f;
+        float pxlOffset  = 1.5f;
+        float2 buffSigma = 0.0f;
+        #if( BLOOM_QUALITY_0_TO_2 == 0 )
+            float bSigma = BlurSigmaNarrow;
+        #elif( BLOOM_QUALITY_0_TO_2 == 1 )
+            float bSigma = BlurSigmaNarrow * 0.5f;
+        #else
+            float bSigma = BlurSigmaNarrow * 0.25f;
+        #endif
+        //Gaussian Math
+        float3 Sigma;
+        Sigma.x          = 1.0f / ( sqrt( 2.0f * PI ) * bSigma );
+        Sigma.y          = exp( -0.5f / ( bSigma * bSigma ));
+        Sigma.z          = Sigma.y * Sigma.y;
+
+        //Center Weight
+        color.xyz        *= Sigma.x;
+        //Adding to total sum of distributed weights
+        SigmaSum         += Sigma.x;
+        //Setup next weight
+        Sigma.xy         *= Sigma.yz;
+
+        [loop]
+        for( int i = 0; i < BLOOM_LOOPCOUNT && Sigma.x > BLOOM_LIMITER; ++i )
+        {
+            buffSigma.x  = Sigma.x * Sigma.y;
+            buffSigma.y  = Sigma.x + buffSigma.x;
+            color        += tex2Dlod( samplerBloomHF, float4( texcoord.xy + float2( 0.0f, pxlOffset * py ), 0, 0 )) * buffSigma.y;
+            color        += tex2Dlod( samplerBloomHF, float4( texcoord.xy - float2( 0.0f, pxlOffset * py ), 0, 0 )) * buffSigma.y;
+            SigmaSum     += ( 2.0f * Sigma.x + 2.0f * buffSigma.x );
+            pxlOffset    += 2.0f;
+            Sigma.xy     *= Sigma.yz;
+            Sigma.xy     *= Sigma.yz;
+        }
+
+        color            /= SigmaSum;
+        return color;
+    }
+    #endif
+
+    float4 PS_Combine(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
+    {
+        float4 widebloom = tex2D( samplerBloom, texcoord );
+        #if( BLOOM_USE_FOCUS_BLOOM )
+        float4 narrbloom = tex2D( samplerBloomF, texcoord );
+        return saturate( widebloom * ( 1.0 - fBloomStrength ) + narrbloom * fBloomStrength );
+        #else
+        return widebloom;
+        #endif
+    }
+
+    #if( BLOOM_ENABLE_CA )
     float4 PS_CA(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color      = 0.0f;
-        float3 orig       = tex2D( samplerBloom, texcoord ).xyz;
+        float3 orig       = tex2D( samplerBloomAll, texcoord ).xyz;
         float px          = BUFFER_RCP_WIDTH;
         float py          = BUFFER_RCP_HEIGHT;
 
@@ -512,7 +609,7 @@ namespace pd80_hqbloom
         {
             huecolor.xyz  = HUEToRGB( i / 8.0f );
             o2            = lerp( -caWidth, caWidth, i / o1 );
-            temp.xyz      = tex2D( samplerBloom, texcoord.xy + float2( o2 * offsetX, o2 * offsetY )).xyz;
+            temp.xyz      = tex2D( samplerBloomAll, texcoord.xy + float2( o2 * offsetX, o2 * offsetY )).xyz;
             color.xyz     += temp.xyz * huecolor.xyz;
             d.xyz         += huecolor.xyz;
         }
@@ -525,10 +622,10 @@ namespace pd80_hqbloom
 
     float4 PS_Gaussian(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
-        #if( BLOOM_ENABLE_CA == 0 )
-        float4 bloom     = tex2D( samplerBloom, texcoord );
+        #if( !BLOOM_ENABLE_CA )
+        float4 bloom     = tex2D( samplerBloomAll, texcoord );
         #endif
-        #if( BLOOM_ENABLE_CA == 1 )
+        #if( BLOOM_ENABLE_CA )
         float4 bloom     = tex2D( samplerCABloom, texcoord );
         #endif
         float4 color     = tex2D( ReShade::BackBuffer, texcoord );
@@ -571,7 +668,8 @@ namespace pd80_hqbloom
                "BLOOM_LOOPCOUNT: Limit to the amount of loops of the Width effect. Wider blooms may need higher\n"
                "values (eg. max width is 300, this value should be 300)\n\n"
                "BLOOM_LIMITER: Limiter to the bloom. Wider blooms may need lower values or the bloom starts to look\n"
-               "rectangular (eg. 0.0001 (default) is good to about width 100, after that start to decrease this value)";>
+               "rectangular (eg. 0.0001 (default) is good to about width 100, after that start to decrease this value)\n\n"
+               "BLOOM_USE_FOCUS_BLOOM: Enables another 2 passes to add a narrow bloom on top of the wide bloom";>
     {
         pass BLuma
         {
@@ -608,6 +706,26 @@ namespace pd80_hqbloom
             VertexShader   = PostProcessVS;
             PixelShader    = PS_GaussianV;
             RenderTarget   = texBloom;
+        }
+    #if( BLOOM_USE_FOCUS_BLOOM )
+        pass GaussianHF
+        {
+            VertexShader   = PostProcessVS;
+            PixelShader    = PS_GaussianHF;
+            RenderTarget   = texBloomHF;
+        }
+        pass GaussianVF
+        {
+            VertexShader   = PostProcessVS;
+            PixelShader    = PS_GaussianVF;
+            RenderTarget   = texBloomF;
+        }
+    #endif
+        pass Combine
+        {
+            VertexShader   = PostProcessVS;
+            PixelShader    = PS_Combine;
+            RenderTarget   = texBloomAll;
         }
         #if( BLOOM_ENABLE_CA == 0 )
         pass GaussianBlur
