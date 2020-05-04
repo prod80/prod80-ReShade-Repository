@@ -27,7 +27,7 @@
 	#define PD80_TileAmount     64      // Number of tiles / LUT
 #endif
 #ifndef PD80_LutAmount
-	#define PD80_LutAmount      49      // Number of LUTs
+	#define PD80_LutAmount      50      // Number of LUTs
 #endif
 #ifndef PD80_UseLevels
     #define PD80_UseLevels      0
