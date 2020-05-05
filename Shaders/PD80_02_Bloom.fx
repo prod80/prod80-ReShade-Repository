@@ -350,6 +350,7 @@ namespace pd80_hqbloom
         return float4( color.xyz, 1.0f ); 
     }
 
+    #if( !BLOOM_USE_FOCUS_BLOOM )
     float4 PS_GaussianH(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color     = tex2D( samplerBloomIn, texcoord );
@@ -393,6 +394,90 @@ namespace pd80_hqbloom
         color            /= SigmaSum;
         return color;
     }
+    #endif
+
+    #if( BLOOM_USE_FOCUS_BLOOM )
+    void PS_GaussianH(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 bloom1 : SV_Target0, out float4 bloom2 : SV_Target1)
+    {
+        // This part of shader writes both wide and narrow gaussian horizontal during the same pass to avoid sampling same texture twice
+        // Bloom quality setting
+        #if( BLOOM_QUALITY_0_TO_2 == 0 )
+            float Mult   = 1.0f;
+        #elif( BLOOM_QUALITY_0_TO_2 == 1 )
+            float Mult   = 0.5f;
+        #else
+            float Mult   = 0.25f;
+        #endif
+
+        // Required variables
+        float px         = rcp( SWIDTH );
+        float pxlOffset  = 1.5f;
+        
+        // Color
+        bloom1           = tex2D( samplerBloomIn, texcoord );
+        bloom2           = bloom1;
+
+        // Wide bloom
+        float b1_Sum     = 0.0f;
+        float2 b1_tSigma = 0.0f;
+        float b1_Width   = BlurSigma * Mult;
+        float3 b1_Sigma;
+        b1_Sigma.x       = 1.0f / ( sqrt( 2.0f * PI ) * b1_Width );
+        b1_Sigma.y       = exp( -0.5f / ( b1_Width * b1_Width ));
+        b1_Sigma.z       = b1_Sigma.y * b1_Sigma.y;
+        bloom1           *= b1_Sigma.x;
+        b1_Sum           += b1_Sigma.x;
+        b1_Sigma.xy      *= b1_Sigma.yz;
+
+        // Narrow bloom
+        float b2_Sum     = 0.0f;
+        float2 b2_tSigma = 0.0f;
+        float b2_Width   = BlurSigmaNarrow * Mult;
+        float3 b2_Sigma;
+        b2_Sigma.x       = 1.0f / ( sqrt( 2.0f * PI ) * b2_Width );
+        b2_Sigma.y       = exp( -0.5f / ( b2_Width * b2_Width ));
+        b2_Sigma.z       = b2_Sigma.y * b2_Sigma.y;
+        bloom2           *= b2_Sigma.x;
+        b2_Sum           += b2_Sigma.x;
+        b2_Sigma.xy      *= b2_Sigma.yz;
+
+        // Temp variables
+        float4 temp1;
+        float4 temp2;
+
+        [loop]
+        for( int i = 0; i < BLOOM_LOOPCOUNT && b1_Sigma.x > BLOOM_LIMITER; ++i )
+        {
+            // Setup weights (wide)
+            b1_tSigma.x  = b1_Sigma.x * b1_Sigma.y;
+            b1_tSigma.y  = b1_Sigma.x + b1_tSigma.x;
+            // Setup weights (narrow)
+            b2_tSigma.x  = b2_Sigma.x * b2_Sigma.y;
+            b2_tSigma.y  = b2_Sigma.x + b2_tSigma.x;
+            // Fetch
+            temp1        = tex2Dlod( samplerBloomIn, float4( texcoord.xy + float2( pxlOffset * px, 0.0f ), 0, 0 ));
+            temp2        = tex2Dlod( samplerBloomIn, float4( texcoord.xy - float2( pxlOffset * px, 0.0f ), 0, 0 ));
+            // Merge
+            bloom1       += temp1 * b1_tSigma.y;
+            bloom1       += temp2 * b1_tSigma.y;
+            bloom2       += temp1 * b2_tSigma.y;
+            bloom2       += temp2 * b2_tSigma.y;
+            // Sum
+            b1_Sum       += 2.0f * b1_tSigma.y;
+            b2_Sum       += 2.0f * b2_tSigma.y;
+            // Next offset
+            pxlOffset    += 2.0f;
+            // Next weights
+            b1_Sigma.xy  *= b1_Sigma.yz;
+            b1_Sigma.xy  *= b1_Sigma.yz;
+            b2_Sigma.xy  *= b2_Sigma.yz;
+            b2_Sigma.xy  *= b2_Sigma.yz;
+        }
+
+        bloom1           /= b1_Sum;
+        bloom2           /= b2_Sum;
+    }
+    #endif
 
     float4 PS_GaussianV(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
@@ -439,50 +524,6 @@ namespace pd80_hqbloom
     }
 
     #if( BLOOM_USE_FOCUS_BLOOM )
-    float4 PS_GaussianHF(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
-    {
-        float4 color     = tex2D( samplerBloomIn, texcoord );
-        float px         = rcp( SWIDTH );
-        float SigmaSum   = 0.0f;
-        float pxlOffset  = 1.5f;
-        float2 buffSigma = 0.0f;
-        #if( BLOOM_QUALITY_0_TO_2 == 0 )
-            float bSigma = BlurSigmaNarrow;
-        #elif( BLOOM_QUALITY_0_TO_2 == 1 )
-            float bSigma = BlurSigmaNarrow * 0.5f;
-        #else
-            float bSigma = BlurSigmaNarrow * 0.25f;
-        #endif
-        //Gaussian Math
-        float3 Sigma;
-        Sigma.x          = 1.0f / ( sqrt( 2.0f * PI ) * bSigma );
-        Sigma.y          = exp( -0.5f / ( bSigma * bSigma ));
-        Sigma.z          = Sigma.y * Sigma.y;
-
-        //Center Weight
-        color.xyz        *= Sigma.x;
-        //Adding to total sum of distributed weights
-        SigmaSum         += Sigma.x;
-        //Setup next weight
-        Sigma.xy         *= Sigma.yz;
-
-        [loop]
-        for( int i = 0; i < BLOOM_LOOPCOUNT && Sigma.x > BLOOM_LIMITER; ++i )
-        {
-            buffSigma.x  = Sigma.x * Sigma.y;
-            buffSigma.y  = Sigma.x + buffSigma.x;
-            color        += tex2Dlod( samplerBloomIn, float4( texcoord.xy + float2( pxlOffset * px, 0.0f ), 0, 0 )) * buffSigma.y;
-            color        += tex2Dlod( samplerBloomIn, float4( texcoord.xy - float2( pxlOffset * px, 0.0f ), 0, 0 )) * buffSigma.y;
-            SigmaSum     += ( 2.0f * Sigma.x + 2.0f * buffSigma.x );
-            pxlOffset    += 2.0f;
-            Sigma.xy     *= Sigma.yz;
-            Sigma.xy     *= Sigma.yz;
-        }
-
-        color            /= SigmaSum;
-        return color;
-    }
-
     float4 PS_GaussianVF(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color     = tex2D( samplerBloomHF, texcoord );
@@ -669,7 +710,7 @@ namespace pd80_hqbloom
                "values (eg. max width is 300, this value should be 300)\n\n"
                "BLOOM_LIMITER: Limiter to the bloom. Wider blooms may need lower values or the bloom starts to look\n"
                "rectangular (eg. 0.0001 (default) is good to about width 100, after that start to decrease this value)\n\n"
-               "BLOOM_USE_FOCUS_BLOOM: Enables another 2 passes to add a narrow bloom on top of the wide bloom";>
+               "BLOOM_USE_FOCUS_BLOOM: Enables another pass to add a narrow bloom on top of the wide bloom";>
     {
         pass BLuma
         {
@@ -695,12 +736,23 @@ namespace pd80_hqbloom
             PixelShader    = PS_BloomIn;
             RenderTarget   = texBloomIn;
         }
+    #if( BLOOM_USE_FOCUS_BLOOM )
+        pass GaussianH
+        {
+            VertexShader   = PostProcessVS;
+            PixelShader    = PS_GaussianH;
+            RenderTarget0  = texBloomH;
+            RenderTarget1  = texBloomHF;
+        }
+    #endif
+    #if( !BLOOM_USE_FOCUS_BLOOM )
         pass GaussianH
         {
             VertexShader   = PostProcessVS;
             PixelShader    = PS_GaussianH;
             RenderTarget   = texBloomH;
         }
+    #endif
         pass GaussianV
         {
             VertexShader   = PostProcessVS;
@@ -708,12 +760,6 @@ namespace pd80_hqbloom
             RenderTarget   = texBloom;
         }
     #if( BLOOM_USE_FOCUS_BLOOM )
-        pass GaussianHF
-        {
-            VertexShader   = PostProcessVS;
-            PixelShader    = PS_GaussianHF;
-            RenderTarget   = texBloomHF;
-        }
         pass GaussianVF
         {
             VertexShader   = PostProcessVS;
