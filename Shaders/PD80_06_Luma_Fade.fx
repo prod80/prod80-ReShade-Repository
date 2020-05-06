@@ -114,8 +114,8 @@ namespace pd80_lumafade
     technique prod80_06_LumaFade_Start
     < ui_tooltip = "Luma Fading Effects\n\n"
 			       "This shader allows you to fade in and out ReShade effects based on scene luminance.\n"
-                   "To use: put the Start technque before the shaders you can to enable in a BRIGHT scene and\n"
-                   "put the End technque after those shaders. Then use the UI settings to manipulate the fading.";>
+                   "To use: put the Start technque before the shaders you want to enable in a BRIGHT scene and\n"
+                   "put the End technique after those shaders. Then use the UI settings to manipulate the fading.";>
     {
         pass Luma
         {
