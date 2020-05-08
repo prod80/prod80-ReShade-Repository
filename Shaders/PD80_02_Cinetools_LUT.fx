@@ -27,14 +27,14 @@
 	#define PD80_TileAmountCL     64      // Number of tiles / LUT
 #endif
 #ifndef PD80_LutAmountCL
-	#define PD80_LutAmountCL      12      // Number of LUTs
+	#define PD80_LutAmountCL      13      // Number of LUTs
 #endif
 #ifndef PD80_UseLevelsCL
     #define PD80_UseLevelsCL      0
 #endif
 
 // Example: "LUT Name 01\0LUT Name 02\0LUT Name 03\0LUT Name 04\0LUT Name 05\0"
-#define PD80_DropDownMenuCL       "FilmicGold\0FilmicGold_Contrast\0FilmicBlue\0FilmicBlue_Contrast\0TealOrangeNeutral\0TealOrangeYCSplit\0TealOrangeWarmMatte\0BW-MaxWarmth\0BW-MatteLooks\0CinematicColors\0UltraWarmMatte\0UltraMatte\0"
+#define PD80_DropDownMenuCL       "FilmicGold\0FilmicGold_Contrast\0FilmicBlue\0FilmicBlue_Contrast\0TealOrangeNeutral\0TealOrangeYCSplit\0TealOrangeWarmMatte\0CinematicColors\0UltraWarmMatte\0UltraMatte\0BW-Max\0BW-MaxSepia\0BW-MatteLooks\0"
 
 #include "ReShade.fxh"
 #include "PD80_00_Noise_Samplers.fxh"
