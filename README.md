@@ -9,6 +9,6 @@ The shaders are categorized (numbered) by suggested load order, but use as you s
 
 As always, I like to share. If you're happy with my work, all I would ask in return is: spread the word. You can link the download link above, or a link to this repository directly. 
 
-For any questions, you can find me on the Reshade discord: https://discord.gg/nGaJfv
+For any questions, you can find me on the Reshade discord.
 
 Enjoy, and make your games look nice(r)!
