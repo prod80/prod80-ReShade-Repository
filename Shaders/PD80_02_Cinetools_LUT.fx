@@ -154,7 +154,7 @@ namespace pd80_multilut2_cl
     //
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    technique pd80_02_Cinetools_LUT
+    technique prod80_02_Cinetools_LUT
     {
         pass Cinetools
         {
