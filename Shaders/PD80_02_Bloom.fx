@@ -2,6 +2,16 @@
     Description : PD80 01 HQ Bloom for Reshade https://reshade.me/
     Author      : prod80 (Bas Veth)
     License     : MIT, Copyright (c) 2020 prod80
+
+    Additional credits (exposure)
+    - Padraic Hennessy for the logic
+      https://placeholderart.wordpress.com/2014/11/21/implementing-a-physically-based-camera-manual-exposure/
+    - Padraic Hennessy for the logic
+      https://placeholderart.wordpress.com/2014/12/15/implementing-a-physically-based-camera-automatic-exposure/
+    - MJP and David Neubelt for the method
+      https://github.com/TheRealMJP/BakingLab/blob/master/BakingLab/Exposure.hlsl
+      License: MIT, Copyright (c) 2016 MJP
+
     MIT License
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
