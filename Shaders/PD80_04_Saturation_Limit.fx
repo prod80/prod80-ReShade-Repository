@@ -60,7 +60,7 @@ namespace pd80_satlimit
     }
 
     //// TECHNIQUES /////////////////////////////////////////////////////////////////
-    technique prod80_Saturation_Limiter
+    technique prod80_04_Saturation_Limiter
     {
         pass prod80_pass0
         {
