@@ -202,62 +202,62 @@ namespace pd80_blackandwhite
         {
             case 0: // Red Filter
             {
-                red      = 1.0f;
-                yellow   = 1.0f;
-                green    = -0.9f;
-                cyan     = -1.0f;
-                blue     = -1.2f;
-                magenta  = 1.0f;
+                red      = 0.2f;
+                yellow   = 0.5f;
+                green    = -0.2f;
+                cyan     = -0.6f;
+                blue     = -1.0f;
+                magenta  = -0.2f;
             }
             break;
             case 1: // Green Filter
             {
-                red      = 0.0f;
-                yellow   = 1.3f;
-                green    = 0.8f;
-                cyan     = 0.3f;
-                blue     = -0.9f;
-                magenta  = -0.2f;
+                red      = -0.5f;
+                yellow   = 0.5f;
+                green    = 1.2f;
+                cyan     = -0.2f;
+                blue     = -1.0f;
+                magenta  = -0.5f;
             }
             break;
             case 2: // Blue Filter
             {
-                red      = -0.9f;
-                yellow   = -0.8f;
+                red      = -0.2f;
+                yellow   = 0.4f;
                 green    = -0.6f;
-                cyan     = 1.2f;
-                blue     = 1.2f;
-                magenta  = 1.2f;
+                cyan     = 0.5f;
+                blue     = 1.0f;
+                magenta  = -0.2f;
             }
             break;
             case 3: // High Contrast Red Filter
             {
-                red      = 1.5f;
-                yellow   = 2.2f;
-                green    = -0.6f;
-                cyan     = -1.2f;
-                blue     = -2.0f;
-                magenta  = 1.0f;
+                red      = 0.5f;
+                yellow   = 1.2f;
+                green    = -0.5f;
+                cyan     = -1.0f;
+                blue     = -1.5f;
+                magenta  = -1.0f;
             }
             break;
             case 4: // High Contrast Green Filter
             {
-                red      = -0.6f;
-                yellow   = 1.5f;
-                green    = 2.2f;
-                cyan     = 0.0f;
+                red      = -1.0f;
+                yellow   = 1.0f;
+                green    = 1.2f;
+                cyan     = -0.2f;
                 blue     = -1.5f;
                 magenta  = -1.0f;
             }
             break;
             case 5: // High Contrast Blue Filter
             {
-                red      = -2.0f;
-                yellow   = -1.5f;
-                green    = -0.6f;
-                cyan     = 1.5f;
-                blue     = 2.0f;
-                magenta  = 1.0f;
+                red      = -0.7f;
+                yellow   = 0.4f;
+                green    = -1.2f;
+                cyan     = 0.7f;
+                blue     = 1.2f;
+                magenta  = -0.2f;
             }
             break;
             case 6: // Infrared
