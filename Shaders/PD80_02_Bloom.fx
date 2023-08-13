@@ -220,9 +220,9 @@ namespace pd80_hqbloom
     #if( BLOOM_QUALITY_0_TO_2 == 0 )
         texture texBloomIn { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
         texture texBloomH { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
-        texture texBloom { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
         texture texBloomAll { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
     #if( BLOOM_USE_FOCUS_BLOOM )
+        texture texBloom { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
         texture texBloomHF { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
         texture texBloomF { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
     #endif
@@ -233,9 +233,9 @@ namespace pd80_hqbloom
         #define SHEIGHT  ( BUFFER_HEIGHT / 2 )
         texture texBloomIn { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
         texture texBloomH { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
-        texture texBloom { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
         texture texBloomAll { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
     #if( BLOOM_USE_FOCUS_BLOOM )
+        texture texBloom { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
         texture texBloomF { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
         texture texBloomHF { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
     #endif
@@ -244,9 +244,9 @@ namespace pd80_hqbloom
         #define SHEIGHT  ( BUFFER_HEIGHT / 4 )
         texture texBloomIn { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
         texture texBloomH { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
-        texture texBloom { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
         texture texBloomAll { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
     #if( BLOOM_USE_FOCUS_BLOOM )
+        texture texBloom { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
         texture texBloomF { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
         texture texBloomHF { Width = SWIDTH; Height = SHEIGHT; Format = RGBA16F; };
     #endif
@@ -281,11 +281,11 @@ namespace pd80_hqbloom
 	    AddressW = BORDER;
     };
     sampler samplerBloomF { Texture = texBloomF; };
+    sampler samplerBloom { Texture = texBloom; };
     #endif
     #if( BLOOM_ENABLE_CA == 1 )
     sampler samplerCABloom { Texture = texCABloom; };
     #endif
-    sampler samplerBloom { Texture = texBloom; };
     sampler samplerBloomAll { Texture = texBloomAll; };
     //// DEFINES ////////////////////////////////////////////////////////////////////
     uniform float frametime < source = "frametime"; >;
@@ -326,6 +326,12 @@ namespace pd80_hqbloom
     // Not supported in ReShade (?)
 
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
+    float PS_PrevAvgBLuma(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
+    {
+        float avgLuma    = tex2D( samplerBAvgLuma, float2( 0.5f, 0.5f )).x;
+        return avgLuma;
+    }
+
     float PS_WriteBLuma(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color     = tex2D( samplerLinColor, texcoord );
@@ -698,12 +704,6 @@ namespace pd80_hqbloom
         return float4( color.xyz, 1.0f );
     }
 
-    float PS_PrevAvgBLuma(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
-    {
-        float avgLuma    = tex2D( samplerBAvgLuma, float2( 0.5f, 0.5f )).x;
-        return avgLuma;
-    }
-
     //// TECHNIQUES /////////////////////////////////////////////////////////////////
     technique prod80_02_Bloom_New
         < ui_tooltip = "Bloom\n\n"
@@ -791,13 +791,6 @@ namespace pd80_hqbloom
             RenderTarget   = texBloomAll;
         }
     #endif
-    #if( BLOOM_ENABLE_CA == 0 )
-        pass GaussianBlur
-        {
-            VertexShader   = PostProcessVS;
-            PixelShader    = PS_Gaussian;
-        }
-    #endif
     #if( BLOOM_ENABLE_CA == 1 )
         pass AddCA
         {
@@ -805,11 +798,11 @@ namespace pd80_hqbloom
             PixelShader    = PS_CA;
             RenderTarget   = texCABloom;
         }
+    #endif
         pass GaussianBlur
         {
             VertexShader   = PostProcessVS;
             PixelShader    = PS_Gaussian;
         }
-    #endif
     }
 }
