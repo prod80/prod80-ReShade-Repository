@@ -705,7 +705,7 @@ namespace pd80_hqbloom
     }
 
     //// TECHNIQUES /////////////////////////////////////////////////////////////////
-    technique prod80_02_Bloom_New
+    technique prod80_02_Bloom
         < ui_tooltip = "Bloom\n\n"
 			   "Bloom is an effect that causes diffraction of light around bright reflective or emittive sources\n\n"
                "Preprocessor Settings\n\n"
