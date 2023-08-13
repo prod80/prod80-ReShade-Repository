@@ -577,18 +577,14 @@ namespace pd80_hqbloom
         color            /= SigmaSum;
         return color;
     }
-    #endif
 
     float4 PS_Combine(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 widebloom = tex2D( samplerBloom, texcoord );
-        #if( BLOOM_USE_FOCUS_BLOOM )
         float4 narrbloom = tex2D( samplerBloomF, texcoord );
         return saturate( widebloom * ( 1.0 - fBloomStrength ) + narrbloom * fBloomStrength );
-        #else
-        return widebloom;
-        #endif
     }
+    #endif
 
     #if( BLOOM_ENABLE_CA )
     float4 PS_CA(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
@@ -709,7 +705,7 @@ namespace pd80_hqbloom
     }
 
     //// TECHNIQUES /////////////////////////////////////////////////////////////////
-    technique prod80_02_Bloom
+    technique prod80_02_Bloom_New
         < ui_tooltip = "Bloom\n\n"
 			   "Bloom is an effect that causes diffraction of light around bright reflective or emittive sources\n\n"
                "Preprocessor Settings\n\n"
@@ -722,6 +718,12 @@ namespace pd80_hqbloom
                "rectangular (eg. 0.0001 (default) is good to about width 100, after that start to decrease this value)\n\n"
                "BLOOM_USE_FOCUS_BLOOM: Enables another pass to add a narrow bloom on top of the wide bloom";>
     {
+        pass PreviousBLuma
+        {
+            VertexShader   = PostProcessVS;
+            PixelShader    = PS_PrevAvgBLuma;
+            RenderTarget   = texBPrevAvgLuma;
+        }
         pass BLuma
         {
             VertexShader   = PostProcessVS;
@@ -762,35 +764,41 @@ namespace pd80_hqbloom
             PixelShader    = PS_GaussianH;
             RenderTarget   = texBloomH;
         }
+        pass GaussianV
+        {
+            VertexShader   = PostProcessVS;
+            PixelShader    = PS_GaussianV;
+            RenderTarget   = texBloomAll;
+        }
     #endif
+    #if( BLOOM_USE_FOCUS_BLOOM )
         pass GaussianV
         {
             VertexShader   = PostProcessVS;
             PixelShader    = PS_GaussianV;
             RenderTarget   = texBloom;
         }
-    #if( BLOOM_USE_FOCUS_BLOOM )
         pass GaussianVF
         {
             VertexShader   = PostProcessVS;
             PixelShader    = PS_GaussianVF;
             RenderTarget   = texBloomF;
         }
-    #endif
         pass Combine
         {
             VertexShader   = PostProcessVS;
             PixelShader    = PS_Combine;
             RenderTarget   = texBloomAll;
         }
-        #if( BLOOM_ENABLE_CA == 0 )
+    #endif
+    #if( BLOOM_ENABLE_CA == 0 )
         pass GaussianBlur
         {
             VertexShader   = PostProcessVS;
             PixelShader    = PS_Gaussian;
         }
-        #endif
-        #if( BLOOM_ENABLE_CA == 1 )
+    #endif
+    #if( BLOOM_ENABLE_CA == 1 )
         pass AddCA
         {
             VertexShader   = PostProcessVS;
@@ -802,12 +810,6 @@ namespace pd80_hqbloom
             VertexShader   = PostProcessVS;
             PixelShader    = PS_Gaussian;
         }
-        #endif
-        pass PreviousBLuma
-        {
-            VertexShader   = PostProcessVS;
-            PixelShader    = PS_PrevAvgBLuma;
-            RenderTarget   = texBPrevAvgLuma;
-        }
+    #endif
     }
 }
