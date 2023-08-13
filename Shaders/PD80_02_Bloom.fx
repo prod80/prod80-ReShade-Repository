@@ -212,8 +212,8 @@ namespace pd80_hqbloom
     //// TEXTURES ///////////////////////////////////////////////////////////////////
     texture texPrepLOD { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; MipLevels = 5; };
     texture texBLuma { Width = 256; Height = 256; Format = R16F; MipLevels = 9; };
-    texture texBAvgLumaEven { Format = R16F; };
-    texture texBAvgLumaOdd { Format = R16F; };
+    texture texBAvgLuma { Format = R16F; };
+    texture texBPrevAvgLuma { Format = R16F; };
     #if( BLOOM_ENABLE_CA == 1 )
     texture texCABloom { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
     #endif
@@ -256,8 +256,8 @@ namespace pd80_hqbloom
     sampler samplerLODColor { Texture = texPrepLOD; };
     sampler samplerLinColor { Texture = ReShade::BackBufferTex; SRGBTexture = true; };
     sampler samplerBLuma { Texture = texBLuma; };
-    sampler samplerBAvgLumaEven { Texture = texBAvgLumaEven; };
-    sampler samplerBAvgLumaOdd { Texture = texBAvgLumaOdd; };
+    sampler samplerBAvgLuma { Texture = texBAvgLuma; };
+    sampler samplerBPrevAvgLuma { Texture = texBPrevAvgLuma; };
     sampler samplerBloomIn
     {
         Texture = texBloomIn;
@@ -289,7 +289,6 @@ namespace pd80_hqbloom
     sampler samplerBloomAll { Texture = texBloomAll; };
     //// DEFINES ////////////////////////////////////////////////////////////////////
     uniform float frametime < source = "frametime"; >;
-    uniform float framecount < source = "framecount"; >;
     #define LumCoeff float3(0.212656, 0.715158, 0.072186)
     #define PI 3.141592f
     #define LOOPCOUNT 500.0f
@@ -327,6 +326,12 @@ namespace pd80_hqbloom
     // Not supported in ReShade (?)
 
     //// PIXEL SHADERS //////////////////////////////////////////////////////////////
+    float PS_PrevAvgBLuma(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
+    {
+        float avgLuma    = tex2D( samplerBAvgLuma, float2( 0.5f, 0.5f )).x;
+        return avgLuma;
+    }
+
     float PS_WriteBLuma(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color     = tex2D( samplerLinColor, texcoord );
@@ -335,32 +340,11 @@ namespace pd80_hqbloom
         return log2( luma );
     }
 
-    void VS_AvgBLumaEven(in uint id : SV_VERTEXID, out float4 pos : SV_POSITION, out float2 texcoord : TEXCOORD) {
-        id *= 1 - framecount % 2;
-        PostProcessVS(id, pos, texcoord);
-    }
-
-    void VS_AvgBLumaOdd(in uint id : SV_VERTEXID, out float4 pos : SV_POSITION, out float2 texcoord : TEXCOORD) {
-        id *= framecount % 2;
-        PostProcessVS(id, pos, texcoord);
-    }
-
-    float PS_AvgBLumaEven(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
+    float PS_AvgBLuma(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float luma       = tex2Dlod( samplerBLuma, float4(0.5f, 0.5f, 0, 8 )).x;
         luma             = exp2( luma );
-        float prevluma   = tex2D( samplerBAvgLumaOdd, float2( 0.5f, 0.5f )).x;
-        float fps        = max( 1000.0f / frametime, 0.001f );
-        fps              *= 0.5f; //approx. 1 second delay to change luma between bright and dark
-        float avgLuma    = lerp( prevluma, luma, saturate( 1.0f / fps )); 
-        return avgLuma;
-    }
-
-    float PS_AvgBLumaOdd(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
-    {
-        float luma       = tex2Dlod( samplerBLuma, float4(0.5f, 0.5f, 0, 8 )).x;
-        luma             = exp2( luma );
-        float prevluma   = tex2D( samplerBAvgLumaEven, float2( 0.5f, 0.5f )).x;
+        float prevluma   = tex2D( samplerBPrevAvgLuma, float2( 0.5f, 0.5f )).x;
         float fps        = max( 1000.0f / frametime, 0.001f );
         fps              *= 0.5f; //approx. 1 second delay to change luma between bright and dark
         float avgLuma    = lerp( prevluma, luma, saturate( 1.0f / fps )); 
@@ -375,11 +359,7 @@ namespace pd80_hqbloom
     float4 PS_BloomIn(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
     {
         float4 color     = tex2Dlod( samplerLODColor, float4( texcoord.xy, 0, BLOOM_MIPLVL ));
-        float luma;
-        if (framecount % 2 == 1)
-            luma = tex2D( samplerBAvgLumaOdd, float2( 0.5f, 0.5f )).x;
-        else
-            luma = tex2D( samplerBAvgLumaEven, float2( 0.5f, 0.5f )).x;
+        float luma       = tex2D( samplerBAvgLuma, float2( 0.5f, 0.5f )).x;
         luma             = clamp( luma, 0.000001f, 0.999999f );
         color.xyz        = saturate( color.xyz - luma ) / saturate( 1.0f - luma );
         color.xyz        = CalcExposedColor( color.xyz, luma, bExposure, GreyValue );
@@ -738,23 +718,23 @@ namespace pd80_hqbloom
                "rectangular (eg. 0.0001 (default) is good to about width 100, after that start to decrease this value)\n\n"
                "BLOOM_USE_FOCUS_BLOOM: Enables another pass to add a narrow bloom on top of the wide bloom";>
     {
+        pass PreviousBLuma
+        {
+            VertexShader   = PostProcessVS;
+            PixelShader    = PS_PrevAvgBLuma;
+            RenderTarget   = texBPrevAvgLuma;
+        }
         pass BLuma
         {
             VertexShader   = PostProcessVS;
             PixelShader    = PS_WriteBLuma;
             RenderTarget   = texBLuma;
         }
-        pass AvgBLumaEven
+        pass AvgBLuma
         {
-            VertexShader   = VS_AvgBLumaEven;
-            PixelShader    = PS_AvgBLumaEven;
-            RenderTarget   = texBAvgLumaEven;
-        }
-        pass AvgBLumaOdd
-        {
-            VertexShader   = VS_AvgBLumaOdd;
-            PixelShader    = PS_AvgBLumaOdd;
-            RenderTarget   = texBAvgLumaOdd;
+            VertexShader   = PostProcessVS;
+            PixelShader    = PS_AvgBLuma;
+            RenderTarget   = texBAvgLuma;
         }
         pass PrepLod
         {
